@@ -9,7 +9,8 @@
  *  transactionId     : FieldTypes.transactionId,
  *  sharesAllocated   : "Number",
  *  costBasisAllocated: "Number",
- *  date              : "String"
+ *  date              : "String",
+ *  proceedsAllocated : "Number?"
  *
  */
 
@@ -25,17 +26,27 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 /*
  * Construct a LotAllocation instance
- * @sig LotAllocation :: (String, String, String, Number, Number, String) -> LotAllocation
+ * @sig LotAllocation :: (String, String, String, Number, Number, String, Number?) -> LotAllocation
  */
-const LotAllocation = function LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date) {
-    const constructorName = 'LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date)'
-    R.validateArgumentLength(constructorName, 6, arguments)
+const LotAllocation = function LotAllocation(
+    id,
+    lotId,
+    transactionId,
+    sharesAllocated,
+    costBasisAllocated,
+    date,
+    proceedsAllocated,
+) {
+    const constructorName =
+        'LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date, proceedsAllocated)'
+
     R.validateRegex(constructorName, FieldTypes.lotAllocationId, 'id', false, id)
     R.validateRegex(constructorName, FieldTypes.lotId, 'lotId', false, lotId)
     R.validateRegex(constructorName, FieldTypes.transactionId, 'transactionId', false, transactionId)
     R.validateNumber(constructorName, 'sharesAllocated', false, sharesAllocated)
     R.validateNumber(constructorName, 'costBasisAllocated', false, costBasisAllocated)
     R.validateString(constructorName, 'date', false, date)
+    R.validateNumber(constructorName, 'proceedsAllocated', true, proceedsAllocated)
 
     const result = Object.create(prototype)
     result.id = id
@@ -44,6 +55,7 @@ const LotAllocation = function LotAllocation(id, lotId, transactionId, sharesAll
     result.sharesAllocated = sharesAllocated
     result.costBasisAllocated = costBasisAllocated
     result.date = date
+    if (proceedsAllocated !== undefined) result.proceedsAllocated = proceedsAllocated
     return result
 }
 
@@ -63,7 +75,8 @@ const lotallocationToString = function () {
         ${R._toString(this.transactionId)},
         ${R._toString(this.sharesAllocated)},
         ${R._toString(this.costBasisAllocated)},
-        ${R._toString(this.date)})`
+        ${R._toString(this.date)},
+        ${R._toString(this.proceedsAllocated)})`
 }
 
 /*
@@ -97,8 +110,8 @@ LotAllocation.toString = () => 'LotAllocation'
 LotAllocation.is = v => v && v['@@typeName'] === 'LotAllocation'
 
 LotAllocation._from = _input => {
-    const { id, lotId, transactionId, sharesAllocated, costBasisAllocated, date } = _input
-    return LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date)
+    const { id, lotId, transactionId, sharesAllocated, costBasisAllocated, date, proceedsAllocated } = _input
+    return LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date, proceedsAllocated)
 }
 LotAllocation.from = LotAllocation._from
 

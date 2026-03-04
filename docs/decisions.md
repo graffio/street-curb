@@ -878,3 +878,21 @@ Future architecture decisions are data-driven and support sustainable business g
 **Context:** Query engine had 12 `Object`/`[Object]`/loose `String` fields across 5 type definitions. Parser produced plain objects with `{type}` fields dispatched via if/else chains.
 **Decision:** Every IR node is a Tagged/TaggedSum type with `.match()` dispatch. Sources stored as `LookupTable<QuerySource>`. 13 type definitions total with cross-type references and FieldType regex validation.
 **Why:** `.match()` is exhaustive — adding a variant forces handler updates at all dispatch sites. Eliminates "what shape does this field have?" questions. FieldType regexes validate at construction time.
+
+### Position replaces Holding throughout (2026-03-04)
+
+**Context:** 'Holding' is point-in-time; extending to realized gains, dividends, and performance requires lifecycle semantics.
+**Decision:** Mechanical rename of Holding → Position across types, computations, selectors, components, tests. No backward-compatible alias.
+**Why:** 'Position' naturally covers open + closed + lifecycle. 'Holding' is a point-in-time view that Position subsumes. One entity, one name.
+
+### Capital gains are position fields, not a separate domain (2026-03-04)
+
+**Context:** Capital gains could be modeled as a separate domain entity or as computed fields on Position.
+**Decision:** Realized gains are fields on Position, computed from lot allocations for the same (account, security).
+**Why:** No domain proliferation. Lots and allocations already belong to the position's (account, security) pair.
+
+### Metric registry pattern for position metrics (2026-03-04)
+
+**Context:** Position enrichment needs IRR, benchmark return, alpha, total return — extensible set of computed metrics.
+**Decision:** MetricDefinition Tagged type in a LookupTable registry. Compute signature: `(position, context) => Number`. 7 initial metrics. New metrics = new registry entries.
+**Why:** Extensible without grammar changes. Matches the query language's "stable grammar" principle. LookupTable.get() is fail-fast on unknown names.

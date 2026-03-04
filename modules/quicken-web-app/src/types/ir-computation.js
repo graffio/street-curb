@@ -12,6 +12,9 @@
  *      expression: "IRExpression"
  *  FilterEntities
  *      source: FieldTypes.sourceName
+ *  TimeSeries
+ *      source  : FieldTypes.sourceName,
+ *      interval: FieldTypes.timeSeriesInterval
  *
  */
 
@@ -32,7 +35,7 @@ const IRComputation = {
 // Add hidden properties
 Object.defineProperty(IRComputation, '@@typeName', { value: 'IRComputation', enumerable: false })
 Object.defineProperty(IRComputation, '@@tagNames', {
-    value: ['Identity', 'Compare', 'Expression', 'FilterEntities'],
+    value: ['Identity', 'Compare', 'Expression', 'FilterEntities', 'TimeSeries'],
     enumerable: false,
 })
 
@@ -64,6 +67,7 @@ const toString = {
     compare       : function () { return `IRComputation.Compare(${R._toString(this.left)}, ${R._toString(this.right)})` },
     expression    : function () { return `IRComputation.Expression(${R._toString(this.expression)})` },
     filterEntities: function () { return `IRComputation.FilterEntities(${R._toString(this.source)})` },
+    timeSeries    : function () { return `IRComputation.TimeSeries(${R._toString(this.source)}, ${R._toString(this.interval)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -77,6 +81,7 @@ const toJSON = {
     compare       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     expression    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     filterEntities: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    timeSeries    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -151,6 +156,24 @@ const FilterEntitiesConstructor = function FilterEntities(source) {
 
 IRComputation.FilterEntities = FilterEntitiesConstructor
 
+/*
+ * Construct a IRComputation.TimeSeries instance
+ * @sig TimeSeries :: (String, String) -> IRComputation.TimeSeries
+ */
+const TimeSeriesConstructor = function TimeSeries(source, interval) {
+    const constructorName = 'IRComputation.TimeSeries(source, interval)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
+    R.validateRegex(constructorName, FieldTypes.timeSeriesInterval, 'interval', false, interval)
+
+    const result = Object.create(TimeSeriesPrototype)
+    result.source = source
+    result.interval = interval
+    return result
+}
+
+IRComputation.TimeSeries = TimeSeriesConstructor
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
@@ -188,6 +211,14 @@ const FilterEntitiesPrototype = Object.create(IRComputationPrototype, {
     constructor: { value: FilterEntitiesConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const TimeSeriesPrototype = Object.create(IRComputationPrototype, {
+    '@@tagName': { value: 'TimeSeries', enumerable: false },
+    '@@typeName': { value: 'IRComputation', enumerable: false },
+    toString: { value: toString.timeSeries, enumerable: false },
+    toJSON: { value: toJSON.timeSeries, enumerable: false },
+    constructor: { value: TimeSeriesConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
@@ -195,6 +226,7 @@ IdentityConstructor.prototype = IdentityPrototype
 CompareConstructor.prototype = ComparePrototype
 ExpressionConstructor.prototype = ExpressionPrototype
 FilterEntitiesConstructor.prototype = FilterEntitiesPrototype
+TimeSeriesConstructor.prototype = TimeSeriesPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
@@ -202,6 +234,7 @@ IdentityConstructor.is = val => val && val.constructor === IdentityConstructor
 CompareConstructor.is = val => val && val.constructor === CompareConstructor
 ExpressionConstructor.is = val => val && val.constructor === ExpressionConstructor
 FilterEntitiesConstructor.is = val => val && val.constructor === FilterEntitiesConstructor
+TimeSeriesConstructor.is = val => val && val.constructor === TimeSeriesConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
@@ -209,6 +242,7 @@ IdentityConstructor.toString = () => 'IRComputation.Identity'
 CompareConstructor.toString = () => 'IRComputation.Compare'
 ExpressionConstructor.toString = () => 'IRComputation.Expression'
 FilterEntitiesConstructor.toString = () => 'IRComputation.FilterEntities'
+TimeSeriesConstructor.toString = () => 'IRComputation.TimeSeries'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
@@ -216,6 +250,7 @@ IdentityConstructor._from = _input => IRComputation.Identity(_input.source)
 CompareConstructor._from = _input => IRComputation.Compare(_input.left, _input.right)
 ExpressionConstructor._from = _input => IRComputation.Expression(_input.expression)
 FilterEntitiesConstructor._from = _input => IRComputation.FilterEntities(_input.source)
+TimeSeriesConstructor._from = _input => IRComputation.TimeSeries(_input.source, _input.interval)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -223,6 +258,7 @@ IdentityConstructor.from = IdentityConstructor._from
 CompareConstructor.from = CompareConstructor._from
 ExpressionConstructor.from = ExpressionConstructor._from
 FilterEntitiesConstructor.from = FilterEntitiesConstructor._from
+TimeSeriesConstructor.from = TimeSeriesConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
 
@@ -231,14 +267,15 @@ FilterEntitiesConstructor.from = FilterEntitiesConstructor._from
  * @sig is :: Any -> Boolean
  */
 IRComputation.is = v => {
-    const { Identity, Compare, Expression, FilterEntities } = IRComputation
+    const { Identity, Compare, Expression, FilterEntities, TimeSeries } = IRComputation
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return (
         constructor === Identity ||
         constructor === Compare ||
         constructor === Expression ||
-        constructor === FilterEntities
+        constructor === FilterEntities ||
+        constructor === TimeSeries
     )
 }
 

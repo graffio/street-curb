@@ -12,7 +12,11 @@ import {
     uniq,
     wrapIndex,
 } from '@graffio/functional'
-import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
+import { computeBenchmarkReturn } from '../financial-computations/compute-benchmark-return.js'
+import { computeDividendIncome } from '../financial-computations/compute-dividend-income.js'
+import { computeIrr } from '../financial-computations/compute-irr.js'
+import { computePositions } from '../financial-computations/compute-positions.js'
+import { computeRealizedGains } from '../financial-computations/compute-realized-gains.js'
 import {
     AccountSummary,
     Category,
@@ -26,20 +30,18 @@ import {
 import { CategoryTree } from '../utils/category-tree.js'
 
 // COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
-// COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
+// COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Positions) not P/T/F/V/A/E
 // COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
 // COMPLEXITY: function-naming — Selectors are noun-named by Redux convention (accounts, tableLayouts, not toAccounts)
 // COMPLEXITY: section-separators — Domain-specific 3-line separators group selectors by concern
 // COMPLEXITY: react-redux-separation — Selectors join multiple state slices by design
 import { DateRangeUtils } from '../utils/date-range-utils.js'
 import { Formatters } from '../utils/formatters.js'
-import { HoldingsTree } from '../utils/holdings-tree.js'
+import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
 import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
-
-const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = HoldingsModule
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
@@ -437,8 +439,8 @@ const ACCOUNT_STATE_KEYS = [
 // @sig _organizedAccounts :: State -> LookupTable<AccountSection>
 const _organizedAccounts = state => {
     const { accounts, transactions, accountListSortMode } = state
-    const holdings = Holdings.asOf(state, ACCOUNT_LIST_VIEW_ID)
-    const enriched = LookupTable(EnrichedAccount.enrichAll(accounts, holdings, transactions), EnrichedAccount, 'id')
+    const positions = Positions.asOf(state, ACCOUNT_LIST_VIEW_ID)
+    const enriched = LookupTable(EnrichedAccount.enrichAll(accounts, positions, transactions), EnrichedAccount, 'id')
     return toAccountSections(enriched, accountListSortMode)
 }
 
@@ -460,17 +462,13 @@ const _dataSummary = state => {
 const dataSummary = memoizeReduxState(['categories', 'accounts', 'transactions'], _dataSummary)
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Holdings
+// Positions
 // ---------------------------------------------------------------------------------------------------------------------
 
-const priceIndex = memoizeReduxState(['prices'], state => buildPriceIndex(state.prices))
-const allocationIndex = memoizeReduxState(['lotAllocations'], state => buildAllocationIndex(state.lotAllocations))
-const transactionIndex = memoizeReduxState(['transactions'], state => buildTransactionIndex(state.transactions))
-
-const _holdingsAsOf = (state, viewId) => {
+const _positionsAsOf = (state, viewId) => {
     const { asOfDate, filterQuery, selectedAccounts } = filter(state, viewId)
     const { accounts, lotAllocations, lots, prices, securities, transactions } = state
-    return HoldingsModule.computeHoldingsAsOf({
+    return computePositions({
         lots,
         lotAllocations,
         prices,
@@ -480,30 +478,69 @@ const _holdingsAsOf = (state, viewId) => {
         asOfDate,
         selectedAccountIds: selectedAccounts,
         filterQuery,
-        allocationIndex: allocationIndex(state),
-        priceIndex: priceIndex(state),
-        transactionIndex: transactionIndex(state),
     })
 }
 
-const holdingsAsOf = memoizeReduxStatePerKey(
+const positionsAsOf = memoizeReduxStatePerKey(
     ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
     'transactionFilters',
-    _holdingsAsOf,
+    _positionsAsOf,
 )
 
-const _holdingsTree = (state, viewId) => {
+const _positionsTree = (state, viewId) => {
     const groupBy = filter(state, viewId).groupBy || 'account'
-    return HoldingsTree.buildHoldingsTree(groupBy, holdingsAsOf(state, viewId))
+    return buildPositionsTree(groupBy, positionsAsOf(state, viewId))
 }
 
-const holdingsTree = memoizeReduxStatePerKey(
+const positionsTree = memoizeReduxStatePerKey(
     ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
     'transactionFilters',
-    _holdingsTree,
+    _positionsTree,
 )
 
-const Holdings = { asOf: holdingsAsOf, tree: holdingsTree }
+const benchmarkSecurity = memoizeReduxState(['securities'], state => state.securities.find(s => s.symbol === 'SPY'))
+
+const _enrichedPosition = (state, accountId, securityId) => {
+    const { lots, lotAllocations, prices, securities, transactions } = state
+    const positions = positionsAsOf(state, ACCOUNT_LIST_VIEW_ID)
+    const position = positions.find(p => p.accountId === accountId && p.securityId === securityId)
+    if (!position) return undefined
+
+    const benchmark = benchmarkSecurity(state)
+    const { asOfDate } = filter(state, ACCOUNT_LIST_VIEW_ID)
+    const context = {
+        lots,
+        lotAllocations,
+        transactions,
+        securities,
+        prices,
+        asOfDate,
+        benchmarkSecurityId: benchmark?.id,
+    }
+
+    const realizedGains = computeRealizedGains(position, context)
+    const dividendIncome = computeDividendIncome(position, context)
+    const { unrealizedGainLoss, costBasis } = position
+    const totalReturnDollars = unrealizedGainLoss + realizedGains.totalRealizedGain + dividendIncome
+    const totalReturnPercent = costBasis !== 0 ? totalReturnDollars / costBasis : 0
+
+    return {
+        ...position,
+        realizedGains,
+        dividendIncome,
+        irr: computeIrr(position, context),
+        benchmarkReturnPct: computeBenchmarkReturn(position, context),
+        totalReturn: { totalReturnDollars, totalReturnPercent },
+    }
+}
+
+const enrichedPosition = memoizeReduxStatePerKey(
+    ['lots', 'lotAllocations', 'prices', 'securities', 'transactions'],
+    'transactionFilters',
+    _enrichedPosition,
+)
+
+const Positions = { asOf: positionsAsOf, tree: positionsTree, enriched: enrichedPosition }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Transactions - memoized selectors
@@ -609,7 +646,7 @@ const Transactions = { ...T, ...T2, ...T3, matchingTransfer }
 export {
     Accounts,
     Categories,
-    Holdings,
+    Positions,
     Transactions,
     UI,
 

@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum for domain-specific query result trees
-// ABOUTME: Separates data shape (Category vs Holdings) from computation shape (Identity vs Comparison)
+// ABOUTME: Separates data shape (Category vs Positions) from computation shape (Identity vs Comparison)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -13,6 +13,6 @@ export const IRResultTree = {
     kind: 'taggedSum',
     variants: {
         Category: { nodes: '[CategoryTreeNode]' },
-        Holdings: { nodes: '[HoldingsTreeNode]' },
+        Positions: { nodes: '[PositionTreeNode]' },
     },
 }

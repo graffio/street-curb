@@ -95,4 +95,9 @@ const slice = (fromIndex, toIndex, list) => list.slice(fromIndex, toIndex)
  */
 const find = (predicate, list) => list.find(predicate)
 
-export { append, head, last, map, filter, reject, find, reduce, slice, tail }
+/*
+ * @sig flatMap :: ((a -> [b]), [a]) -> [b]
+ */
+const flatMap = (fn, list) => list.flatMap(fn)
+
+export { append, flatMap, head, last, map, filter, reject, find, reduce, slice, tail }

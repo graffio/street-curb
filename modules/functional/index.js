@@ -38,6 +38,7 @@ import forEachObject from './src/ramda-like/for-each-object.js'
 import groupBy from './src/ramda-like/group-by.js'
 import groupByMulti from './src/ramda-like/group-by-multi.js'
 import invertObj from './src/ramda-like/invertObject.js'
+import iterate from './src/ramda-like/iterate.js'
 import isNil from './src/ramda-like/isNil.js'
 import keys from './src/ramda-like/keys.js'
 import mapAccum from './src/ramda-like/map-accum.js'
@@ -151,6 +152,7 @@ export {
     groupByMulti,
     invertObj,
     isNil,
+    iterate,
     keys,
     mapAccum,
     compactMap,

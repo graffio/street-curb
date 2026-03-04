@@ -8,7 +8,8 @@
  *  domain   : "IRDomain",
  *  filters  : "[IRFilter]",
  *  dateRange: "IRDateRange?",
- *  groupBy  : FieldTypes.groupDimension
+ *  groupBy  : FieldTypes.groupDimension,
+ *  metrics  : "[String]?"
  *
  */
 
@@ -28,16 +29,17 @@ import { IRDateRange } from './ir-date-range.js'
 
 /*
  * Construct a IRSource instance
- * @sig IRSource :: (String, IRDomain, [IRFilter], IRDateRange?, String?) -> IRSource
+ * @sig IRSource :: (String, IRDomain, [IRFilter], IRDateRange?, String?, [String]?) -> IRSource
  */
-const IRSource = function IRSource(name, domain, filters, dateRange, groupBy) {
-    const constructorName = 'IRSource(name, domain, filters, dateRange, groupBy)'
+const IRSource = function IRSource(name, domain, filters, dateRange, groupBy, metrics) {
+    const constructorName = 'IRSource(name, domain, filters, dateRange, groupBy, metrics)'
 
     R.validateRegex(constructorName, FieldTypes.sourceName, 'name', false, name)
     R.validateTag(constructorName, 'IRDomain', 'domain', false, domain)
     R.validateArray(constructorName, 1, 'Tagged', 'IRFilter', 'filters', false, filters)
     R.validateTag(constructorName, 'IRDateRange', 'dateRange', true, dateRange)
     R.validateRegex(constructorName, FieldTypes.groupDimension, 'groupBy', true, groupBy)
+    R.validateArray(constructorName, 1, 'String', undefined, 'metrics', true, metrics)
 
     const result = Object.create(prototype)
     result.name = name
@@ -45,6 +47,7 @@ const IRSource = function IRSource(name, domain, filters, dateRange, groupBy) {
     result.filters = filters
     if (dateRange !== undefined) result.dateRange = dateRange
     if (groupBy !== undefined) result.groupBy = groupBy
+    if (metrics !== undefined) result.metrics = metrics
     return result
 }
 
@@ -63,7 +66,8 @@ const irsourceToString = function () {
         ${R._toString(this.domain)},
         ${R._toString(this.filters)},
         ${R._toString(this.dateRange)},
-        ${R._toString(this.groupBy)})`
+        ${R._toString(this.groupBy)},
+        ${R._toString(this.metrics)})`
 }
 
 /*
@@ -97,8 +101,8 @@ IRSource.toString = () => 'IRSource'
 IRSource.is = v => v && v['@@typeName'] === 'IRSource'
 
 IRSource._from = _input => {
-    const { name, domain, filters, dateRange, groupBy } = _input
-    return IRSource(name, domain, filters, dateRange, groupBy)
+    const { name, domain, filters, dateRange, groupBy, metrics } = _input
+    return IRSource(name, domain, filters, dateRange, groupBy, metrics)
 }
 IRSource.from = IRSource._from
 

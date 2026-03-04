@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum type for query execution results
-// ABOUTME: Four variants matching IRComputation — computation shape is orthogonal to data shape (IRResultTree)
+// ABOUTME: Five variants matching IRComputation — computation shape is orthogonal to data shape (IRResultTree)
 
 import { FieldTypes } from './field-types.js'
 
@@ -18,5 +18,6 @@ export const IRResult = {
         Comparison:       { left: 'IRResultTree', right: 'IRResultTree', source: FieldTypes.sourceName },
         Scalar:           { value: 'Number', expression: 'IRExpression' },
         FilteredEntities: { entities: '[Account]', source: FieldTypes.sourceName },
+        TimeSeries:       { snapshots: '[Object]', source: FieldTypes.sourceName },
     },
 }

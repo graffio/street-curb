@@ -249,21 +249,21 @@ View.CATEGORY_DIMENSION_LAYOUTS = {
     },
 }
 
-View.HOLDINGS_DIMENSION_LAYOUTS = {
+View.POSITIONS_DIMENSION_LAYOUTS = {
     account: {
-        title: 'Holdings by Account',
+        title: 'Positions by Account',
         subtitle: 'View portfolio positions by account',
     },
     security: {
-        title: 'Holdings by Security',
+        title: 'Positions by Security',
         subtitle: 'View portfolio positions by security',
     },
     securityType: {
-        title: 'Holdings by Type',
+        title: 'Positions by Type',
         subtitle: 'View portfolio positions by security type',
     },
     goal: {
-        title: 'Holdings by Goal',
+        title: 'Positions by Goal',
         subtitle: 'View portfolio positions by investment goal',
     },
 }
@@ -274,8 +274,8 @@ View.DEFAULT_PAGE_TITLE = {
 }
 
 View.toReportTitle = (reportType, groupBy) => {
-    if (reportType === 'holdings')
-        return View.HOLDINGS_DIMENSION_LAYOUTS[groupBy || 'account'] || View.HOLDINGS_DIMENSION_LAYOUTS.account
+    if (reportType === 'positions')
+        return View.POSITIONS_DIMENSION_LAYOUTS[groupBy || 'account'] || View.POSITIONS_DIMENSION_LAYOUTS.account
     return View.CATEGORY_DIMENSION_LAYOUTS[groupBy || 'category'] || View.CATEGORY_DIMENSION_LAYOUTS.category
 }
 

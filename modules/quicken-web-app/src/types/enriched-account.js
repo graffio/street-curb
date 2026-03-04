@@ -106,12 +106,12 @@ EnrichedAccount.from = EnrichedAccount._from
 //
 // -------------------------------------------------------------------------------------------------------------
 
-EnrichedAccount.HOLDINGS_BALANCE_TYPES = ['Investment', '401(k)/403(b)']
+EnrichedAccount.POSITION_BALANCE_TYPES = ['Investment', '401(k)/403(b)']
 
-EnrichedAccount.sumHoldingsForAccount = (holdings, accountId) => {
-    const accountHoldings = holdings.filter(h => h.accountId === accountId)
-    const balance = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
-    const dayChange = accountHoldings.reduce((sum, h) => sum + h.dayGainLoss, 0)
+EnrichedAccount.sumPositionsForAccount = (positions, accountId) => {
+    const accountPositions = positions.filter(p => p.accountId === accountId)
+    const balance = accountPositions.reduce((sum, p) => sum + p.marketValue, 0)
+    const dayChange = accountPositions.reduce((sum, p) => sum + p.dayGainLoss, 0)
     const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : undefined
     return {
         balance,
@@ -132,17 +132,17 @@ EnrichedAccount.cashBalanceFromRunning = (transactions, accountId) => {
     return accountTxns[accountTxns.length - 1].runningBalance ?? 0
 }
 
-EnrichedAccount.fromAccount = (account, holdings, transactions) => {
+EnrichedAccount.fromAccount = (account, positions, transactions) => {
     const { id } = account
-    const isHoldingsType = EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)
-    if (!isHoldingsType)
+    const isPositionType = EnrichedAccount.POSITION_BALANCE_TYPES.includes(account.type)
+    if (!isPositionType)
         return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, undefined)
-    const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
+    const { balance, dayChange, dayChangePct } = EnrichedAccount.sumPositionsForAccount(positions, id)
     if (balance !== 0 || dayChange !== 0) return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
     return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, undefined)
 }
 
-EnrichedAccount.enrichAll = (accounts, holdings, transactions) =>
-    accounts.map(account => EnrichedAccount.fromAccount(account, holdings, transactions))
+EnrichedAccount.enrichAll = (accounts, positions, transactions) =>
+    accounts.map(account => EnrichedAccount.fromAccount(account, positions, transactions))
 
 export { EnrichedAccount }

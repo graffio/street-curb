@@ -13,5 +13,6 @@ export const LotAllocation = {
         sharesAllocated: 'Number',
         costBasisAllocated: 'Number',
         date: 'String',
+        proceedsAllocated: 'Number?',
     },
 }

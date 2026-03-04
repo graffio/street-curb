@@ -29,11 +29,11 @@ View.CATEGORY_DIMENSION_LAYOUTS = {
 }
 
 // prettier-ignore
-View.HOLDINGS_DIMENSION_LAYOUTS = {
-    account     : { title: 'Holdings by Account',  subtitle: 'View portfolio positions by account' },
-    security    : { title: 'Holdings by Security',  subtitle: 'View portfolio positions by security' },
-    securityType: { title: 'Holdings by Type',      subtitle: 'View portfolio positions by security type' },
-    goal        : { title: 'Holdings by Goal',      subtitle: 'View portfolio positions by investment goal' },
+View.POSITIONS_DIMENSION_LAYOUTS = {
+    account     : { title: 'Positions by Account',  subtitle: 'View portfolio positions by account' },
+    security    : { title: 'Positions by Security',  subtitle: 'View portfolio positions by security' },
+    securityType: { title: 'Positions by Type',      subtitle: 'View portfolio positions by security type' },
+    goal        : { title: 'Positions by Goal',      subtitle: 'View portfolio positions by investment goal' },
 }
 
 View.DEFAULT_PAGE_TITLE = { title: 'Dashboard', subtitle: '' }
@@ -47,7 +47,7 @@ View.DEFAULT_PAGE_TITLE = { title: 'Dashboard', subtitle: '' }
 // Derives page title for a Report view from its reportType and groupBy dimension
 // @sig toReportTitle :: (String, String) -> { title: String, subtitle: String }
 View.toReportTitle = (reportType, groupBy) => {
-    if (reportType === 'holdings')
-        return View.HOLDINGS_DIMENSION_LAYOUTS[groupBy || 'account'] || View.HOLDINGS_DIMENSION_LAYOUTS.account
+    if (reportType === 'positions')
+        return View.POSITIONS_DIMENSION_LAYOUTS[groupBy || 'account'] || View.POSITIONS_DIMENSION_LAYOUTS.account
     return View.CATEGORY_DIMENSION_LAYOUTS[groupBy || 'category'] || View.CATEGORY_DIMENSION_LAYOUTS.category
 }

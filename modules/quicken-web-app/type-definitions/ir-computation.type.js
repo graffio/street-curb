@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum type for query computation strategies
-// ABOUTME: Four variants dispatched by execution engine via .match()
+// ABOUTME: Five variants dispatched by execution engine via .match()
 
 import { FieldTypes } from './field-types.js'
 
@@ -18,5 +18,6 @@ export const IRComputation = {
         Compare:        { left: FieldTypes.sourceName, right: FieldTypes.sourceName },
         Expression:     { expression: 'IRExpression' },
         FilterEntities: { source: FieldTypes.sourceName },
+        TimeSeries:     { source: FieldTypes.sourceName, interval: FieldTypes.timeSeriesInterval },
     },
 }

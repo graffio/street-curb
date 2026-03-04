@@ -12,6 +12,9 @@ import {
     IRResult,
     IRResultTree,
     IRSource,
+    Lot,
+    LotAllocation,
+    Price,
     Query,
     Security,
     Transaction,
@@ -95,6 +98,9 @@ const STATE = {
     categories: CATEGORIES,
     transactions: TRANSACTIONS,
     securities: LookupTable([], Security, 'id'),
+    lots: LookupTable([], Lot, 'id'),
+    lotAllocations: LookupTable([], LotAllocation, 'id'),
+    prices: LookupTable([], Price, 'id'),
 }
 
 // ═════════════════════════════════════════════════
@@ -119,23 +125,23 @@ test('Identity — transaction source with category filter', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (b) Identity — holdings source (structural only)
+// (b) Identity — positions source (structural only)
 // ═════════════════════════════════════════════════
 
-test('Identity — holdings source', t => {
-    t.test('Given a holdings query', t => {
+test('Identity — positions source', t => {
+    t.test('Given a positions query', t => {
         t.test('When executing against state with investment account', t => {
-            const source = IRSource('_default', IRDomain.Holdings(), [], IRDateRange.Year(2025))
+            const source = IRSource('_default', IRDomain.Positions(), [], IRDateRange.Year(2025))
             const ir = Query(
-                'holdings',
-                'Holdings view',
+                'positions',
+                'Positions view',
                 LookupTable([source], IRSource, 'name'),
                 IRComputation.Identity('_default'),
                 IROutput(['total']),
             )
             const result = queryExecutionEngine(ir, STATE)
             t.ok(IRResult.Identity.is(result), 'Then result is IRResult.Identity')
-            t.ok(IRResultTree.Holdings.is(result.tree), 'Then result contains a holdings tree')
+            t.ok(IRResultTree.Positions.is(result.tree), 'Then result contains a positions tree')
             t.end()
         })
         t.end()

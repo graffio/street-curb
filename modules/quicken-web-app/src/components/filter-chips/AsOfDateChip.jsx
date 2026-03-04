@@ -1,4 +1,4 @@
-// ABOUTME: As-of date filter chip with single date picker for holdings view
+// ABOUTME: As-of date filter chip with single date picker for positions view
 // ABOUTME: Escape closes popover, KeyboardDateInput has own keymap
 
 import { KeymapModule } from '@graffio/keymap'
@@ -82,7 +82,7 @@ const DateContent = ({ viewId }) => {
     return (
         <Flex direction="column" gap="2">
             <Text size="1" color="gray" weight="medium">
-                Show holdings as of date
+                Show positions as of date
             </Text>
             <KeyboardDateInput {...inputProps} />
         </Flex>
@@ -106,7 +106,7 @@ let contentCleanup
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// As-of date filter chip with single date picker for holdings view
+// As-of date filter chip with single date picker for positions view
 // @sig Chip :: { viewId: String } -> ReactElement
 const Chip = ({ viewId }) => {
     const handleOpenChange = open => {
