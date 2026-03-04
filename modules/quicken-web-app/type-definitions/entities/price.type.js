@@ -1,7 +1,7 @@
 // ABOUTME: Price type definition for security price history
 // ABOUTME: Daily price quotes with staleness detection
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 export const Price = {
     name: 'Price',

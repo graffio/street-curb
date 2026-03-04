@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for TabGroup
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/tab-group.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/tab-group.type.js - do not edit manually
 
 /** {@link module:TabGroup} */
-/*  TabGroup generated from: modules/quicken-web-app/type-definitions/tab-group.type.js
+/*  TabGroup generated from: modules/quicken-web-app/type-definitions/ui-state/tab-group.type.js
  *
  *  id          : FieldTypes.tabGroupId,
  *  views       : "{View:id}",

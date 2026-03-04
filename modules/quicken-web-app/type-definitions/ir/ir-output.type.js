@@ -1,7 +1,7 @@
 // ABOUTME: Tagged type for query output configuration
 // ABOUTME: Controls which fields to show, output format, and post-computation modifiers (orderBy, limit)
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for TabLayout
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/tab-layout.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/tab-layout.type.js - do not edit manually
 
 /** {@link module:TabLayout} */
-/*  TabLayout generated from: modules/quicken-web-app/type-definitions/tab-layout.type.js
+/*  TabLayout generated from: modules/quicken-web-app/type-definitions/ui-state/tab-layout.type.js
  *
  *  id              : FieldTypes.tabLayoutId,
  *  tabGroups       : "{TabGroup:id}",

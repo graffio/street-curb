@@ -1,7 +1,7 @@
 // ABOUTME: Tagged type for query data sources with domain, filters, and date range
 // ABOUTME: Keyed by name — collected into LookupTable in Query
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

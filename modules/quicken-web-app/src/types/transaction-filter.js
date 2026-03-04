@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for TransactionFilter
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/transaction-filter.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/transaction-filter.type.js - do not edit manually
 
 /** {@link module:TransactionFilter} */
-/*  TransactionFilter generated from: modules/quicken-web-app/type-definitions/transaction-filter.type.js
+/*  TransactionFilter generated from: modules/quicken-web-app/type-definitions/ui-state/transaction-filter.type.js
  *
  *  id                       : FieldTypes.viewId,
  *  asOfDate                 : "String?",

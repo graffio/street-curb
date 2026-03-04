@@ -1,7 +1,7 @@
 // ABOUTME: Type definition for TransactionFilter - per-view filter criteria
 // ABOUTME: Contains only filter criteria (dateRange, selectedCategories, etc.) — ephemeral UI state is in ViewUiState
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 import { Transaction } from './transaction.js'
 
 export const TransactionFilter = {

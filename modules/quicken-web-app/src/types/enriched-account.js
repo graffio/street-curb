@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for EnrichedAccount
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/enriched-account.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/enriched-account.type.js - do not edit manually
 
 /** {@link module:EnrichedAccount} */
-/*  EnrichedAccount generated from: modules/quicken-web-app/type-definitions/enriched-account.type.js
+/*  EnrichedAccount generated from: modules/quicken-web-app/type-definitions/derived/enriched-account.type.js
  *
  *  id          : "String",
  *  account     : "Account",

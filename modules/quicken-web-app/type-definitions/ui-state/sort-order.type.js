@@ -1,6 +1,6 @@
 /** @module SortOrder */
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 /**
  * SortOrder represents a single column's sort state in multi-column sorting

@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for LotAllocation
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/lot-allocation.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/lot-allocation.type.js - do not edit manually
 
 /** {@link module:LotAllocation} */
-/*  LotAllocation generated from: modules/quicken-web-app/type-definitions/lot-allocation.type.js
+/*  LotAllocation generated from: modules/quicken-web-app/type-definitions/entities/lot-allocation.type.js
  *
  *  id                : FieldTypes.lotAllocationId,
  *  lotId             : FieldTypes.lotId,

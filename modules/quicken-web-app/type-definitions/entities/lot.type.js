@@ -1,7 +1,7 @@
 // ABOUTME: Lot type definition for tax lot tracking
 // ABOUTME: Tracks purchase date, cost basis, and remaining quantity per security position
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

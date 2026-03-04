@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for AccountSummary
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/account-summary.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/account-summary.type.js - do not edit manually
 
 /** {@link module:AccountSummary} */
-/*  AccountSummary generated from: modules/quicken-web-app/type-definitions/account-summary.type.js
+/*  AccountSummary generated from: modules/quicken-web-app/type-definitions/derived/account-summary.type.js
  *
  *  name: "String",
  *  type: /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/

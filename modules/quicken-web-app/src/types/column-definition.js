@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for ColumnDefinition
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/column-definition.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/column-definition.type.js - do not edit manually
 
 /** {@link module:ColumnDefinition} */
-/*  ColumnDefinition generated from: modules/quicken-web-app/type-definitions/column-definition.type.js
+/*  ColumnDefinition generated from: modules/quicken-web-app/type-definitions/ui-state/column-definition.type.js
  *
  *  id            : "String",
  *  accessorKey   : "String?",

@@ -1,6 +1,6 @@
 /** @module ColumnDescriptor */
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 /**
  * ColumnDescriptor represents a single column's state (width, sort direction)

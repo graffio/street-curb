@@ -1,7 +1,7 @@
 // ABOUTME: Type definition for ViewUiState - per-view ephemeral UI state
 // ABOUTME: Separated from TransactionFilter to avoid invalidating expensive selector caches
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

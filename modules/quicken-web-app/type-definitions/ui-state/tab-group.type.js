@@ -1,7 +1,7 @@
 // ABOUTME: TabGroup type definition for a group of views in the layout
 // ABOUTME: Contains id, LookupTable of views, active view reference, and width
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

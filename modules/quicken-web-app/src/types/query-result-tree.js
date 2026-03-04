@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for QueryResultTree
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-result-tree.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/query-result-tree.type.js - do not edit manually
 
-/*  QueryResultTree generated from: modules/quicken-web-app/type-definitions/query-result-tree.type.js
+/*  QueryResultTree generated from: modules/quicken-web-app/type-definitions/derived/query-result-tree.type.js
  *
  *  Category
  *      nodes: "[CategoryTreeNode]"

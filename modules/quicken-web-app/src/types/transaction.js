@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for Transaction
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/transaction.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/transaction.type.js - do not edit manually
 
-/*  Transaction generated from: modules/quicken-web-app/type-definitions/transaction.type.js
+/*  Transaction generated from: modules/quicken-web-app/type-definitions/entities/transaction.type.js
  *
  *  Bank
  *      accountId        : FieldTypes.accountId,

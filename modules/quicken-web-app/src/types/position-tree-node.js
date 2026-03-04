@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for PositionTreeNode
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/position-tree-node.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/position-tree-node.type.js - do not edit manually
 
-/*  PositionTreeNode generated from: modules/quicken-web-app/type-definitions/position-tree-node.type.js
+/*  PositionTreeNode generated from: modules/quicken-web-app/type-definitions/derived/position-tree-node.type.js
  *
  *  Group
  *      id       : "String",

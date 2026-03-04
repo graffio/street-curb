@@ -1,7 +1,7 @@
 // ABOUTME: Position type definition for portfolio positions
 // ABOUTME: Represents a security position with market data and gain/loss calculations
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

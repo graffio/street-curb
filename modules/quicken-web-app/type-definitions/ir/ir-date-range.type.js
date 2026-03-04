@@ -1,7 +1,7 @@
 // ABOUTME: TaggedSum type for date range specifications in query source clauses
 // ABOUTME: Six variants covering absolute, relative, and named date ranges
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

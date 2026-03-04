@@ -1,7 +1,7 @@
 // ABOUTME: Account type definition for bank, investment, and credit accounts
 // ABOUTME: Validates account ID format and account type enum
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 export const Account = {
     name: 'Account',

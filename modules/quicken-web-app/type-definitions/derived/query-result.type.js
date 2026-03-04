@@ -1,7 +1,7 @@
 // ABOUTME: TaggedSum type for query execution results
 // ABOUTME: Five variants matching IRComputation — computation shape is orthogonal to data shape (QueryResultTree)
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

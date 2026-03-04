@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for TableLayout
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/table-layout.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/table-layout.type.js - do not edit manually
 
 /** {@link module:TableLayout} */
-/*  TableLayout generated from: modules/quicken-web-app/type-definitions/table-layout.type.js
+/*  TableLayout generated from: modules/quicken-web-app/type-definitions/ui-state/table-layout.type.js
  *
  *  id               : FieldTypes.tableLayoutId,
  *  columnDescriptors: "{ColumnDescriptor:id}",

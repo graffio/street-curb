@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for QueryResult
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-result.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/query-result.type.js - do not edit manually
 
-/*  QueryResult generated from: modules/quicken-web-app/type-definitions/query-result.type.js
+/*  QueryResult generated from: modules/quicken-web-app/type-definitions/derived/query-result.type.js
  *
  *  Identity
  *      tree  : "QueryResultTree",

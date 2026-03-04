@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for ViewUiState
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/view-ui-state.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/view-ui-state.type.js - do not edit manually
 
 /** {@link module:ViewUiState} */
-/*  ViewUiState generated from: modules/quicken-web-app/type-definitions/view-ui-state.type.js
+/*  ViewUiState generated from: modules/quicken-web-app/type-definitions/ui-state/view-ui-state.type.js
  *
  *  id                    : FieldTypes.viewId,
  *  filterPopoverId       : "String?",

@@ -1,7 +1,7 @@
 // ABOUTME: TaggedSum type for query computation strategies
 // ABOUTME: Five variants dispatched by execution engine via .match()
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

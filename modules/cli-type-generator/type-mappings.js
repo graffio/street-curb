@@ -24,6 +24,9 @@ const sources = {
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
     functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
     quickenWebApp           : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
+    quickenEntities         : `${REPO_ROOT}/modules/quicken-web-app/type-definitions/entities`,
+    quickenDerived          : `${REPO_ROOT}/modules/quicken-web-app/type-definitions/derived`,
+    quickenUiState          : `${REPO_ROOT}/modules/quicken-web-app/type-definitions/ui-state`,
     quickenWebAppIR         : `${REPO_ROOT}/modules/quicken-web-app/type-definitions/ir`,
     typesGeneration         : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
@@ -85,57 +88,58 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/qif-split.type.js`]       : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/import-issue.type.js`]     : [targets.cliQifToSqlite],
 
-    // quicken-web-app (types must come before Action since Action references them)
-    [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp, targets.queryLanguage],
-    [`${sources.quickenWebApp}/column-definition.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/column-descriptor.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/sort-order.type.js`]      : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/table-layout.type.js`]    : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/view.type.js`]            : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/tab-group.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/tab-layout.type.js`]      : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/transaction-filter.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/view-ui-state.type.js`]   : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/sort-mode.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/enriched-account.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/account-section.type.js`] : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/position-aggregate.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/position-tree-node.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/category-aggregate.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/category-tree-node.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/register-row.type.js`]     : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/account-summary.type.js`] : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/data-summary.type.js`]    : [targets.quickenWebApp],
+    // quicken-web-app — field-types must come before all other types
+    [`${sources.quickenWebApp}/field-types.js`]               : [targets.quickenWebApp, targets.queryLanguage],
+
+    // entities — domain concepts (account, transaction, etc.)
+    [`${sources.quickenEntities}/account.type.js`]            : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/transaction.type.js`]        : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/split.type.js`]              : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/category.type.js`]           : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/tag.type.js`]                : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/security.type.js`]           : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/price.type.js`]              : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/lot.type.js`]                : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/lot-allocation.type.js`]     : [targets.quickenWebApp],
+    [`${sources.quickenEntities}/position.type.js`]           : [targets.quickenWebApp],
+
+    // derived — computed types for display and type safety
+    [`${sources.quickenDerived}/enriched-account.type.js`]    : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/account-summary.type.js`]     : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/account-section.type.js`]     : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/position-aggregate.type.js`]  : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/position-tree-node.type.js`]  : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/category-aggregate.type.js`]  : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/category-tree-node.type.js`]  : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/register-row.type.js`]        : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/query-result.type.js`]        : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/query-result-tree.type.js`]   : [targets.quickenWebApp],
+    [`${sources.quickenDerived}/data-summary.type.js`]        : [targets.quickenWebApp],
+
+    // ui-state — view/layout/filter configuration
+    [`${sources.quickenUiState}/view.type.js`]                : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/tab-group.type.js`]           : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/tab-layout.type.js`]          : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/table-layout.type.js`]        : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/column-descriptor.type.js`]   : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/column-definition.type.js`]   : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/sort-order.type.js`]          : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/sort-mode.type.js`]           : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/transaction-filter.type.js`]  : [targets.quickenWebApp],
+    [`${sources.quickenUiState}/view-ui-state.type.js`]       : [targets.quickenWebApp],
 
     // query-language IR types (internal to query-language)
-    [`${sources.quickenWebAppIR}/ir-domain.type.js`]      : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-date-range.type.js`]  : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-filter.type.js`]      : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-expression.type.js`]  : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-computation.type.js`] : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-source.type.js`]      : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-output.type.js`]      : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-domain.type.js`]          : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-date-range.type.js`]      : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-filter.type.js`]          : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-expression.type.js`]      : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-computation.type.js`]     : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-source.type.js`]          : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-output.type.js`]          : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/query.type.js`]              : [targets.queryLanguage],
 
-    // Query is part of the IR (constructed using IR types)
-    [`${sources.quickenWebAppIR}/query.type.js`]          : [targets.queryLanguage],
-
-    // query result types (public output — stay in src/types/)
-    [`${sources.quickenWebApp}/query-result-tree.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/query-result.type.js`]     : [targets.quickenWebApp],
-
-    // quicken-web-app entity types (moved from quicken-type-definitions)
-    [`${sources.quickenWebApp}/account.type.js`]        : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/category.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/position.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/lot.type.js`]            : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/lot-allocation.type.js`] : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/price.type.js`]          : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/security.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/split.type.js`]          : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/tag.type.js`]            : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/transaction.type.js`]    : [targets.quickenWebApp],
-
-    [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
+    // cross-cutting (Action must come after entity types it references)
+    [`${sources.quickenWebApp}/action.type.js`]               : [targets.quickenWebApp],
 
 
     // for the cli-type-generator itself (all internal types)

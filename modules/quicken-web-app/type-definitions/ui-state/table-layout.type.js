@@ -3,7 +3,7 @@
 /** @module TableLayout */
 
 /* eslint-disable no-undef -- ColumnDescriptor, SortOrder, LookupTable are in scope in generated output */
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 /**
  * TableLayout represents all column state for a table view

@@ -1,7 +1,7 @@
 // ABOUTME: View type definition for tab content types
 // ABOUTME: Tagged sum with Register, Report, and Reconciliation variants
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // prettier-ignore
 export const View = {

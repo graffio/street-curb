@@ -1,7 +1,7 @@
 // ABOUTME: Tag type definition for user-defined transaction labels
 // ABOUTME: Optional color and description for visual categorization
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // prettier-ignore
 export const Tag = {

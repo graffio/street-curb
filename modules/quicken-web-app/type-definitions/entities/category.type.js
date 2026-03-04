@@ -1,7 +1,7 @@
 // ABOUTME: Category type definition with hierarchical name support
 // ABOUTME: Includes static methods for parent category generation
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 export const Category = {
     name: 'Category',

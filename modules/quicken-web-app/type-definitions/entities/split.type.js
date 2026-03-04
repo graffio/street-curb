@@ -1,7 +1,7 @@
 // ABOUTME: Split type definition for transaction sub-items
 // ABOUTME: Represents individual lines within a split transaction
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 export const Split = {
     name: 'Split',

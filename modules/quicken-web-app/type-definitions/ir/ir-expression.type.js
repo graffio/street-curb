@@ -1,7 +1,7 @@
 // ABOUTME: TaggedSum type for expression AST nodes in query compute clauses
 // ABOUTME: Four variants — Literal, Binary, Call, Reference — used by evaluator and validator
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

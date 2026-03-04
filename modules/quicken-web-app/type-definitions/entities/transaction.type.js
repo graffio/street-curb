@@ -8,7 +8,7 @@ import {
     dateToDateParts,
     formatDateString,
 } from '@graffio/functional'
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

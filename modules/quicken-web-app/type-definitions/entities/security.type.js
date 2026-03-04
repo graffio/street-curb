@@ -1,7 +1,7 @@
 // ABOUTME: Security type definition for stocks, bonds, and funds
 // ABOUTME: Identifies tradeable securities by symbol and name
 
-import { FieldTypes } from './field-types.js'
+import { FieldTypes } from '../field-types.js'
 
 export const Security = {
     name: 'Security',
