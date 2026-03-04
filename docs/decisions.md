@@ -657,6 +657,9 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 | Modal layer in ActionRegistry              | Feb 2026 | Accepted | `{ modal: true }` flag hides background keybindings from drawer when modal is open |
 | Claude scoped to 3 narrow interfaces       | Mar 2026 | Accepted | Text-in/text-out roles (formulate, summarize, suggest); chat UI deferred            |
 | Query engine types fully Tagged            | Mar 2026 | Accepted | All IR nodes Tagged/TaggedSum with .match(); sources as LookupTable                 |
+| DSL parser removed — Claude constructs IR  | Mar 2026 | Accepted | No consumer for text DSL; Claude produces IR Tagged values directly from natural language |
+| IR prefix naming convention for query types | Mar 2026 | Accepted | All query engine types use IR prefix (IRSource, IRFilter, etc.) except root Query type   |
+| Firestore codegen default off, opt-in      | Mar 2026 | Accepted | Only curb-map uses Firestore; `firestore: true` in type def opts in, default skips       |
 
 ---
 
@@ -851,6 +854,24 @@ Future architecture decisions are data-driven and support sustainable business g
 **Context:** Financial query language could give Claude broad analytical power over user data (proactive insights, pattern detection, financial advice). Explored and rejected for Phase 1.
 **Decision:** Claude has three narrow text-in/text-out roles: (1) formulate queries from natural language, (2) summarize query results, (3) suggest follow-up queries. Chat UI deferred — users paste queries for now.
 **Why:** Proactive insights require broad context Claude doesn't have (full history, what's "normal", seasonal patterns). Each richer role is an idiosyncratic integration point. Three narrow roles share the same interface shape (text in, text out) — testable, replaceable, no deep app coupling.
+
+### DSL parser removed — Claude constructs IR directly (2026-03-03)
+
+**Context:** The query language parser (~700 lines) parsed a custom DSL syntax into IR, but had no consumer — Claude generates IR directly from natural language.
+**Decision:** Delete the parser entirely. Pipeline accepts Query IR directly: validate → execute.
+**Why:** The parser was a maintenance-heavy layer with no consumer. Every new IR feature (metrics, orderBy, limit) would have required parser changes. Claude produces IR Tagged values directly.
+
+### IR prefix naming convention for query engine types (2026-03-03)
+
+**Context:** Query engine types had inconsistent naming: half used "Query" prefix (QuerySource, QueryFilter), half had none (Computation, ExpressionNode, Domain).
+**Decision:** All query engine types use IR prefix (IRSource, IRFilter, IRComputation, IRExpression, IRDomain, IRDateRange, IRResultTree, IROutput, IRResult). Root type is plain `Query`. Non-IR data types (DataSummary, AccountSummary) keep their names.
+**Why:** With the DSL gone, there's no second layer to disambiguate from. IR prefix is clear, consistent, and groups related types visually.
+
+### Firestore codegen: default off, opt-in via `firestore: true` (2026-03-03)
+
+**Context:** Type generator unconditionally emitted toFirestore/fromFirestore for every Tagged type with Date/Tagged/LookupTable fields. Only curb-map uses Firestore.
+**Decision:** Add `firestore: true` to type definitions that need serialization. Default is no Firestore codegen. curb-map types opt in.
+**Why:** Non-Firestore modules (quicken-web-app, functional, etc.) carried dead serialization code. Also: type generator PascalCase→kebab-case regex needed a fix to handle acronym prefixes (IR) — now uses two-pass replacement.
 
 ### Query engine types: all IR nodes are Tagged/TaggedSum, sources are LookupTable (2026-03-03)
 
