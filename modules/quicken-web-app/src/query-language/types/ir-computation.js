@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for IRComputation
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-computation.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-computation.type.js - do not edit manually
 
-/*  IRComputation generated from: modules/quicken-web-app/type-definitions/ir-computation.type.js
+/*  IRComputation generated from: modules/quicken-web-app/type-definitions/ir/ir-computation.type.js
  *
  *  Identity
  *      source: FieldTypes.sourceName
@@ -28,9 +28,7 @@ import { IRExpression } from './ir-expression.js'
 // IRComputation constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const IRComputation = {
-    toString: () => 'IRComputation',
-}
+const IRComputation = { toString: () => 'IRComputation' }
 
 // Add hidden properties
 Object.defineProperty(IRComputation, '@@typeName', { value: 'IRComputation', enumerable: false })

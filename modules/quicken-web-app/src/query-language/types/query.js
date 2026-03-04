@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Query
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/query.type.js - do not edit manually
 
 /** {@link module:Query} */
-/*  Query generated from: modules/quicken-web-app/type-definitions/query.type.js
+/*  Query generated from: modules/quicken-web-app/type-definitions/ir/query.type.js
  *
  *  name       : "String",
  *  description: "String?",

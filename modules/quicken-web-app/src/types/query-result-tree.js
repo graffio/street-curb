@@ -1,7 +1,7 @@
-// ABOUTME: Generated type definition for IRResultTree
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-result-tree.type.js - do not edit manually
+// ABOUTME: Generated type definition for QueryResultTree
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-result-tree.type.js - do not edit manually
 
-/*  IRResultTree generated from: modules/quicken-web-app/type-definitions/ir-result-tree.type.js
+/*  QueryResultTree generated from: modules/quicken-web-app/type-definitions/query-result-tree.type.js
  *
  *  Category
  *      nodes: "[CategoryTreeNode]"
@@ -16,33 +16,33 @@ import { PositionTreeNode } from './position-tree-node.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// IRResultTree constructor
+// QueryResultTree constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const IRResultTree = {
-    toString: () => 'IRResultTree',
+const QueryResultTree = {
+    toString: () => 'QueryResultTree',
 }
 
 // Add hidden properties
-Object.defineProperty(IRResultTree, '@@typeName', { value: 'IRResultTree', enumerable: false })
-Object.defineProperty(IRResultTree, '@@tagNames', { value: ['Category', 'Positions'], enumerable: false })
+Object.defineProperty(QueryResultTree, '@@typeName', { value: 'QueryResultTree', enumerable: false })
+Object.defineProperty(QueryResultTree, '@@tagNames', { value: ['Category', 'Positions'], enumerable: false })
 
 // Type prototype with match method
-const IRResultTreePrototype = {}
+const QueryResultTreePrototype = {}
 
-Object.defineProperty(IRResultTreePrototype, 'match', {
-    value: R.match(IRResultTree['@@tagNames']),
+Object.defineProperty(QueryResultTreePrototype, 'match', {
+    value: R.match(QueryResultTree['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(IRResultTreePrototype, 'constructor', {
-    value: IRResultTree,
+Object.defineProperty(QueryResultTreePrototype, 'constructor', {
+    value: QueryResultTree,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-IRResultTree.prototype = IRResultTreePrototype
+QueryResultTree.prototype = QueryResultTreePrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -51,8 +51,8 @@ IRResultTree.prototype = IRResultTreePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    category : function () { return `IRResultTree.Category(${R._toString(this.nodes)})` },
-    positions: function () { return `IRResultTree.Positions(${R._toString(this.nodes)})` },
+    category : function () { return `QueryResultTree.Category(${R._toString(this.nodes)})` },
+    positions: function () { return `QueryResultTree.Positions(${R._toString(this.nodes)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -73,11 +73,11 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a IRResultTree.Category instance
- * @sig Category :: ([CategoryTreeNode]) -> IRResultTree.Category
+ * Construct a QueryResultTree.Category instance
+ * @sig Category :: ([CategoryTreeNode]) -> QueryResultTree.Category
  */
 const CategoryConstructor = function Category(nodes) {
-    const constructorName = 'IRResultTree.Category(nodes)'
+    const constructorName = 'QueryResultTree.Category(nodes)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateArray(constructorName, 1, 'Tagged', 'CategoryTreeNode', 'nodes', false, nodes)
 
@@ -86,14 +86,14 @@ const CategoryConstructor = function Category(nodes) {
     return result
 }
 
-IRResultTree.Category = CategoryConstructor
+QueryResultTree.Category = CategoryConstructor
 
 /*
- * Construct a IRResultTree.Positions instance
- * @sig Positions :: ([PositionTreeNode]) -> IRResultTree.Positions
+ * Construct a QueryResultTree.Positions instance
+ * @sig Positions :: ([PositionTreeNode]) -> QueryResultTree.Positions
  */
 const PositionsConstructor = function Positions(nodes) {
-    const constructorName = 'IRResultTree.Positions(nodes)'
+    const constructorName = 'QueryResultTree.Positions(nodes)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateArray(constructorName, 1, 'Tagged', 'PositionTreeNode', 'nodes', false, nodes)
 
@@ -102,24 +102,24 @@ const PositionsConstructor = function Positions(nodes) {
     return result
 }
 
-IRResultTree.Positions = PositionsConstructor
+QueryResultTree.Positions = PositionsConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const CategoryPrototype = Object.create(IRResultTreePrototype, {
+const CategoryPrototype = Object.create(QueryResultTreePrototype, {
     '@@tagName': { value: 'Category', enumerable: false },
-    '@@typeName': { value: 'IRResultTree', enumerable: false },
+    '@@typeName': { value: 'QueryResultTree', enumerable: false },
     toString: { value: toString.category, enumerable: false },
     toJSON: { value: toJSON.category, enumerable: false },
     constructor: { value: CategoryConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const PositionsPrototype = Object.create(IRResultTreePrototype, {
+const PositionsPrototype = Object.create(QueryResultTreePrototype, {
     '@@tagName': { value: 'Positions', enumerable: false },
-    '@@typeName': { value: 'IRResultTree', enumerable: false },
+    '@@typeName': { value: 'QueryResultTree', enumerable: false },
     toString: { value: toString.positions, enumerable: false },
     toJSON: { value: toJSON.positions, enumerable: false },
     constructor: { value: PositionsConstructor, enumerable: false, writable: true, configurable: true },
@@ -138,13 +138,13 @@ PositionsConstructor.is = val => val && val.constructor === PositionsConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-CategoryConstructor.toString = () => 'IRResultTree.Category'
-PositionsConstructor.toString = () => 'IRResultTree.Positions'
+CategoryConstructor.toString = () => 'QueryResultTree.Category'
+PositionsConstructor.toString = () => 'QueryResultTree.Positions'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-CategoryConstructor._from = _input => IRResultTree.Category(_input.nodes)
-PositionsConstructor._from = _input => IRResultTree.Positions(_input.nodes)
+CategoryConstructor._from = _input => QueryResultTree.Category(_input.nodes)
+PositionsConstructor._from = _input => QueryResultTree.Positions(_input.nodes)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -154,13 +154,13 @@ PositionsConstructor.from = PositionsConstructor._from
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a IRResultTree instance
+ * Check if value is a QueryResultTree instance
  * @sig is :: Any -> Boolean
  */
-IRResultTree.is = v => {
+QueryResultTree.is = v => {
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
-    return constructor === IRResultTree.Category || constructor === IRResultTree.Positions
+    return constructor === QueryResultTree.Category || constructor === QueryResultTree.Positions
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -169,4 +169,4 @@ IRResultTree.is = v => {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { IRResultTree }
+export { QueryResultTree }

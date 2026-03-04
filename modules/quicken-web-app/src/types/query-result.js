@@ -1,18 +1,18 @@
-// ABOUTME: Generated type definition for IRResult
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-result.type.js - do not edit manually
+// ABOUTME: Generated type definition for QueryResult
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-result.type.js - do not edit manually
 
-/*  IRResult generated from: modules/quicken-web-app/type-definitions/ir-result.type.js
+/*  QueryResult generated from: modules/quicken-web-app/type-definitions/query-result.type.js
  *
  *  Identity
- *      tree  : "IRResultTree",
+ *      tree  : "QueryResultTree",
  *      source: FieldTypes.sourceName
  *  Comparison
- *      left  : "IRResultTree",
- *      right : "IRResultTree",
+ *      left  : "QueryResultTree",
+ *      right : "QueryResultTree",
  *      source: FieldTypes.sourceName
  *  Scalar
  *      value     : "Number",
- *      expression: "IRExpression"
+ *      expression: "Object"
  *  FilteredEntities
  *      entities: "[Account]",
  *      source  : FieldTypes.sourceName
@@ -25,42 +25,41 @@
 import { FieldTypes } from './field-types.js'
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
-import { IRResultTree } from './ir-result-tree.js'
-import { IRExpression } from './ir-expression.js'
+import { QueryResultTree } from './query-result-tree.js'
 import { Account } from './account.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// IRResult constructor
+// QueryResult constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const IRResult = {
-    toString: () => 'IRResult',
+const QueryResult = {
+    toString: () => 'QueryResult',
 }
 
 // Add hidden properties
-Object.defineProperty(IRResult, '@@typeName', { value: 'IRResult', enumerable: false })
-Object.defineProperty(IRResult, '@@tagNames', {
+Object.defineProperty(QueryResult, '@@typeName', { value: 'QueryResult', enumerable: false })
+Object.defineProperty(QueryResult, '@@tagNames', {
     value: ['Identity', 'Comparison', 'Scalar', 'FilteredEntities', 'TimeSeries'],
     enumerable: false,
 })
 
 // Type prototype with match method
-const IRResultPrototype = {}
+const QueryResultPrototype = {}
 
-Object.defineProperty(IRResultPrototype, 'match', {
-    value: R.match(IRResult['@@tagNames']),
+Object.defineProperty(QueryResultPrototype, 'match', {
+    value: R.match(QueryResult['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(IRResultPrototype, 'constructor', {
-    value: IRResult,
+Object.defineProperty(QueryResultPrototype, 'constructor', {
+    value: QueryResult,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-IRResult.prototype = IRResultPrototype
+QueryResult.prototype = QueryResultPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -69,11 +68,11 @@ IRResult.prototype = IRResultPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    identity        : function () { return `IRResult.Identity(${R._toString(this.tree)}, ${R._toString(this.source)})` },
-    comparison      : function () { return `IRResult.Comparison(${R._toString(this.left)}, ${R._toString(this.right)}, ${R._toString(this.source)})` },
-    scalar          : function () { return `IRResult.Scalar(${R._toString(this.value)}, ${R._toString(this.expression)})` },
-    filteredEntities: function () { return `IRResult.FilteredEntities(${R._toString(this.entities)}, ${R._toString(this.source)})` },
-    timeSeries      : function () { return `IRResult.TimeSeries(${R._toString(this.snapshots)}, ${R._toString(this.source)})` },
+    identity        : function () { return `QueryResult.Identity(${R._toString(this.tree)}, ${R._toString(this.source)})` },
+    comparison      : function () { return `QueryResult.Comparison(${R._toString(this.left)}, ${R._toString(this.right)}, ${R._toString(this.source)})` },
+    scalar          : function () { return `QueryResult.Scalar(${R._toString(this.value)}, ${R._toString(this.expression)})` },
+    filteredEntities: function () { return `QueryResult.FilteredEntities(${R._toString(this.entities)}, ${R._toString(this.source)})` },
+    timeSeries      : function () { return `QueryResult.TimeSeries(${R._toString(this.snapshots)}, ${R._toString(this.source)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -97,13 +96,13 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a IRResult.Identity instance
- * @sig Identity :: (IRResultTree, String) -> IRResult.Identity
+ * Construct a QueryResult.Identity instance
+ * @sig Identity :: (QueryResultTree, String) -> QueryResult.Identity
  */
 const IdentityConstructor = function Identity(tree, source) {
-    const constructorName = 'IRResult.Identity(tree, source)'
+    const constructorName = 'QueryResult.Identity(tree, source)'
     R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateTag(constructorName, 'IRResultTree', 'tree', false, tree)
+    R.validateTag(constructorName, 'QueryResultTree', 'tree', false, tree)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
 
     const result = Object.create(IdentityPrototype)
@@ -112,17 +111,17 @@ const IdentityConstructor = function Identity(tree, source) {
     return result
 }
 
-IRResult.Identity = IdentityConstructor
+QueryResult.Identity = IdentityConstructor
 
 /*
- * Construct a IRResult.Comparison instance
- * @sig Comparison :: (IRResultTree, IRResultTree, String) -> IRResult.Comparison
+ * Construct a QueryResult.Comparison instance
+ * @sig Comparison :: (QueryResultTree, QueryResultTree, String) -> QueryResult.Comparison
  */
 const ComparisonConstructor = function Comparison(left, right, source) {
-    const constructorName = 'IRResult.Comparison(left, right, source)'
+    const constructorName = 'QueryResult.Comparison(left, right, source)'
     R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateTag(constructorName, 'IRResultTree', 'left', false, left)
-    R.validateTag(constructorName, 'IRResultTree', 'right', false, right)
+    R.validateTag(constructorName, 'QueryResultTree', 'left', false, left)
+    R.validateTag(constructorName, 'QueryResultTree', 'right', false, right)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
 
     const result = Object.create(ComparisonPrototype)
@@ -132,17 +131,17 @@ const ComparisonConstructor = function Comparison(left, right, source) {
     return result
 }
 
-IRResult.Comparison = ComparisonConstructor
+QueryResult.Comparison = ComparisonConstructor
 
 /*
- * Construct a IRResult.Scalar instance
- * @sig Scalar :: (Number, IRExpression) -> IRResult.Scalar
+ * Construct a QueryResult.Scalar instance
+ * @sig Scalar :: (Number, Object) -> QueryResult.Scalar
  */
 const ScalarConstructor = function Scalar(value, expression) {
-    const constructorName = 'IRResult.Scalar(value, expression)'
+    const constructorName = 'QueryResult.Scalar(value, expression)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateNumber(constructorName, 'value', false, value)
-    R.validateTag(constructorName, 'IRExpression', 'expression', false, expression)
+    R.validateObject(constructorName, 'expression', false, expression)
 
     const result = Object.create(ScalarPrototype)
     result.value = value
@@ -150,14 +149,14 @@ const ScalarConstructor = function Scalar(value, expression) {
     return result
 }
 
-IRResult.Scalar = ScalarConstructor
+QueryResult.Scalar = ScalarConstructor
 
 /*
- * Construct a IRResult.FilteredEntities instance
- * @sig FilteredEntities :: ([Account], String) -> IRResult.FilteredEntities
+ * Construct a QueryResult.FilteredEntities instance
+ * @sig FilteredEntities :: ([Account], String) -> QueryResult.FilteredEntities
  */
 const FilteredEntitiesConstructor = function FilteredEntities(entities, source) {
-    const constructorName = 'IRResult.FilteredEntities(entities, source)'
+    const constructorName = 'QueryResult.FilteredEntities(entities, source)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateArray(constructorName, 1, 'Tagged', 'Account', 'entities', false, entities)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
@@ -168,14 +167,14 @@ const FilteredEntitiesConstructor = function FilteredEntities(entities, source) 
     return result
 }
 
-IRResult.FilteredEntities = FilteredEntitiesConstructor
+QueryResult.FilteredEntities = FilteredEntitiesConstructor
 
 /*
- * Construct a IRResult.TimeSeries instance
- * @sig TimeSeries :: ([Object], String) -> IRResult.TimeSeries
+ * Construct a QueryResult.TimeSeries instance
+ * @sig TimeSeries :: ([Object], String) -> QueryResult.TimeSeries
  */
 const TimeSeriesConstructor = function TimeSeries(snapshots, source) {
-    const constructorName = 'IRResult.TimeSeries(snapshots, source)'
+    const constructorName = 'QueryResult.TimeSeries(snapshots, source)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateArray(constructorName, 1, 'Object', undefined, 'snapshots', false, snapshots)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
@@ -186,48 +185,48 @@ const TimeSeriesConstructor = function TimeSeries(snapshots, source) {
     return result
 }
 
-IRResult.TimeSeries = TimeSeriesConstructor
+QueryResult.TimeSeries = TimeSeriesConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const IdentityPrototype = Object.create(IRResultPrototype, {
+const IdentityPrototype = Object.create(QueryResultPrototype, {
     '@@tagName': { value: 'Identity', enumerable: false },
-    '@@typeName': { value: 'IRResult', enumerable: false },
+    '@@typeName': { value: 'QueryResult', enumerable: false },
     toString: { value: toString.identity, enumerable: false },
     toJSON: { value: toJSON.identity, enumerable: false },
     constructor: { value: IdentityConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const ComparisonPrototype = Object.create(IRResultPrototype, {
+const ComparisonPrototype = Object.create(QueryResultPrototype, {
     '@@tagName': { value: 'Comparison', enumerable: false },
-    '@@typeName': { value: 'IRResult', enumerable: false },
+    '@@typeName': { value: 'QueryResult', enumerable: false },
     toString: { value: toString.comparison, enumerable: false },
     toJSON: { value: toJSON.comparison, enumerable: false },
     constructor: { value: ComparisonConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const ScalarPrototype = Object.create(IRResultPrototype, {
+const ScalarPrototype = Object.create(QueryResultPrototype, {
     '@@tagName': { value: 'Scalar', enumerable: false },
-    '@@typeName': { value: 'IRResult', enumerable: false },
+    '@@typeName': { value: 'QueryResult', enumerable: false },
     toString: { value: toString.scalar, enumerable: false },
     toJSON: { value: toJSON.scalar, enumerable: false },
     constructor: { value: ScalarConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const FilteredEntitiesPrototype = Object.create(IRResultPrototype, {
+const FilteredEntitiesPrototype = Object.create(QueryResultPrototype, {
     '@@tagName': { value: 'FilteredEntities', enumerable: false },
-    '@@typeName': { value: 'IRResult', enumerable: false },
+    '@@typeName': { value: 'QueryResult', enumerable: false },
     toString: { value: toString.filteredEntities, enumerable: false },
     toJSON: { value: toJSON.filteredEntities, enumerable: false },
     constructor: { value: FilteredEntitiesConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const TimeSeriesPrototype = Object.create(IRResultPrototype, {
+const TimeSeriesPrototype = Object.create(QueryResultPrototype, {
     '@@tagName': { value: 'TimeSeries', enumerable: false },
-    '@@typeName': { value: 'IRResult', enumerable: false },
+    '@@typeName': { value: 'QueryResult', enumerable: false },
     toString: { value: toString.timeSeries, enumerable: false },
     toJSON: { value: toJSON.timeSeries, enumerable: false },
     constructor: { value: TimeSeriesConstructor, enumerable: false, writable: true, configurable: true },
@@ -252,22 +251,22 @@ TimeSeriesConstructor.is = val => val && val.constructor === TimeSeriesConstruct
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-IdentityConstructor.toString = () => 'IRResult.Identity'
-ComparisonConstructor.toString = () => 'IRResult.Comparison'
-ScalarConstructor.toString = () => 'IRResult.Scalar'
-FilteredEntitiesConstructor.toString = () => 'IRResult.FilteredEntities'
-TimeSeriesConstructor.toString = () => 'IRResult.TimeSeries'
+IdentityConstructor.toString = () => 'QueryResult.Identity'
+ComparisonConstructor.toString = () => 'QueryResult.Comparison'
+ScalarConstructor.toString = () => 'QueryResult.Scalar'
+FilteredEntitiesConstructor.toString = () => 'QueryResult.FilteredEntities'
+TimeSeriesConstructor.toString = () => 'QueryResult.TimeSeries'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-IdentityConstructor._from = _input => IRResult.Identity(_input.tree, _input.source)
+IdentityConstructor._from = _input => QueryResult.Identity(_input.tree, _input.source)
 ComparisonConstructor._from = _input => {
     const { left, right, source } = _input
-    return IRResult.Comparison(left, right, source)
+    return QueryResult.Comparison(left, right, source)
 }
-ScalarConstructor._from = _input => IRResult.Scalar(_input.value, _input.expression)
-FilteredEntitiesConstructor._from = _input => IRResult.FilteredEntities(_input.entities, _input.source)
-TimeSeriesConstructor._from = _input => IRResult.TimeSeries(_input.snapshots, _input.source)
+ScalarConstructor._from = _input => QueryResult.Scalar(_input.value, _input.expression)
+FilteredEntitiesConstructor._from = _input => QueryResult.FilteredEntities(_input.entities, _input.source)
+TimeSeriesConstructor._from = _input => QueryResult.TimeSeries(_input.snapshots, _input.source)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -280,11 +279,11 @@ TimeSeriesConstructor.from = TimeSeriesConstructor._from
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a IRResult instance
+ * Check if value is a QueryResult instance
  * @sig is :: Any -> Boolean
  */
-IRResult.is = v => {
-    const { Identity, Comparison, Scalar, FilteredEntities, TimeSeries } = IRResult
+QueryResult.is = v => {
+    const { Identity, Comparison, Scalar, FilteredEntities, TimeSeries } = QueryResult
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return (
@@ -302,4 +301,4 @@ IRResult.is = v => {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { IRResult }
+export { QueryResult }

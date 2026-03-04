@@ -1,8 +1,8 @@
 // ABOUTME: Query execution engine — routes IR sources to state queries and computes results
-// ABOUTME: Resolves dates, filters data, dispatches computations via IRResult types
+// ABOUTME: Resolves dates, filters data, dispatches computations via QueryResult types
 
 import { filter, find, iterate, map, reduce } from '@graffio/functional'
-import { IRResult, IRResultTree, PositionTreeNode, Transaction } from '../types/index.js'
+import { PositionTreeNode, QueryResult, QueryResultTree, Transaction } from '../types/index.js'
 import { computePositions } from '../financial-computations/compute-positions.js'
 import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
 import { MetricRegistry } from '../financial-computations/metric-registry.js'
@@ -209,16 +209,16 @@ const A = {
     },
 
     // Route a source to the correct domain executor via IRDomain.match()
-    // @sig collectSourceResult :: (IRSource, Object) -> IRResultTree | [Account]
+    // @sig collectSourceResult :: (IRSource, Object) -> QueryResultTree | [Account]
     collectSourceResult: (source, state) =>
         source.domain.match({
-            Transactions: () => IRResultTree.Category(A.collectTransactionResult(source, state)),
+            Transactions: () => QueryResultTree.Category(A.collectTransactionResult(source, state)),
             Accounts: () => A.collectAccountResult(source, state),
-            Positions: () => IRResultTree.Positions(A.collectPositionsResult(source, state)),
+            Positions: () => QueryResultTree.Positions(A.collectPositionsResult(source, state)),
         }),
 
-    // Sum top-level node totals from an IRResultTree (Category: .total, Positions: .marketValue)
-    // @sig collectTotal :: IRResultTree -> Number
+    // Sum top-level node totals from an QueryResultTree (Category: .total, Positions: .marketValue)
+    // @sig collectTotal :: QueryResultTree -> Number
     collectTotal: resultTree =>
         resultTree.match({
             Category: ({ nodes }) => reduce((sum, node) => sum + node.aggregate.total, 0, nodes),
@@ -231,7 +231,7 @@ const A = {
         reduce(
             (values, [name, data]) => ({
                 ...values,
-                [name]: { total: IRResultTree.is(data) ? A.collectTotal(data) : 0 },
+                [name]: { total: QueryResultTree.is(data) ? A.collectTotal(data) : 0 },
             }),
             {},
             Object.entries(executed),
@@ -296,27 +296,27 @@ const A = {
     }),
 
     // Compute timeSeries snapshots at interval boundaries within the source date range
-    // @sig collectTimeSeriesResult :: (String, String, Object, LookupTable) -> IRResult
+    // @sig collectTimeSeriesResult :: (String, String, Object, LookupTable) -> QueryResult
     collectTimeSeriesResult: (sourceName, interval, state, sources) => {
         const sourceIR = find(s => s.name === sourceName, Array.from(sources))
         const dateRange = T.toDateRange(sourceIR.dateRange)
         if (!dateRange) throw new Error('TimeSeries requires a date range')
         const datePoints = A.collectDatePoints(dateRange.start, dateRange.end, interval)
-        return IRResult.TimeSeries(
+        return QueryResult.TimeSeries(
             map(date => A.collectSnapshot(state, date), datePoints),
             sourceName,
         )
     },
 
-    // Apply orderBy and limit post-processing to an IRResultTree.Positions result
-    // @sig collectPostProcessedResult :: (IRResultTree, IROutput) -> IRResultTree
+    // Apply orderBy and limit post-processing to an QueryResultTree.Positions result
+    // @sig collectPostProcessedResult :: (QueryResultTree, IROutput) -> QueryResultTree
     collectPostProcessedResult: (tree, output) => {
-        if (!output || !IRResultTree.Positions.is(tree)) return tree
+        if (!output || !QueryResultTree.Positions.is(tree)) return tree
         const { orderByField, orderByDirection, limit } = output
         let nodes = tree.nodes
         if (orderByField) nodes = A.collectSortedNodes(nodes, orderByField, orderByDirection || 'asc')
         if (limit !== undefined) nodes = nodes.slice(0, limit)
-        return IRResultTree.Positions(nodes)
+        return QueryResultTree.Positions(nodes)
     },
 }
 
@@ -344,7 +344,7 @@ const SAFETY_LIMIT = 500
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Execute a query IR against Redux state, dispatching on computation type
-// @sig queryExecutionEngine :: (Query, Object) -> IRResult
+// @sig queryExecutionEngine :: (Query, Object) -> QueryResult
 const queryExecutionEngine = ({ sources, computation, output }, state) => {
     const executed = reduce(
         (results, source) => ({ ...results, [source.name]: A.collectSourceResult(source, state) }),
@@ -353,11 +353,11 @@ const queryExecutionEngine = ({ sources, computation, output }, state) => {
     )
 
     return computation.match({
-        Identity: ({ source }) => IRResult.Identity(A.collectPostProcessedResult(executed[source], output), source),
-        Compare: ({ left, right }) => IRResult.Comparison(executed[left], executed[right], left),
+        Identity: ({ source }) => QueryResult.Identity(A.collectPostProcessedResult(executed[source], output), source),
+        Compare: ({ left, right }) => QueryResult.Comparison(executed[left], executed[right], left),
         Expression: ({ expression }) =>
-            IRResult.Scalar(resolveExpression(expression, A.collectBoundValues(executed)), expression),
-        FilterEntities: ({ source }) => IRResult.FilteredEntities(executed[source], source),
+            QueryResult.Scalar(resolveExpression(expression, A.collectBoundValues(executed)), expression),
+        FilterEntities: ({ source }) => QueryResult.FilteredEntities(executed[source], source),
         TimeSeries: ({ source: sourceName, interval }) =>
             A.collectTimeSeriesResult(sourceName, interval, state, sources),
     })

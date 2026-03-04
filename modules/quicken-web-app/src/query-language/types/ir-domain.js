@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for IRDomain
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-domain.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-domain.type.js - do not edit manually
 
-/*  IRDomain generated from: modules/quicken-web-app/type-definitions/ir-domain.type.js
+/*  IRDomain generated from: modules/quicken-web-app/type-definitions/ir/ir-domain.type.js
  *
  *  Transactions
  *  Positions
@@ -16,9 +16,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // IRDomain constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const IRDomain = {
-    toString: () => 'IRDomain',
-}
+const IRDomain = { toString: () => 'IRDomain' }
 
 // Add hidden properties
 Object.defineProperty(IRDomain, '@@typeName', { value: 'IRDomain', enumerable: false })
@@ -27,10 +25,7 @@ Object.defineProperty(IRDomain, '@@tagNames', { value: ['Transactions', 'Positio
 // Type prototype with match method
 const IRDomainPrototype = {}
 
-Object.defineProperty(IRDomainPrototype, 'match', {
-    value: R.match(IRDomain['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(IRDomainPrototype, 'match', { value: R.match(IRDomain['@@tagNames']), enumerable: false })
 
 Object.defineProperty(IRDomainPrototype, 'constructor', {
     value: IRDomain,

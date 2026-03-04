@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for IRDateRange
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-date-range.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-date-range.type.js - do not edit manually
 
-/*  IRDateRange generated from: modules/quicken-web-app/type-definitions/ir-date-range.type.js
+/*  IRDateRange generated from: modules/quicken-web-app/type-definitions/ir/ir-date-range.type.js
  *
  *  Year
  *      year: "Number"
@@ -31,9 +31,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // IRDateRange constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const IRDateRange = {
-    toString: () => 'IRDateRange',
-}
+const IRDateRange = { toString: () => 'IRDateRange' }
 
 // Add hidden properties
 Object.defineProperty(IRDateRange, '@@typeName', { value: 'IRDateRange', enumerable: false })
@@ -45,10 +43,7 @@ Object.defineProperty(IRDateRange, '@@tagNames', {
 // Type prototype with match method
 const IRDateRangePrototype = {}
 
-Object.defineProperty(IRDateRangePrototype, 'match', {
-    value: R.match(IRDateRange['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(IRDateRangePrototype, 'match', { value: R.match(IRDateRange['@@tagNames']), enumerable: false })
 
 Object.defineProperty(IRDateRangePrototype, 'constructor', {
     value: IRDateRange,

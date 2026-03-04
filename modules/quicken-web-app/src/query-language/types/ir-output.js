@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for IROutput
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-output.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-output.type.js - do not edit manually
 
 /** {@link module:IROutput} */
-/*  IROutput generated from: modules/quicken-web-app/type-definitions/ir-output.type.js
+/*  IROutput generated from: modules/quicken-web-app/type-definitions/ir/ir-output.type.js
  *
  *  show            : "[String]?",
  *  format          : "String?",

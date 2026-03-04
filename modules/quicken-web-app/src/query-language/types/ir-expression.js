@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for IRExpression
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-expression.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-expression.type.js - do not edit manually
 
-/*  IRExpression generated from: modules/quicken-web-app/type-definitions/ir-expression.type.js
+/*  IRExpression generated from: modules/quicken-web-app/type-definitions/ir/ir-expression.type.js
  *
  *  Literal
  *      value: "Number"
@@ -27,9 +27,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // IRExpression constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const IRExpression = {
-    toString: () => 'IRExpression',
-}
+const IRExpression = { toString: () => 'IRExpression' }
 
 // Add hidden properties
 Object.defineProperty(IRExpression, '@@typeName', { value: 'IRExpression', enumerable: false })
@@ -41,10 +39,7 @@ Object.defineProperty(IRExpression, '@@tagNames', {
 // Type prototype with match method
 const IRExpressionPrototype = {}
 
-Object.defineProperty(IRExpressionPrototype, 'match', {
-    value: R.match(IRExpression['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(IRExpressionPrototype, 'match', { value: R.match(IRExpression['@@tagNames']), enumerable: false })
 
 Object.defineProperty(IRExpressionPrototype, 'constructor', {
     value: IRExpression,

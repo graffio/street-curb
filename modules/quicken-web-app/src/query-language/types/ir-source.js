@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for IRSource
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-source.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-source.type.js - do not edit manually
 
 /** {@link module:IRSource} */
-/*  IRSource generated from: modules/quicken-web-app/type-definitions/ir-source.type.js
+/*  IRSource generated from: modules/quicken-web-app/type-definitions/ir/ir-source.type.js
  *
  *  name     : FieldTypes.sourceName,
  *  domain   : "IRDomain",

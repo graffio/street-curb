@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for IRFilter
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-filter.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-filter.type.js - do not edit manually
 
-/*  IRFilter generated from: modules/quicken-web-app/type-definitions/ir-filter.type.js
+/*  IRFilter generated from: modules/quicken-web-app/type-definitions/ir/ir-filter.type.js
  *
  *  Equals
  *      field: /^(category|account|payee|accountType)$/,
@@ -19,9 +19,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // IRFilter constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const IRFilter = {
-    toString: () => 'IRFilter',
-}
+const IRFilter = { toString: () => 'IRFilter' }
 
 // Add hidden properties
 Object.defineProperty(IRFilter, '@@typeName', { value: 'IRFilter', enumerable: false })
@@ -30,10 +28,7 @@ Object.defineProperty(IRFilter, '@@tagNames', { value: ['Equals', 'OlderThan'], 
 // Type prototype with match method
 const IRFilterPrototype = {}
 
-Object.defineProperty(IRFilterPrototype, 'match', {
-    value: R.match(IRFilter['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(IRFilterPrototype, 'match', { value: R.match(IRFilter['@@tagNames']), enumerable: false })
 
 Object.defineProperty(IRFilterPrototype, 'constructor', {
     value: IRFilter,

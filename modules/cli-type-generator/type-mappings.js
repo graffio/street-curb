@@ -24,6 +24,7 @@ const sources = {
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
     functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
     quickenWebApp           : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
+    quickenWebAppIR         : `${REPO_ROOT}/modules/quicken-web-app/type-definitions/ir`,
     typesGeneration         : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
 
@@ -35,6 +36,7 @@ const targets = {
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
     functional           : `${REPO_ROOT}/modules/functional/src/types`,
     quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
+    queryLanguage        : `${REPO_ROOT}/modules/quicken-web-app/src/query-language/types`,
     typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
 
@@ -84,7 +86,7 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/import-issue.type.js`]     : [targets.cliQifToSqlite],
 
     // quicken-web-app (types must come before Action since Action references them)
-    [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp, targets.queryLanguage],
     [`${sources.quickenWebApp}/column-definition.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/column-descriptor.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/sort-order.type.js`]      : [targets.quickenWebApp],
@@ -104,16 +106,22 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/register-row.type.js`]     : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/account-summary.type.js`] : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/data-summary.type.js`]    : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-domain.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-date-range.type.js`]   : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-filter.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-expression.type.js`]   : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-computation.type.js`]  : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-source.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-output.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-result-tree.type.js`]  : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/ir-result.type.js`]       : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/query.type.js`]           : [targets.quickenWebApp],
+
+    // query-language IR types (internal to query-language)
+    [`${sources.quickenWebAppIR}/ir-domain.type.js`]      : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-date-range.type.js`]  : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-filter.type.js`]      : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-expression.type.js`]  : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-computation.type.js`] : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-source.type.js`]      : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-output.type.js`]      : [targets.queryLanguage],
+
+    // Query is part of the IR (constructed using IR types)
+    [`${sources.quickenWebAppIR}/query.type.js`]          : [targets.queryLanguage],
+
+    // query result types (public output — stay in src/types/)
+    [`${sources.quickenWebApp}/query-result-tree.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/query-result.type.js`]     : [targets.quickenWebApp],
 
     // quicken-web-app entity types (moved from quicken-type-definitions)
     [`${sources.quickenWebApp}/account.type.js`]        : [targets.quickenWebApp],

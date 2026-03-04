@@ -8,8 +8,8 @@
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-export const IRResultTree = {
-    name: 'IRResultTree',
+export const QueryResultTree = {
+    name: 'QueryResultTree',
     kind: 'taggedSum',
     variants: {
         Category: { nodes: '[CategoryTreeNode]' },

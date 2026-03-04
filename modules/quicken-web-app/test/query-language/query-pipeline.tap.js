@@ -1,4 +1,4 @@
-// ABOUTME: Tests for query pipeline — validate → execute flow with direct IR construction
+// ABOUTME: Tests for runQuery — validate → execute flow with direct IR construction
 // ABOUTME: Verifies pipeline produces correct results for identity, comparison, and expression queries
 
 import { test } from 'tap'
@@ -7,21 +7,23 @@ import {
     Account,
     AccountSummary,
     Category,
-    IRComputation,
     DataSummary,
+    QueryResult,
+    QueryResultTree,
+    Security,
+    Transaction,
+} from '../../src/types/index.js'
+import {
+    IRComputation,
     IRDateRange,
     IRDomain,
     IRExpression,
     IRFilter,
-    Query,
     IROutput,
-    IRResult,
     IRSource,
-    IRResultTree,
-    Security,
-    Transaction,
-} from '../../src/types/index.js'
-import { queryPipeline } from '../../src/query-language/query-pipeline.js'
+    Query,
+} from '../../src/query-language/types/index.js'
+import { runQuery } from '../../src/query-language/run-query.js'
 
 // ═════════════════════════════════════════════════
 // Helper: build a Bank transaction with minimal boilerplate
@@ -103,11 +105,11 @@ test('Full pipeline — transaction IR produces tree result', t => {
                 IROutput(['total']),
             )
 
-            const result = queryPipeline(ir, SUMMARY, STATE)
+            const result = runQuery(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
-            t.ok(IRResult.Identity.is(result.result), 'Then result is IRResult.Identity')
-            t.ok(IRResultTree.Category.is(result.result.tree), 'Then result contains a category tree')
+            t.ok(QueryResult.Identity.is(result.result), 'Then result is QueryResult.Identity')
+            t.ok(QueryResultTree.Category.is(result.result.tree), 'Then result contains a category tree')
             t.ok(result.result.tree.nodes.length > 0, 'Then tree is not empty')
             t.end()
         })
@@ -139,12 +141,12 @@ test('Full pipeline — comparison IR produces two-period result', t => {
                 IROutput(['total']),
             )
 
-            const result = queryPipeline(ir, SUMMARY, STATE)
+            const result = runQuery(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
-            t.ok(IRResult.Comparison.is(result.result), 'Then result is IRResult.Comparison')
-            t.ok(IRResultTree.Category.is(result.result.left), 'Then left result is a category tree')
-            t.ok(IRResultTree.Category.is(result.result.right), 'Then right result is a category tree')
+            t.ok(QueryResult.Comparison.is(result.result), 'Then result is QueryResult.Comparison')
+            t.ok(QueryResultTree.Category.is(result.result.left), 'Then left result is a category tree')
+            t.ok(QueryResultTree.Category.is(result.result.right), 'Then right result is a category tree')
             t.end()
         })
         t.end()
@@ -185,10 +187,10 @@ test('Full pipeline — expression IR produces scalar', t => {
                 IROutput(undefined, 'percent'),
             )
 
-            const result = queryPipeline(ir, SUMMARY, STATE)
+            const result = runQuery(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
-            t.ok(IRResult.Scalar.is(result.result), 'Then result is IRResult.Scalar')
+            t.ok(QueryResult.Scalar.is(result.result), 'Then result is QueryResult.Scalar')
             t.type(result.result.value, 'number', 'Then value is a number')
             t.end()
         })
@@ -213,7 +215,7 @@ test('Validation error — misspelled category returns phase validate', t => {
                 IROutput(['total']),
             )
 
-            const result = queryPipeline(ir, SUMMARY, STATE)
+            const result = runQuery(ir, SUMMARY, STATE)
 
             t.equal(result.success, false, 'Then pipeline fails')
             t.equal(result.phase, 'validate', 'Then phase is validate')
@@ -253,7 +255,7 @@ test('Validation catches before execution — never reaches executor', t => {
                 IROutput(['total']),
             )
 
-            const result = queryPipeline(ir, SUMMARY, STATE)
+            const result = runQuery(ir, SUMMARY, STATE)
 
             t.equal(result.success, false, 'Then pipeline fails')
             t.equal(result.phase, 'validate', 'Then phase is validate (not execute)')

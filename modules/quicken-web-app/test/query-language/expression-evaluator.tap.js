@@ -1,5 +1,5 @@
 import { test } from 'tap'
-import { IRExpression } from '../../src/types/index.js'
+import { IRExpression } from '../../src/query-language/types/index.js'
 import { resolveExpression } from '../../src/query-language/resolve-expression.js'
 
 const evaluate = resolveExpression
