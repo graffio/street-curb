@@ -1,10 +1,16 @@
-// ABOUTME: Holding type definition for portfolio positions
+// ABOUTME: Position type definition for portfolio positions
 // ABOUTME: Represents a security position with market data and gain/loss calculations
 
 import { FieldTypes } from './field-types.js'
 
-export const Holding = {
-    name: 'Holding',
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+export const Position = {
+    name: 'Position',
     kind: 'tagged',
     fields: {
         accountId: FieldTypes.accountId,
@@ -27,13 +33,13 @@ export const Holding = {
     },
 }
 
-// Checks if holding matches search query (case-insensitive)
-// @sig matchesSearch :: (Holding, String) -> Boolean
+// Checks if position matches search query (case-insensitive)
+// @sig matchesSearch :: (Position, String) -> Boolean
 // prettier-ignore
-Holding.matchesSearch = (holding, query) => {
+Position.matchesSearch = (position, query) => {
     if (!query) return true
     const q = query.toLowerCase()
-    const { accountName, securityName, securitySymbol } = holding
+    const { accountName, securityName, securitySymbol } = position
     return securityName.toLowerCase().includes(q) || securitySymbol.toLowerCase().includes(q) ||
         accountName.toLowerCase().includes(q)
 }

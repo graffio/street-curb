@@ -56,9 +56,9 @@ const PickerConfig = {
                 execute: () => post(Action.OpenView(View.Report('rpt_spending', 'spending', 'Spending by Category'))),
             },
             {
-                id: 'holdings',
-                label: 'Investment Holdings',
-                execute: () => post(Action.OpenView(View.Report('rpt_holdings', 'holdings', 'Investment Holdings'))),
+                id: 'positions',
+                label: 'Investment Positions',
+                execute: () => post(Action.OpenView(View.Report('rpt_positions', 'positions', 'Investment Positions'))),
             },
         ],
     },

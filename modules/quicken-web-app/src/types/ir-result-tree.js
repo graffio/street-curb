@@ -5,14 +5,14 @@
  *
  *  Category
  *      nodes: "[CategoryTreeNode]"
- *  Holdings
- *      nodes: "[HoldingsTreeNode]"
+ *  Positions
+ *      nodes: "[PositionTreeNode]"
  *
  */
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { CategoryTreeNode } from './category-tree-node.js'
-import { HoldingsTreeNode } from './holdings-tree-node.js'
+import { PositionTreeNode } from './position-tree-node.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -25,7 +25,7 @@ const IRResultTree = {
 
 // Add hidden properties
 Object.defineProperty(IRResultTree, '@@typeName', { value: 'IRResultTree', enumerable: false })
-Object.defineProperty(IRResultTree, '@@tagNames', { value: ['Category', 'Holdings'], enumerable: false })
+Object.defineProperty(IRResultTree, '@@tagNames', { value: ['Category', 'Positions'], enumerable: false })
 
 // Type prototype with match method
 const IRResultTreePrototype = {}
@@ -51,8 +51,8 @@ IRResultTree.prototype = IRResultTreePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    category: function () { return `IRResultTree.Category(${R._toString(this.nodes)})` },
-    holdings: function () { return `IRResultTree.Holdings(${R._toString(this.nodes)})` },
+    category : function () { return `IRResultTree.Category(${R._toString(this.nodes)})` },
+    positions: function () { return `IRResultTree.Positions(${R._toString(this.nodes)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -62,8 +62,8 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-    category: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    holdings: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    category : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    positions: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -89,20 +89,20 @@ const CategoryConstructor = function Category(nodes) {
 IRResultTree.Category = CategoryConstructor
 
 /*
- * Construct a IRResultTree.Holdings instance
- * @sig Holdings :: ([HoldingsTreeNode]) -> IRResultTree.Holdings
+ * Construct a IRResultTree.Positions instance
+ * @sig Positions :: ([PositionTreeNode]) -> IRResultTree.Positions
  */
-const HoldingsConstructor = function Holdings(nodes) {
-    const constructorName = 'IRResultTree.Holdings(nodes)'
+const PositionsConstructor = function Positions(nodes) {
+    const constructorName = 'IRResultTree.Positions(nodes)'
     R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateArray(constructorName, 1, 'Tagged', 'HoldingsTreeNode', 'nodes', false, nodes)
+    R.validateArray(constructorName, 1, 'Tagged', 'PositionTreeNode', 'nodes', false, nodes)
 
-    const result = Object.create(HoldingsPrototype)
+    const result = Object.create(PositionsPrototype)
     result.nodes = nodes
     return result
 }
 
-IRResultTree.Holdings = HoldingsConstructor
+IRResultTree.Positions = PositionsConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -117,39 +117,39 @@ const CategoryPrototype = Object.create(IRResultTreePrototype, {
     constructor: { value: CategoryConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const HoldingsPrototype = Object.create(IRResultTreePrototype, {
-    '@@tagName': { value: 'Holdings', enumerable: false },
+const PositionsPrototype = Object.create(IRResultTreePrototype, {
+    '@@tagName': { value: 'Positions', enumerable: false },
     '@@typeName': { value: 'IRResultTree', enumerable: false },
-    toString: { value: toString.holdings, enumerable: false },
-    toJSON: { value: toJSON.holdings, enumerable: false },
-    constructor: { value: HoldingsConstructor, enumerable: false, writable: true, configurable: true },
+    toString: { value: toString.positions, enumerable: false },
+    toJSON: { value: toJSON.positions, enumerable: false },
+    constructor: { value: PositionsConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 CategoryConstructor.prototype = CategoryPrototype
-HoldingsConstructor.prototype = HoldingsPrototype
+PositionsConstructor.prototype = PositionsPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
 CategoryConstructor.is = val => val && val.constructor === CategoryConstructor
-HoldingsConstructor.is = val => val && val.constructor === HoldingsConstructor
+PositionsConstructor.is = val => val && val.constructor === PositionsConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
 CategoryConstructor.toString = () => 'IRResultTree.Category'
-HoldingsConstructor.toString = () => 'IRResultTree.Holdings'
+PositionsConstructor.toString = () => 'IRResultTree.Positions'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 CategoryConstructor._from = _input => IRResultTree.Category(_input.nodes)
-HoldingsConstructor._from = _input => IRResultTree.Holdings(_input.nodes)
+PositionsConstructor._from = _input => IRResultTree.Positions(_input.nodes)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
 CategoryConstructor.from = CategoryConstructor._from
-HoldingsConstructor.from = HoldingsConstructor._from
+PositionsConstructor.from = PositionsConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
 
@@ -160,7 +160,7 @@ HoldingsConstructor.from = HoldingsConstructor._from
 IRResultTree.is = v => {
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
-    return constructor === IRResultTree.Category || constructor === IRResultTree.Holdings
+    return constructor === IRResultTree.Category || constructor === IRResultTree.Positions
 }
 
 // -------------------------------------------------------------------------------------------------------------

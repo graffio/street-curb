@@ -1,8 +1,8 @@
-// ABOUTME: Generated type definition for Holding
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/holding.type.js - do not edit manually
+// ABOUTME: Generated type definition for Position
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/position.type.js - do not edit manually
 
-/** {@link module:Holding} */
-/*  Holding generated from: modules/quicken-web-app/type-definitions/holding.type.js
+/** {@link module:Position} */
+/*  Position generated from: modules/quicken-web-app/type-definitions/position.type.js
  *
  *  accountId                : FieldTypes.accountId,
  *  accountName              : "String",
@@ -35,10 +35,10 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a Holding instance
- * @sig Holding :: (String, String, String, String, String, String, String?, Number, Number, Number, Number, Number, Number, Number, Number, Number, Boolean) -> Holding
+ * Construct a Position instance
+ * @sig Position :: (String, String, String, String, String, String, String?, Number, Number, Number, Number, Number, Number, Number, Number, Number, Boolean) -> Position
  */
-const Holding = function Holding(
+const Position = function Position(
     accountId,
     accountName,
     securityId,
@@ -58,7 +58,7 @@ const Holding = function Holding(
     isStale,
 ) {
     const constructorName =
-        'Holding(accountId, accountName, securityId, securityName, securitySymbol, securityType, securityGoal, quantity, costBasis, averageCostPerShare, quotePrice, marketValue, unrealizedGainLoss, unrealizedGainLossPercent, dayGainLoss, dayGainLossPercent, isStale)'
+        'Position(accountId, accountName, securityId, securityName, securitySymbol, securityType, securityGoal, quantity, costBasis, averageCostPerShare, quotePrice, marketValue, unrealizedGainLoss, unrealizedGainLossPercent, dayGainLoss, dayGainLossPercent, isStale)'
 
     R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
     R.validateString(constructorName, 'accountName', false, accountName)
@@ -107,10 +107,10 @@ const Holding = function Holding(
 
 /*
  * Convert to string representation
- * @sig holdingToString :: () -> String
+ * @sig positionToString :: () -> String
  */
-const holdingToString = function () {
-    return `Holding(${R._toString(this.accountId)},
+const positionToString = function () {
+    return `Position(${R._toString(this.accountId)},
         ${R._toString(this.accountName)},
         ${R._toString(this.securityId)},
         ${R._toString(this.securityName)},
@@ -131,9 +131,9 @@ const holdingToString = function () {
 
 /*
  * Convert to JSON representation
- * @sig holdingToJSON :: () -> Object
+ * @sig positionToJSON :: () -> Object
  */
-const holdingToJSON = function () {
+const positionToJSON = function () {
     return this
 }
 
@@ -143,23 +143,23 @@ const holdingToJSON = function () {
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
-    '@@typeName': { value: 'Holding', enumerable: false },
-    toString: { value: holdingToString, enumerable: false },
-    toJSON: { value: holdingToJSON, enumerable: false },
-    constructor: { value: Holding, enumerable: false, writable: true, configurable: true },
+    '@@typeName': { value: 'Position', enumerable: false },
+    toString: { value: positionToString, enumerable: false },
+    toJSON: { value: positionToJSON, enumerable: false },
+    constructor: { value: Position, enumerable: false, writable: true, configurable: true },
 })
 
-Holding.prototype = prototype
+Position.prototype = prototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // static methods
 //
 // -------------------------------------------------------------------------------------------------------------
-Holding.toString = () => 'Holding'
-Holding.is = v => v && v['@@typeName'] === 'Holding'
+Position.toString = () => 'Position'
+Position.is = v => v && v['@@typeName'] === 'Position'
 
-Holding._from = _input => {
+Position._from = _input => {
     const {
         accountId,
         accountName,
@@ -179,7 +179,7 @@ Holding._from = _input => {
         dayGainLossPercent,
         isStale,
     } = _input
-    return Holding(
+    return Position(
         accountId,
         accountName,
         securityId,
@@ -199,7 +199,7 @@ Holding._from = _input => {
         isStale,
     )
 }
-Holding.from = Holding._from
+Position.from = Position._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -207,10 +207,10 @@ Holding.from = Holding._from
 //
 // -------------------------------------------------------------------------------------------------------------
 
-Holding.matchesSearch = (holding, query) => {
+Position.matchesSearch = (position, query) => {
     if (!query) return true
     const q = query.toLowerCase()
-    const { accountName, securityName, securitySymbol } = holding
+    const { accountName, securityName, securitySymbol } = position
     return (
         securityName.toLowerCase().includes(q) ||
         securitySymbol.toLowerCase().includes(q) ||
@@ -218,4 +218,4 @@ Holding.matchesSearch = (holding, query) => {
     )
 }
 
-export { Holding }
+export { Position }

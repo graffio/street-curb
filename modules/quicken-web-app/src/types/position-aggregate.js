@@ -1,8 +1,8 @@
-// ABOUTME: Generated type definition for HoldingsAggregate
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/holdings-aggregate.type.js - do not edit manually
+// ABOUTME: Generated type definition for PositionAggregate
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/position-aggregate.type.js - do not edit manually
 
-/** {@link module:HoldingsAggregate} */
-/*  HoldingsAggregate generated from: modules/quicken-web-app/type-definitions/holdings-aggregate.type.js
+/** {@link module:PositionAggregate} */
+/*  PositionAggregate generated from: modules/quicken-web-app/type-definitions/position-aggregate.type.js
  *
  *  shares                   : "Number",
  *  costBasis                : "Number",
@@ -25,10 +25,10 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a HoldingsAggregate instance
- * @sig HoldingsAggregate :: (Number, Number, Number, Number, Number, Number, Number, Number, Number) -> HoldingsAggregate
+ * Construct a PositionAggregate instance
+ * @sig PositionAggregate :: (Number, Number, Number, Number, Number, Number, Number, Number, Number) -> PositionAggregate
  */
-const HoldingsAggregate = function HoldingsAggregate(
+const PositionAggregate = function PositionAggregate(
     shares,
     costBasis,
     marketValue,
@@ -40,7 +40,7 @@ const HoldingsAggregate = function HoldingsAggregate(
     count,
 ) {
     const constructorName =
-        'HoldingsAggregate(shares, costBasis, marketValue, averageCostPerShare, dayGainLoss, dayGainLossPercent, unrealizedGainLoss, unrealizedGainLossPercent, count)'
+        'PositionAggregate(shares, costBasis, marketValue, averageCostPerShare, dayGainLoss, dayGainLossPercent, unrealizedGainLoss, unrealizedGainLossPercent, count)'
     R.validateArgumentLength(constructorName, 9, arguments)
     R.validateNumber(constructorName, 'shares', false, shares)
     R.validateNumber(constructorName, 'costBasis', false, costBasis)
@@ -73,10 +73,10 @@ const HoldingsAggregate = function HoldingsAggregate(
 
 /*
  * Convert to string representation
- * @sig holdingsaggregateToString :: () -> String
+ * @sig positionaggregateToString :: () -> String
  */
-const holdingsaggregateToString = function () {
-    return `HoldingsAggregate(${R._toString(this.shares)},
+const positionaggregateToString = function () {
+    return `PositionAggregate(${R._toString(this.shares)},
         ${R._toString(this.costBasis)},
         ${R._toString(this.marketValue)},
         ${R._toString(this.averageCostPerShare)},
@@ -89,9 +89,9 @@ const holdingsaggregateToString = function () {
 
 /*
  * Convert to JSON representation
- * @sig holdingsaggregateToJSON :: () -> Object
+ * @sig positionaggregateToJSON :: () -> Object
  */
-const holdingsaggregateToJSON = function () {
+const positionaggregateToJSON = function () {
     return this
 }
 
@@ -101,23 +101,23 @@ const holdingsaggregateToJSON = function () {
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
-    '@@typeName': { value: 'HoldingsAggregate', enumerable: false },
-    toString: { value: holdingsaggregateToString, enumerable: false },
-    toJSON: { value: holdingsaggregateToJSON, enumerable: false },
-    constructor: { value: HoldingsAggregate, enumerable: false, writable: true, configurable: true },
+    '@@typeName': { value: 'PositionAggregate', enumerable: false },
+    toString: { value: positionaggregateToString, enumerable: false },
+    toJSON: { value: positionaggregateToJSON, enumerable: false },
+    constructor: { value: PositionAggregate, enumerable: false, writable: true, configurable: true },
 })
 
-HoldingsAggregate.prototype = prototype
+PositionAggregate.prototype = prototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // static methods
 //
 // -------------------------------------------------------------------------------------------------------------
-HoldingsAggregate.toString = () => 'HoldingsAggregate'
-HoldingsAggregate.is = v => v && v['@@typeName'] === 'HoldingsAggregate'
+PositionAggregate.toString = () => 'PositionAggregate'
+PositionAggregate.is = v => v && v['@@typeName'] === 'PositionAggregate'
 
-HoldingsAggregate._from = _input => {
+PositionAggregate._from = _input => {
     const {
         shares,
         costBasis,
@@ -129,7 +129,7 @@ HoldingsAggregate._from = _input => {
         unrealizedGainLossPercent,
         count,
     } = _input
-    return HoldingsAggregate(
+    return PositionAggregate(
         shares,
         costBasis,
         marketValue,
@@ -141,7 +141,7 @@ HoldingsAggregate._from = _input => {
         count,
     )
 }
-HoldingsAggregate.from = HoldingsAggregate._from
+PositionAggregate.from = PositionAggregate._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -149,4 +149,4 @@ HoldingsAggregate.from = HoldingsAggregate._from
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { HoldingsAggregate }
+export { PositionAggregate }

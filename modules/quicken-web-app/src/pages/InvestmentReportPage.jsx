@@ -1,4 +1,4 @@
-// ABOUTME: Investment holdings report page with hierarchical tree display
+// ABOUTME: Investment positions report page with hierarchical tree display
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
 import { Flex } from '@radix-ui/themes'
 import { useSelector } from 'react-redux'
@@ -23,30 +23,30 @@ import { Action } from '../types/action.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 /*
- * Investment holdings report with hierarchical tree display
+ * Investment positions report with hierarchical tree display
  * @sig InvestmentReportPage :: ({ viewId: String, height?: String }) -> ReactElement
  */
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
-    const holdings = useSelector(state => S.Holdings.asOf(state, viewId))
-    const holdingsTree = useSelector(state => S.Holdings.tree(state, viewId))
+    const positions = useSelector(state => S.Positions.asOf(state, viewId))
+    const positionsTree = useSelector(state => S.Positions.tree(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
     const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
     const highlightedRowId = useSelector(state => S.UI.highlightedRowId(state, viewId))
 
-    const totalHoldingsCount = holdings.length
+    const totalPositionsCount = positions.length
 
     const filterChipRowProps = {
         viewId,
-        filteredCount: totalHoldingsCount,
-        totalCount: totalHoldingsCount,
-        itemLabel: 'holdings',
+        filteredCount: totalPositionsCount,
+        totalCount: totalPositionsCount,
+        itemLabel: 'positions',
     }
 
     const dataTableProps = {
         columns: InvestmentReportColumns,
-        data: holdingsTree,
+        data: positionsTree,
         height,
         rowHeight: 40,
         getChildRows: row => row.children,

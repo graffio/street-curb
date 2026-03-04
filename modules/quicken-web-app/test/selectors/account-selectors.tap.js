@@ -21,7 +21,7 @@ const organizedAccounts = Accounts.organized
 // Test helpers
 // -----------------------------------------------------------------------------
 
-const emptyHoldingsState = {
+const emptyPositionsState = {
     lots: LookupTable([], Lot, 'id'),
     lotAllocations: LookupTable([], LotAllocation, 'id'),
     prices: LookupTable([], Price, 'id'),
@@ -59,7 +59,7 @@ t.test('Given accounts of various types with SortMode.Alphabetical', t => {
         Transaction,
         'id',
     )
-    const state = { ...emptyHoldingsState, accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
+    const state = { ...emptyPositionsState, accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
 
     t.test('When organizedAccounts is called', t => {
         const result = organizedAccounts(state)
@@ -100,7 +100,7 @@ t.test('Given accounts with zero balance (Alphabetical mode with $0 section)', t
         Transaction,
         'id',
     )
-    const state = { ...emptyHoldingsState, accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
+    const state = { ...emptyPositionsState, accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
 
     t.test('When organizedAccounts is called', t => {
         const result = organizedAccounts(state)
@@ -142,7 +142,7 @@ t.test('Given accounts with SortMode.ByType', t => {
         Transaction,
         'id',
     )
-    const state = { ...emptyHoldingsState, accounts, transactions, accountListSortMode: SortMode.ByType() }
+    const state = { ...emptyPositionsState, accounts, transactions, accountListSortMode: SortMode.ByType() }
 
     t.test('When organizedAccounts is called', t => {
         const result = organizedAccounts(state)

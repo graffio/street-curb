@@ -3,7 +3,7 @@
     "goal"             : "Rename Holding → Position throughout, add position enrichment (realized gains, dividends, IRR, benchmark, total return), metric registry, and query language extensions (order by, limit, metrics, time series) — computation layer only, no new UI",
     "brainstorm"       : "docs/brainstorms/2026-03-03-investment-analysis-brainstorm.md",
     "templates_used"   : ["commit-changes.md"],
-    "integration_tests": ["test/holdings-report.integration-test.js"],
+    "integration_tests": ["test/positions-report.integration-test.js"],
     "related_learnings": [
         "docs/solutions/integration-issues/investment-sidebar-balance-wrong.md — cash holdings use runningBalance, only created for accounts with security positions",
         "docs/solutions/architecture/transaction-filter-memoization-invalidation.md — separate ephemeral UI state from filter state to avoid selector cache invalidation",
@@ -18,71 +18,71 @@
         {
             "step"  : 1,
             "action": "[CHECKPOINT] Confirm rename decisions before starting:\n1. HoldingsTreeNode.Holding variant → PositionTreeNode.Position? (brainstorm says yes — Position is the leaf node)\n2. UI strings: 'Investment Holdings' in picker-config.js → keep 'Holdings' for user-facing labels or change to 'Positions'? Same for dimension titles in view.js ('Holdings by Account' etc.)\n3. EnrichedAccount.HOLDINGS_BALANCE_TYPES → POSITION_BALANCE_TYPES? (The constant values are account type names like 'Investment', '401(k)/403(b)', not branded — rename is about the constant name, not the values)\nPresent options and wait for approval.",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "All yes: Position variant, Positions everywhere (B), POSITION_BALANCE_TYPES"
         },
         {
             "step"      : 2,
             "action"    : "Rename type definition files and update internals. All files in modules/quicken-web-app/type-definitions/:\n- mv holding.type.js → position.type.js (Holding → Position Tagged type, update field names where 'holding' appears)\n- mv holdings-aggregate.type.js → position-aggregate.type.js (HoldingsAggregate → PositionAggregate)\n- mv holdings-tree-node.type.js → position-tree-node.type.js (HoldingsTreeNode → PositionTreeNode, variant Holding → Position per checkpoint)\n- Update ir-domain.type.js: Holdings variant → Positions\n- Update ir-result-tree.type.js: Holdings variant → Positions\n- Update enriched-account.type.js: per checkpoint decision on constant/function names\n- Delete old generated files: src/types/holding.js, src/types/holdings-aggregate.js, src/types/holdings-tree-node.js\n- Run yarn types:generate-all\n- Run style validator on all changed type-def files — verify isCompliant: true\n\nNote: Position structural change (flattened securityName/securitySymbol/etc. → security: Security reference) is deferred to Plan B where column accessors are rebuilt generically. This rename keeps the existing field structure.",
             "style_card": "js-module",
-            "done"      : false,
+            "done"      : true,
             "note"      : ""
         },
         {
             "step"  : 3,
             "action": "[CHECKPOINT] Run complexity review on: financial-computations/holdings.js, utils/holdings-tree.js, store/selectors.js, query-language/query-execution-engine.js, test/holdings-report.integration-test.js. Report style card violations found. Wait for approval before proceeding.\n\nNote: selectors.js has COMPLEXITY comments — one mentions 'Holdings' by name in cohesion-structure exemption. Update to 'Positions' during rename.",
             "rule"  : "unconditional",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "All 5 files isCompliant: true"
         },
         {
             "step"      : 4,
             "action"    : "Rename financial computation files. Both in modules/quicken-web-app/src/:\n\nfinancial-computations/holdings.js → positions.js:\n- Holdings namespace → Positions\n- computeHoldingsAsOf → computePositionsAsOf\n- All Holding(...) factory calls → Position(...)\n- All holding/holdings variable names → position/positions\n- Imports: Holding type → Position, HoldingsAggregate → PositionAggregate\n- Update exports\n\nutils/holdings-tree.js → positions-tree.js:\n- HoldingsTree → PositionTree\n- buildHoldingsTree → buildPositionTree\n- toHoldingNode → toPositionNode, sumHoldings → sumPositions\n- HoldingsTreeNode → PositionTreeNode, HoldingsAggregate → PositionAggregate\n\nUpdate ALL imports across the codebase that reference these files.\nRun style validator on both new files — verify isCompliant: true",
             "style_card": "js-module",
-            "done"      : false,
-            "note"      : ""
+            "done"      : true,
+            "note"      : "Validator caught PositionTree → PositionsTree (file name mismatch). Fixed."
         },
         {
             "step"      : 5,
             "action"    : "Rename selectors.js Holdings namespace → Positions (modules/quicken-web-app/src/store/selectors.js):\n- Holdings = { asOf, tree } → Positions = { asOf, tree }\n- _holdingsAsOf → _positionsAsOf, holdingsAsOf → positionsAsOf\n- _holdingsTree → _positionsTree, holdingsTree → positionsTree\n- HoldingsModule import alias → PositionsModule\n- Update COMPLEXITY comment: 'Holdings' → 'Positions' in cohesion-structure exemption\n- Update imports from renamed files (positions.js, positions-tree.js)\n- Run style validator — verify isCompliant: true",
             "style_card": "selector",
-            "done"      : false,
+            "done"      : true,
             "note"      : ""
         },
         {
             "step"      : 6,
             "action"    : "Rename query execution engine (modules/quicken-web-app/src/query-language/query-execution-engine.js):\n- collectHoldingsResult → collectPositionsResult\n- IRDomain.Holdings match arm → IRDomain.Positions\n- IRResultTree.Holdings(...) → IRResultTree.Positions(...)\n- Update imports from renamed type files\n- Run style validator — verify isCompliant: true",
             "style_card": "js-module",
-            "done"      : false,
+            "done"      : true,
             "note"      : ""
         },
         {
             "step"  : 7,
             "action": "[CHECKPOINT] Run complexity review on InvestmentReportColumns.jsx, InvestmentReportPage.jsx. Report style card violations found. Wait for approval before proceeding.",
             "rule"  : "unconditional",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "Both isCompliant: true"
         },
         {
             "step"      : 8,
             "action"    : "Rename component files (modules/quicken-web-app/src/):\n\ncolumns/InvestmentReportColumns.jsx:\n- HoldingsTreeNode → PositionTreeNode, all variant checks and field access\n- isHolding/isHoldingRow → isPosition/isPositionRow\n- node.holding.* → node.position.* (Position variant field access)\n- toHoldingNode import → toPositionNode\n\npages/InvestmentReportPage.jsx:\n- S.Holdings.asOf → S.Positions.asOf\n- S.Holdings.tree → S.Positions.tree\n\npicker-config.js and types/view.js:\n- Per checkpoint decision on UI strings and constant names\n- reportType === 'holdings' → 'positions'\n- HOLDINGS_DIMENSION_LAYOUTS → POSITIONS_DIMENSION_LAYOUTS\n\nRun style validator on all changed files — verify isCompliant: true\nVerify zero non-useSelector hooks in modified JSX files",
             "style_card": "react-component",
-            "done"      : false,
-            "note"      : ""
+            "done"      : true,
+            "note"      : "Also updated TabGroup.jsx route condition, AsOfDateChip.jsx comments"
         },
         {
             "step"      : 9,
             "action"    : "Update test file references for rename (modules/quicken-web-app/test/):\n- holdings-report.integration-test.js: update type imports, fixture references, test descriptions, ABOUTME comment\n- selectors/account-selectors.tap.js: emptyHoldingsState → emptyPositionsState\n- query-language/query-execution-engine.tap.js: IRDomain.Holdings() → IRDomain.Positions(), IRResultTree.Holdings → IRResultTree.Positions\n- Run style validator on changed test files — verify isCompliant: true",
             "style_card": "test-file",
-            "done"      : false,
-            "note"      : ""
+            "done"      : true,
+            "note"      : "Renamed test file holdings-report → positions-report"
         },
         {
             "step"  : 10,
             "action": "Run full test suite (yarn --cwd modules/quicken-web-app tap). All tests must pass — rename is mechanical, no behavioral changes. Spawn jeff-js-reviewer and code-simplicity-reviewer on all renamed files. Fix blocking issues. Commit:\n\nRename Holding → Position throughout\n\nProblem: 'Holding' is point-in-time; 'Position' naturally extends to lifecycle semantics (realized gains, dividends, performance)\nSolution: Mechanical rename of types, computations, selectors, components, tests\nImpact: Enables position enrichment without naming ambiguity",
             "rule"  : "unconditional",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "436 tests pass, both reviewers approved, vestigial h→agg fixed"
         },
         {
             "step"  : 11,

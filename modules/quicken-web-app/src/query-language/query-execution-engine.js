@@ -155,9 +155,9 @@ const A = {
             : Array.from(accounts)
     },
 
-    // Execute a holdings source (placeholder — returns empty tree)
-    // @sig collectHoldingsResult :: (IRSource, Object) -> [HoldingsTreeNode]
-    collectHoldingsResult: (_source, _state) => [],
+    // Execute a positions source (placeholder — returns empty tree)
+    // @sig collectPositionsResult :: (IRSource, Object) -> [PositionTreeNode]
+    collectPositionsResult: (_source, _state) => [],
 
     // Route a source to the correct domain executor via IRDomain.match()
     // @sig collectSourceResult :: (IRSource, Object) -> IRResultTree | [Account]
@@ -165,15 +165,15 @@ const A = {
         source.domain.match({
             Transactions: () => IRResultTree.Category(A.collectTransactionResult(source, state)),
             Accounts: () => A.collectAccountResult(source, state),
-            Holdings: () => IRResultTree.Holdings(A.collectHoldingsResult(source, state)),
+            Positions: () => IRResultTree.Positions(A.collectPositionsResult(source, state)),
         }),
 
-    // Sum top-level node totals from an IRResultTree (Category: .total, Holdings: .marketValue)
+    // Sum top-level node totals from an IRResultTree (Category: .total, Positions: .marketValue)
     // @sig collectTotal :: IRResultTree -> Number
     collectTotal: resultTree =>
         resultTree.match({
             Category: ({ nodes }) => reduce((sum, node) => sum + node.aggregate.total, 0, nodes),
-            Holdings: ({ nodes }) => reduce((sum, node) => sum + node.aggregate.marketValue, 0, nodes),
+            Positions: ({ nodes }) => reduce((sum, node) => sum + node.aggregate.marketValue, 0, nodes),
         }),
 
     // Collect bound values for expression evaluation from executed source results

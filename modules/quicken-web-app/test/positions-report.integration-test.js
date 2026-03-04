@@ -1,5 +1,5 @@
-// ABOUTME: covers Investment Holdings report, GroupByFilterChip, AccountFilterChip, AsOfDateChip, AccountFilterChip keyboard
-// ABOUTME: Run with: yarn tap:file test/holdings-report.integration-test.js (-g 'pattern' for single test)
+// ABOUTME: covers Investment Positions report, GroupByFilterChip, AccountFilterChip, AsOfDateChip, AccountFilterChip keyboard
+// ABOUTME: Run with: yarn tap:file test/positions-report.integration-test.js (-g 'pattern' for single test)
 
 import tap from 'tap'
 import { IntegrationBrowser } from './helpers/integration-browser.js'
@@ -12,13 +12,13 @@ const TEST_URL = `http://localhost:${PORT}?testFile=seed-12345`
 let session
 
 tap.before(async () => {
-    session = IntegrationBrowser.createSession('holdings-test')
+    session = IntegrationBrowser.createSession('positions-test')
     session.open(TEST_URL)
     session.setViewport(1280, 1600)
     await wait(1500)
 
-    // Navigate to Investment Holdings report
-    session.clickByRef('Investment Holdings')
+    // Navigate to Investment Positions report
+    session.clickByRef('Investment Positions')
     await wait(500)
 
     // Open second tab group to exercise multi-instance module-level state
@@ -26,18 +26,18 @@ tap.before(async () => {
     await wait(300)
     session.clickByRef('Primary Checking')
     await wait(500)
-    session.browser('click', ['text=Investment Holdings >> nth=1'])
+    session.browser('click', ['text=Investment Positions >> nth=1'])
     await wait(300)
 })
 
 tap.teardown(() => session.close())
 
-tap.test('holdings: by Account shows account names and market values', async t => {
+tap.test('positions: by Account shows account names and market values', async t => {
     const expected = loadExpected()
     const afterClick = session.browser('snapshot')
 
-    t.notOk(afterClick.includes('Something went wrong'), 'no crash on holdings report')
-    t.ok(afterClick.includes('Holdings by Account') || afterClick.includes('Holdings'), 'holdings report visible')
+    t.notOk(afterClick.includes('Something went wrong'), 'no crash on positions report')
+    t.ok(afterClick.includes('Positions by Account') || afterClick.includes('Positions'), 'positions report visible')
 
     // Verify investment accounts with market values
     const investmentAccounts = expected.accounts.filter(a => a.type === 'Investment' && a.marketValue)
@@ -51,7 +51,7 @@ tap.test('holdings: by Account shows account names and market values', async t =
     })
 })
 
-tap.test('holdings: by Security shows individual securities with shares and values', async t => {
+tap.test('positions: by Security shows individual securities with shares and values', async t => {
     const expected = loadExpected()
 
     // Switch to "by Security" grouping
@@ -63,7 +63,7 @@ tap.test('holdings: by Security shows individual securities with shares and valu
     const securityView = session.browser('snapshot')
 
     // Verify at least 3 individual securities
-    const spotCheckSecurities = expected.holdings.filter(h => h.account === 'Fidelity Brokerage').slice(0, 3)
+    const spotCheckSecurities = expected.positions.filter(p => p.account === 'Fidelity Brokerage').slice(0, 3)
     spotCheckSecurities.forEach(({ marketValue, shares, symbol }) => {
         t.ok(securityView.includes(symbol), `shows security: ${symbol}`)
         const isWhole = Number.isInteger(shares)
@@ -85,7 +85,7 @@ tap.test('holdings: by Security shows individual securities with shares and valu
     await wait(200)
 })
 
-tap.test('holdings: GroupBy toggle changes display', async t => {
+tap.test('positions: GroupBy toggle changes display', async t => {
     const beforeGroupBy = session.browser('snapshot')
 
     // Switch to Security
@@ -107,7 +107,7 @@ tap.test('holdings: GroupBy toggle changes display', async t => {
     t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after group by Account')
 })
 
-tap.test('holdings: account filter Fidelity shows correct values and changes display', async t => {
+tap.test('positions: account filter Fidelity shows correct values and changes display', async t => {
     const expected = loadExpected()
     const beforeFilter = session.browser('snapshot')
 
@@ -139,7 +139,7 @@ tap.test('holdings: account filter Fidelity shows correct values and changes dis
     t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after clearing account filter')
 })
 
-tap.test('holdings: as-of date shows correct historical values', async t => {
+tap.test('positions: as-of date shows correct historical values', async t => {
     const expected = loadExpected()
 
     // Click "As of:" chip to open date picker popover
@@ -157,8 +157,8 @@ tap.test('holdings: as-of date shows correct historical values', async t => {
     const afterAsOf = session.browser('snapshot')
     t.notOk(afterAsOf.includes('Something went wrong'), 'no crash after as-of date change')
 
-    // Verify account totals from holdingsAsOf
-    const { accountTotals } = expected.holdingsAsOf
+    // Verify account totals from positionsAsOf
+    const { accountTotals } = expected.positionsAsOf
     Object.entries(accountTotals).forEach(([name, total]) => {
         const formatted = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         t.ok(afterAsOf.includes(formatted), `${name} shows historical total $${formatted}`)
@@ -172,7 +172,7 @@ tap.test('holdings: as-of date shows correct historical values', async t => {
     // which is unaffected by the as-of date value
 })
 
-tap.test('holdings: AccountFilterChip keyboard search filters list', async t => {
+tap.test('positions: AccountFilterChip keyboard search filters list', async t => {
     session.clickByText('Accounts:')
     await wait(800)
 
@@ -189,7 +189,7 @@ tap.test('holdings: AccountFilterChip keyboard search filters list', async t => 
     await wait(300)
 })
 
-tap.test('holdings: AccountFilterChip keyboard Enter selects highlighted item', async t => {
+tap.test('positions: AccountFilterChip keyboard Enter selects highlighted item', async t => {
     session.clickByText('Accounts:')
     await wait(800)
     session.browser('click', ['[data-radix-popper-content-wrapper] [placeholder="Search..."]'])
@@ -213,7 +213,7 @@ tap.test('holdings: AccountFilterChip keyboard Enter selects highlighted item', 
     t.ok(session.browser('snapshot').includes('All'), 'chip cleared back to "All"')
 })
 
-tap.test('holdings: AccountFilterChip keyboard ArrowDown navigates', async t => {
+tap.test('positions: AccountFilterChip keyboard ArrowDown navigates', async t => {
     session.clickByText('Accounts:')
     await wait(800)
 
@@ -233,7 +233,7 @@ tap.test('holdings: AccountFilterChip keyboard ArrowDown navigates', async t => 
     await wait(300)
 })
 
-tap.test('holdings: AccountFilterChip keyboard Escape dismisses without change', async t => {
+tap.test('positions: AccountFilterChip keyboard Escape dismisses without change', async t => {
     session.clickByText('Accounts:')
     await wait(800)
 

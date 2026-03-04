@@ -1,11 +1,11 @@
-// ABOUTME: Column definitions for investment holdings report
-// ABOUTME: Displays HoldingsTreeNode tree with aggregate/holding data and stale price indicators
+// ABOUTME: Column definitions for investment positions report
+// ABOUTME: Displays PositionTreeNode tree with aggregate/position data and stale price indicators
 // COMPLEXITY: react-redux-separation — Cell renderers use conditional spread for stale styling (display-only)
 // COMPLEXITY: require-action-registry — Chevron onClick retained for mouse; keyboard uses row:toggle-expand
 
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
-import { ColumnDefinition, HoldingsTreeNode } from '../types/index.js'
+import { ColumnDefinition, PositionTreeNode } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
 
 const { formatCurrency, formatPercentage, formatPrice, formatQuantity } = Formatters
@@ -16,15 +16,15 @@ const { formatCurrency, formatPercentage, formatPrice, formatQuantity } = Format
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Predicates for node type detection (work on raw HoldingsTreeNode data)
+// Predicates for node type detection (work on raw PositionTreeNode data)
 const P = {
-    // Checks if node is a Holding (vs Group) - for raw data from accessorFn
-    // @sig isHolding :: HoldingsTreeNode -> Boolean
-    isHolding: node => HoldingsTreeNode.Holding.is(node),
+    // Checks if node is a Position (vs Group) - for raw data from accessorFn
+    // @sig isPosition :: PositionTreeNode -> Boolean
+    isPosition: node => PositionTreeNode.Position.is(node),
 
-    // Checks if table row is a Holding node - for cell renderers
-    // @sig isHoldingRow :: Row -> Boolean
-    isHoldingRow: row => HoldingsTreeNode.Holding.is(row.original),
+    // Checks if table row is a Position node - for cell renderers
+    // @sig isPositionRow :: Row -> Boolean
+    isPositionRow: row => PositionTreeNode.Position.is(row.original),
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -34,57 +34,57 @@ const P = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
-    // --- Node-level accessors (for TanStack accessorFn — receive raw HoldingsTreeNode) ---
+    // --- Node-level accessors (for TanStack accessorFn — receive raw PositionTreeNode) ---
 
-    // Returns display name — securityName for holdings, id for groups
-    // @sig toDisplayName :: HoldingsTreeNode -> String
-    toDisplayName: node => (P.isHolding(node) ? node.holding.securityName : node.id),
+    // Returns display name — securityName for positions, id for groups
+    // @sig toDisplayName :: PositionTreeNode -> String
+    toDisplayName: node => (P.isPosition(node) ? node.position.securityName : node.id),
 
-    // Extracts share quantity from holding or aggregate
-    // @sig toShares :: HoldingsTreeNode -> Number?
-    toShares: node => (P.isHolding(node) ? node.holding.quantity : node.aggregate.shares),
+    // Extracts share quantity from position or aggregate
+    // @sig toShares :: PositionTreeNode -> Number?
+    toShares: node => (P.isPosition(node) ? node.position.quantity : node.aggregate.shares),
 
-    // Extracts market value from holding or aggregate
-    // @sig toMarketValue :: HoldingsTreeNode -> Number?
-    toMarketValue: node => (P.isHolding(node) ? node.holding.marketValue : node.aggregate.marketValue),
+    // Extracts market value from position or aggregate
+    // @sig toMarketValue :: PositionTreeNode -> Number?
+    toMarketValue: node => (P.isPosition(node) ? node.position.marketValue : node.aggregate.marketValue),
 
-    // Extracts cost basis from holding or aggregate
-    // @sig toCostBasis :: HoldingsTreeNode -> Number?
-    toCostBasis: node => (P.isHolding(node) ? node.holding.costBasis : node.aggregate.costBasis),
+    // Extracts cost basis from position or aggregate
+    // @sig toCostBasis :: PositionTreeNode -> Number?
+    toCostBasis: node => (P.isPosition(node) ? node.position.costBasis : node.aggregate.costBasis),
 
-    // Extracts average cost per share from holding or aggregate
-    // @sig toAverageCostPerShare :: HoldingsTreeNode -> Number?
+    // Extracts average cost per share from position or aggregate
+    // @sig toAverageCostPerShare :: PositionTreeNode -> Number?
     toAverageCostPerShare: node =>
-        P.isHolding(node) ? node.holding.averageCostPerShare : node.aggregate.averageCostPerShare,
+        P.isPosition(node) ? node.position.averageCostPerShare : node.aggregate.averageCostPerShare,
 
-    // Extracts quote price (holdings only, undefined for groups)
-    // @sig toQuotePrice :: HoldingsTreeNode -> Number?
-    toQuotePrice: node => (P.isHolding(node) ? node.holding.quotePrice : undefined),
+    // Extracts quote price (positions only, undefined for groups)
+    // @sig toQuotePrice :: PositionTreeNode -> Number?
+    toQuotePrice: node => (P.isPosition(node) ? node.position.quotePrice : undefined),
 
-    // Extracts day gain/loss from holding or aggregate
-    // @sig toDayGainLoss :: HoldingsTreeNode -> Number?
-    toDayGainLoss: node => (P.isHolding(node) ? node.holding.dayGainLoss : node.aggregate.dayGainLoss),
+    // Extracts day gain/loss from position or aggregate
+    // @sig toDayGainLoss :: PositionTreeNode -> Number?
+    toDayGainLoss: node => (P.isPosition(node) ? node.position.dayGainLoss : node.aggregate.dayGainLoss),
 
-    // Extracts day gain/loss percentage from holding or aggregate
-    // @sig toDayGainLossPercent :: HoldingsTreeNode -> Number?
+    // Extracts day gain/loss percentage from position or aggregate
+    // @sig toDayGainLossPercent :: PositionTreeNode -> Number?
     toDayGainLossPercent: node =>
-        P.isHolding(node) ? node.holding.dayGainLossPercent : node.aggregate.dayGainLossPercent,
+        P.isPosition(node) ? node.position.dayGainLossPercent : node.aggregate.dayGainLossPercent,
 
-    // Extracts security ticker symbol (holdings only, undefined for groups)
-    // @sig toSecuritySymbol :: HoldingsTreeNode -> String?
-    toSecuritySymbol: node => (P.isHolding(node) ? node.holding.securitySymbol : undefined),
+    // Extracts security ticker symbol (positions only, undefined for groups)
+    // @sig toSecuritySymbol :: PositionTreeNode -> String?
+    toSecuritySymbol: node => (P.isPosition(node) ? node.position.securitySymbol : undefined),
 
     // --- Row-level accessors (for cell renderers — receive TanStack Row with .original) ---
 
-    // Checks if holding has a stale price quote
+    // Checks if position has a stale price quote
     // @sig toIsStale :: Row -> Boolean
-    toIsStale: row => (P.isHoldingRow(row) ? row.original.holding.isStale : false),
+    toIsStale: row => (P.isPositionRow(row) ? row.original.position.isStale : false),
 
-    // Gets the first Holding child's data (for showing security-level info on group rows)
-    // @sig toFirstHoldingChild :: HoldingsTreeNode -> Holding?
-    toFirstHoldingChild: node => {
+    // Gets the first Position child's data (for showing security-level info on group rows)
+    // @sig toFirstPositionChild :: PositionTreeNode -> Position?
+    toFirstPositionChild: node => {
         const firstChild = node.children?.[0]
-        return firstChild && P.isHolding(firstChild) ? firstChild.holding : undefined
+        return firstChild && P.isPosition(firstChild) ? firstChild.position : undefined
     },
 }
 
@@ -94,7 +94,7 @@ const T = {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Cell renderer for expandable tree row with holding/group name
+// Cell renderer for expandable tree row with position/group name
 // @sig ExpandableNameCell :: { row: Row, getValue: Function } -> ReactElement
 const ExpandableNameCell = ({ row, getValue }) => {
     const canExpand = row.getCanExpand()
@@ -155,13 +155,13 @@ const StalePercentageCell = ({ row, getValue }) => {
 // Cell renderer for shares/quantity (shows aggregate only when grouping by security)
 // @sig SharesCell :: { row: Row, table: Table } -> ReactElement
 const SharesCell = ({ row, table }) => {
-    const isHolding = P.isHoldingRow(row)
+    const isPosition = P.isPositionRow(row)
     const groupBy = table.options.meta?.groupBy
     const showAggregate = groupBy === 'security'
 
-    if (!isHolding && !showAggregate) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (!isPosition && !showAggregate) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
-    const value = isHolding ? row.original.holding.quantity : row.original.aggregate.shares
+    const value = isPosition ? row.original.position.quantity : row.original.aggregate.shares
     if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatQuantity(value)}</span>
 }
@@ -169,12 +169,12 @@ const SharesCell = ({ row, table }) => {
 // Cell renderer for average cost per share (shows aggregate only when grouping by security)
 // @sig AvgCostCell :: { row: Row, table: Table, getValue: Function } -> ReactElement
 const AvgCostCell = ({ row, table, getValue }) => {
-    const isHolding = P.isHoldingRow(row)
+    const isPosition = P.isPositionRow(row)
     const groupBy = table.options.meta?.groupBy
     const showAggregate = groupBy === 'security'
     const isStale = T.toIsStale(row)
 
-    if (!isHolding && !showAggregate) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (!isPosition && !showAggregate) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const value = getValue()
     if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
@@ -187,13 +187,13 @@ const AvgCostCell = ({ row, table, getValue }) => {
 // Symbol cell (shows aggregate only when grouping by security - all children have same symbol)
 // @sig SymbolCell :: { row: Row, table: Table } -> ReactElement
 const SymbolCell = ({ row, table }) => {
-    const isHolding = P.isHoldingRow(row)
+    const isPosition = P.isPositionRow(row)
     const showAggregate = table.options.meta?.groupBy === 'security'
 
-    const symbol = isHolding
-        ? row.original.holding.securitySymbol
+    const symbol = isPosition
+        ? row.original.position.securitySymbol
         : showAggregate
-          ? T.toFirstHoldingChild(row.original)?.securitySymbol
+          ? T.toFirstPositionChild(row.original)?.securitySymbol
           : undefined
 
     if (!symbol) return <span style={{ display: 'block' }}>—</span>
@@ -203,11 +203,11 @@ const SymbolCell = ({ row, table }) => {
 // Price cell (shows aggregate only when grouping by security - all children have same price)
 // @sig PriceCell :: { row: Row, table: Table, getValue: Function } -> ReactElement
 const PriceCell = ({ row, table, getValue }) => {
-    const isHolding = P.isHoldingRow(row)
+    const isPosition = P.isPositionRow(row)
     const showAggregate = table.options.meta?.groupBy === 'security'
     const isStale = T.toIsStale(row)
 
-    const value = isHolding ? getValue() : showAggregate ? T.toFirstHoldingChild(row.original)?.quotePrice : undefined
+    const value = isPosition ? getValue() : showAggregate ? T.toFirstPositionChild(row.original)?.quotePrice : undefined
 
     if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
@@ -232,8 +232,8 @@ const staleStyle = { fontStyle: 'italic' }
 // ---------------------------------------------------------------------------------------------------------------------
 
 /*
- * Column definitions for investment holdings report
- * Row structure: HoldingsTreeNode (Group with aggregate, or Holding with holding)
+ * Column definitions for investment positions report
+ * Row structure: PositionTreeNode (Group with aggregate, or Position with position)
  */
 // prettier-ignore
 const columns = LookupTable([

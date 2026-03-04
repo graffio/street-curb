@@ -1,5 +1,5 @@
 // ABOUTME: Type definition for EnrichedAccount with balance computation logic
-// ABOUTME: Handles holdings-based (investment) and transaction-based (bank) balance strategies
+// ABOUTME: Handles position-based (investment) and transaction-based (bank) balance strategies
 import { Transaction } from './transaction.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -21,15 +21,15 @@ export const EnrichedAccount = {
     },
 }
 
-// Account types that compute balance from holdings (shares × price)
-EnrichedAccount.HOLDINGS_BALANCE_TYPES = ['Investment', '401(k)/403(b)']
+// Account types that compute balance from positions (shares × price)
+EnrichedAccount.POSITION_BALANCE_TYPES = ['Investment', '401(k)/403(b)']
 
-// Sums marketValue and dayGainLoss for holdings belonging to an account
-// @sig sumHoldingsForAccount :: ([Holding], String) -> { balance: Number, dayChange: Number, dayChangePct: Number? }
-EnrichedAccount.sumHoldingsForAccount = (holdings, accountId) => {
-    const accountHoldings = holdings.filter(h => h.accountId === accountId)
-    const balance = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
-    const dayChange = accountHoldings.reduce((sum, h) => sum + h.dayGainLoss, 0)
+// Sums marketValue and dayGainLoss for positions belonging to an account
+// @sig sumPositionsForAccount :: ([Position], String) -> { balance: Number, dayChange: Number, dayChangePct: Number? }
+EnrichedAccount.sumPositionsForAccount = (positions, accountId) => {
+    const accountPositions = positions.filter(p => p.accountId === accountId)
+    const balance = accountPositions.reduce((sum, p) => sum + p.marketValue, 0)
+    const dayChange = accountPositions.reduce((sum, p) => sum + p.dayGainLoss, 0)
     const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : undefined
     return { balance, dayChange, dayChangePct }
 }
@@ -51,18 +51,18 @@ EnrichedAccount.cashBalanceFromRunning = (transactions, accountId) => {
 }
 
 // Creates EnrichedAccount from Account with computed balance
-// @sig fromAccount :: (Account, [Holding], [Transaction]) -> EnrichedAccount
-EnrichedAccount.fromAccount = (account, holdings, transactions) => {
+// @sig fromAccount :: (Account, [Position], [Transaction]) -> EnrichedAccount
+EnrichedAccount.fromAccount = (account, positions, transactions) => {
     const { id } = account
-    const isHoldingsType = EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)
-    if (!isHoldingsType)
+    const isPositionType = EnrichedAccount.POSITION_BALANCE_TYPES.includes(account.type)
+    if (!isPositionType)
         return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, undefined)
-    const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
+    const { balance, dayChange, dayChangePct } = EnrichedAccount.sumPositionsForAccount(positions, id)
     if (balance !== 0 || dayChange !== 0) return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
     return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, undefined)
 }
 
 // Enriches all accounts with computed balances
-// @sig enrichAll :: (LookupTable<Account>, [Holding], [Transaction]) -> [EnrichedAccount]
-EnrichedAccount.enrichAll = (accounts, holdings, transactions) =>
-    accounts.map(account => EnrichedAccount.fromAccount(account, holdings, transactions))
+// @sig enrichAll :: (LookupTable<Account>, [Position], [Transaction]) -> [EnrichedAccount]
+EnrichedAccount.enrichAll = (accounts, positions, transactions) =>
+    accounts.map(account => EnrichedAccount.fromAccount(account, positions, transactions))

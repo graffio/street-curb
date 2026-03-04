@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum type for query source domains
-// ABOUTME: Closed set of three — Transactions, Holdings, Accounts
+// ABOUTME: Closed set of three — Transactions, Positions, Accounts
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -11,5 +11,5 @@
 export const IRDomain = {
     name: 'IRDomain',
     kind: 'taggedSum',
-    variants: { Transactions: {}, Holdings: {}, Accounts: {} },
+    variants: { Transactions: {}, Positions: {}, Accounts: {} },
 }

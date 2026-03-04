@@ -1,8 +1,8 @@
-// ABOUTME: Holdings computation as of a specific date
+// ABOUTME: Position computation as of a specific date
 // ABOUTME: Aggregates lots, applies allocations, enriches with prices and market values
 
 import { groupBy, LookupTable } from '@graffio/functional'
-import { Holding, Price } from '../types/index.js'
+import { Position, Price } from '../types/index.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -83,10 +83,10 @@ const T = {
         return asOf.length === 0 ? 0 : (asOf[asOf.length - 1].runningBalance ?? 0)
     },
 
-    // Enriches aggregated lot data into a Holding with market values
-    // @sig toHolding :: (LotAggregate, LookupTable, LookupTable, Map, String) -> Holding
+    // Enriches aggregated lot data into a Position with market values
+    // @sig toPosition :: (LotAggregate, LookupTable, LookupTable, Map, String) -> Position
     // prettier-ignore
-    toHolding: (lotData, accounts, securities, priceIndex, date) => {
+    toPosition: (lotData, accounts, securities, priceIndex, date) => {
         const { accountId, averageCostPerShare, costBasis, quantity, securityId } = lotData
         const security = securities.get(securityId)
         const account = accounts.get(accountId)
@@ -106,7 +106,7 @@ const T = {
         const dayGainLoss = quantity * (quotePrice - previousQuotePrice)
         const dayGainLossPercent = previousQuotePrice !== 0 ? (quotePrice - previousQuotePrice) / previousQuotePrice : 0
 
-        return Holding(accountId, account.name, securityId, name, symbol, type, goal,
+        return Position(accountId, account.name, securityId, name, symbol, type, goal,
             quantity, costBasis, averageCostPerShare, quotePrice, marketValue, unrealizedGainLoss,
             unrealizedGainLossPercent, dayGainLoss, dayGainLossPercent, isStale)
     },
@@ -119,11 +119,11 @@ const T = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
-    // Creates a cash pseudo-holding for an investment account
-    // @sig createCashHolding :: (String, String, Number) -> Holding
+    // Creates a cash pseudo-position for an investment account
+    // @sig createCashPosition :: (String, String, Number) -> Position
     // prettier-ignore
-    createCashHolding: (accountId, accountName, cashBalance) =>
-        Holding(accountId, accountName, CASH_SECURITY_ID, 'Cash', 'CASH', 'Cash', undefined, cashBalance, cashBalance, 1, 1,
+    createCashPosition: (accountId, accountName, cashBalance) =>
+        Position(accountId, accountName, CASH_SECURITY_ID, 'Cash', 'CASH', 'Cash', undefined, cashBalance, cashBalance, 1, 1,
             cashBalance, 0, 0, 0, 0, false),
 }
 
@@ -164,7 +164,7 @@ const A = {
         const grouped = groupBy(T.toLotKey, openLots)
         return Object.values(grouped)
             .map(g => T.toAggregatedLots(g, allocationIndex, date))
-            .filter(h => h.quantity > 0)
+            .filter(agg => agg.quantity > 0)
     },
 }
 
@@ -177,11 +177,11 @@ const A = {
 // Reserved securityId for cash positions in investment accounts
 const CASH_SECURITY_ID = 'sec_000000000000'
 
-// Computes holdings as of a specific date from raw data
+// Computes positions as of a specific date from raw data
 // Accepts optional pre-built indexes to avoid rebuilding on every call
-// @sig computeHoldingsAsOf :: HoldingsConfig -> [Holding]
+// @sig computePositionsAsOf :: PositionsConfig -> [Position]
 // prettier-ignore
-const computeHoldingsAsOf = config => {
+const computePositionsAsOf = config => {
     const { lots, lotAllocations, prices, accounts, securities, transactions, asOfDate } = config
     const { selectedAccountIds, filterQuery } = config
     const { allocationIndex: prebuiltAlloc, priceIndex: prebuiltPrice, transactionIndex: prebuiltTx } = config
@@ -194,18 +194,18 @@ const computeHoldingsAsOf = config => {
 
     const filteredLots = selectedAccountIds.length > 0 ? lots.filter(l => selectedAccountIds.includes(l.accountId)) : lots
     const aggregatedLots = A.collectAggregatedLots(filteredLots, allocationIndex, asOfDate)
-    const holdings = aggregatedLots.map(lotData => T.toHolding(lotData, accounts, securities, priceIndex, asOfDate))
+    const positions = aggregatedLots.map(lotData => T.toPosition(lotData, accounts, securities, priceIndex, asOfDate))
 
-    const accountIdsWithHoldings = [...new Set(holdings.map(h => h.accountId))]
-    const cashHoldings = accountIdsWithHoldings
+    const accountIdsWithPositions = [...new Set(positions.map(p => p.accountId))]
+    const cashPositions = accountIdsWithPositions
         .map(accId => {
             const balance = T.toCashBalanceAsOf(transactionIndex, accId, asOfDate)
-            return balance !== 0 ? F.createCashHolding(accId, accounts.get(accId).name, balance) : undefined
+            return balance !== 0 ? F.createCashPosition(accId, accounts.get(accId).name, balance) : undefined
         })
-        .filter(h => h !== undefined)
+        .filter(p => p !== undefined)
 
-    const allHoldings = [...holdings, ...cashHoldings]
-    return filterQuery ? allHoldings.filter(h => Holding.matchesSearch(h, filterQuery)) : allHoldings
+    const allPositions = [...positions, ...cashPositions]
+    return filterQuery ? allPositions.filter(p => Position.matchesSearch(p, filterQuery)) : allPositions
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -214,6 +214,6 @@ const computeHoldingsAsOf = config => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const Holdings = { buildAllocationIndex, buildPriceIndex, buildTransactionIndex, computeHoldingsAsOf }
+const Positions = { buildAllocationIndex, buildPriceIndex, buildTransactionIndex, computePositionsAsOf }
 
-export { Holdings }
+export { Positions }

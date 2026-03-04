@@ -193,7 +193,7 @@ const TabBar = ({ groupId }) => {
 // Self-selecting report page — renders correct report type based on reportType
 // @sig ReportPage :: { viewId: String, reportType: String } -> ReactElement
 const ReportPage = ({ viewId, reportType }) =>
-    reportType === 'holdings' ? <InvestmentReportPage viewId={viewId} /> : <CategoryReportPage viewId={viewId} />
+    reportType === 'positions' ? <InvestmentReportPage viewId={viewId} /> : <CategoryReportPage viewId={viewId} />
 
 // Renders the appropriate page component for the active view — self-selects group from state
 // @sig ViewContent :: { groupId: String } -> ReactElement

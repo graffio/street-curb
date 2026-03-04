@@ -4,7 +4,7 @@
 /*  IRDomain generated from: modules/quicken-web-app/type-definitions/ir-domain.type.js
  *
  *  Transactions
- *  Holdings
+ *  Positions
  *  Accounts
  *
  */
@@ -22,7 +22,7 @@ const IRDomain = {
 
 // Add hidden properties
 Object.defineProperty(IRDomain, '@@typeName', { value: 'IRDomain', enumerable: false })
-Object.defineProperty(IRDomain, '@@tagNames', { value: ['Transactions', 'Holdings', 'Accounts'], enumerable: false })
+Object.defineProperty(IRDomain, '@@tagNames', { value: ['Transactions', 'Positions', 'Accounts'], enumerable: false })
 
 // Type prototype with match method
 const IRDomainPrototype = {}
@@ -49,7 +49,7 @@ IRDomain.prototype = IRDomainPrototype
 // prettier-ignore
 const toString = {
     transactions: function () { return `IRDomain.Transactions()` },
-    holdings    : function () { return `IRDomain.Holdings()` },
+    positions   : function () { return `IRDomain.Positions()` },
     accounts    : function () { return `IRDomain.Accounts()` },
 }
 
@@ -61,7 +61,7 @@ const toString = {
 // prettier-ignore
 const toJSON = {
     transactions: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    holdings    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    positions   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     accounts    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
@@ -87,19 +87,19 @@ const TransactionsConstructor = function Transactions() {
 IRDomain.Transactions = TransactionsConstructor
 
 /*
- * Construct a IRDomain.Holdings instance
- * @sig Holdings :: () -> IRDomain.Holdings
+ * Construct a IRDomain.Positions instance
+ * @sig Positions :: () -> IRDomain.Positions
  */
-const HoldingsConstructor = function Holdings() {
-    const constructorName = 'IRDomain.Holdings()'
+const PositionsConstructor = function Positions() {
+    const constructorName = 'IRDomain.Positions()'
     R.validateArgumentLength(constructorName, 0, arguments)
 
-    const result = Object.create(HoldingsPrototype)
+    const result = Object.create(PositionsPrototype)
 
     return result
 }
 
-IRDomain.Holdings = HoldingsConstructor
+IRDomain.Positions = PositionsConstructor
 
 /*
  * Construct a IRDomain.Accounts instance
@@ -129,12 +129,12 @@ const TransactionsPrototype = Object.create(IRDomainPrototype, {
     constructor: { value: TransactionsConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const HoldingsPrototype = Object.create(IRDomainPrototype, {
-    '@@tagName': { value: 'Holdings', enumerable: false },
+const PositionsPrototype = Object.create(IRDomainPrototype, {
+    '@@tagName': { value: 'Positions', enumerable: false },
     '@@typeName': { value: 'IRDomain', enumerable: false },
-    toString: { value: toString.holdings, enumerable: false },
-    toJSON: { value: toJSON.holdings, enumerable: false },
-    constructor: { value: HoldingsConstructor, enumerable: false, writable: true, configurable: true },
+    toString: { value: toString.positions, enumerable: false },
+    toJSON: { value: toJSON.positions, enumerable: false },
+    constructor: { value: PositionsConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const AccountsPrototype = Object.create(IRDomainPrototype, {
@@ -149,31 +149,31 @@ const AccountsPrototype = Object.create(IRDomainPrototype, {
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 TransactionsConstructor.prototype = TransactionsPrototype
-HoldingsConstructor.prototype = HoldingsPrototype
+PositionsConstructor.prototype = PositionsPrototype
 AccountsConstructor.prototype = AccountsPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
 TransactionsConstructor.is = val => val && val.constructor === TransactionsConstructor
-HoldingsConstructor.is = val => val && val.constructor === HoldingsConstructor
+PositionsConstructor.is = val => val && val.constructor === PositionsConstructor
 AccountsConstructor.is = val => val && val.constructor === AccountsConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
 TransactionsConstructor.toString = () => 'IRDomain.Transactions'
-HoldingsConstructor.toString = () => 'IRDomain.Holdings'
+PositionsConstructor.toString = () => 'IRDomain.Positions'
 AccountsConstructor.toString = () => 'IRDomain.Accounts'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 TransactionsConstructor._from = _input => IRDomain.Transactions()
-HoldingsConstructor._from = _input => IRDomain.Holdings()
+PositionsConstructor._from = _input => IRDomain.Positions()
 AccountsConstructor._from = _input => IRDomain.Accounts()
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
 TransactionsConstructor.from = TransactionsConstructor._from
-HoldingsConstructor.from = HoldingsConstructor._from
+PositionsConstructor.from = PositionsConstructor._from
 AccountsConstructor.from = AccountsConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
@@ -183,10 +183,10 @@ AccountsConstructor.from = AccountsConstructor._from
  * @sig is :: Any -> Boolean
  */
 IRDomain.is = v => {
-    const { Transactions, Holdings, Accounts } = IRDomain
+    const { Transactions, Positions, Accounts } = IRDomain
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
-    return constructor === Transactions || constructor === Holdings || constructor === Accounts
+    return constructor === Transactions || constructor === Positions || constructor === Accounts
 }
 
 // -------------------------------------------------------------------------------------------------------------

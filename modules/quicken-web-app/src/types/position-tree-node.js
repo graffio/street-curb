@@ -1,52 +1,52 @@
-// ABOUTME: Generated type definition for HoldingsTreeNode
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/holdings-tree-node.type.js - do not edit manually
+// ABOUTME: Generated type definition for PositionTreeNode
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/position-tree-node.type.js - do not edit manually
 
-/*  HoldingsTreeNode generated from: modules/quicken-web-app/type-definitions/holdings-tree-node.type.js
+/*  PositionTreeNode generated from: modules/quicken-web-app/type-definitions/position-tree-node.type.js
  *
  *  Group
  *      id       : "String",
- *      children : "[HoldingsTreeNode]",
- *      aggregate: "HoldingsAggregate"
- *  Holding
+ *      children : "[PositionTreeNode]",
+ *      aggregate: "PositionAggregate"
+ *  Position
  *      id      : "String",
- *      children: "[HoldingsTreeNode]",
- *      holding : "Holding"
+ *      children: "[PositionTreeNode]",
+ *      position: "Position"
  *
  */
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
-import { HoldingsAggregate } from './holdings-aggregate.js'
-import { Holding } from './holding.js'
+import { PositionAggregate } from './position-aggregate.js'
+import { Position } from './position.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// HoldingsTreeNode constructor
+// PositionTreeNode constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const HoldingsTreeNode = {
-    toString: () => 'HoldingsTreeNode',
+const PositionTreeNode = {
+    toString: () => 'PositionTreeNode',
 }
 
 // Add hidden properties
-Object.defineProperty(HoldingsTreeNode, '@@typeName', { value: 'HoldingsTreeNode', enumerable: false })
-Object.defineProperty(HoldingsTreeNode, '@@tagNames', { value: ['Group', 'Holding'], enumerable: false })
+Object.defineProperty(PositionTreeNode, '@@typeName', { value: 'PositionTreeNode', enumerable: false })
+Object.defineProperty(PositionTreeNode, '@@tagNames', { value: ['Group', 'Position'], enumerable: false })
 
 // Type prototype with match method
-const HoldingsTreeNodePrototype = {}
+const PositionTreeNodePrototype = {}
 
-Object.defineProperty(HoldingsTreeNodePrototype, 'match', {
-    value: R.match(HoldingsTreeNode['@@tagNames']),
+Object.defineProperty(PositionTreeNodePrototype, 'match', {
+    value: R.match(PositionTreeNode['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(HoldingsTreeNodePrototype, 'constructor', {
-    value: HoldingsTreeNode,
+Object.defineProperty(PositionTreeNodePrototype, 'constructor', {
+    value: PositionTreeNode,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-HoldingsTreeNode.prototype = HoldingsTreeNodePrototype
+PositionTreeNode.prototype = PositionTreeNodePrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -55,8 +55,8 @@ HoldingsTreeNode.prototype = HoldingsTreeNodePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    group  : function () { return `HoldingsTreeNode.Group(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.aggregate)})` },
-    holding: function () { return `HoldingsTreeNode.Holding(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.holding)})` },
+    group   : function () { return `PositionTreeNode.Group(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.aggregate)})` },
+    position: function () { return `PositionTreeNode.Position(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.position)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -66,8 +66,8 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-    group  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    holding: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    group   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    position: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -77,15 +77,15 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a HoldingsTreeNode.Group instance
- * @sig Group :: (String, [HoldingsTreeNode], HoldingsAggregate) -> HoldingsTreeNode.Group
+ * Construct a PositionTreeNode.Group instance
+ * @sig Group :: (String, [PositionTreeNode], PositionAggregate) -> PositionTreeNode.Group
  */
 const GroupConstructor = function Group(id, children, aggregate) {
-    const constructorName = 'HoldingsTreeNode.Group(id, children, aggregate)'
+    const constructorName = 'PositionTreeNode.Group(id, children, aggregate)'
     R.validateArgumentLength(constructorName, 3, arguments)
     R.validateString(constructorName, 'id', false, id)
-    R.validateArray(constructorName, 1, 'Tagged', 'HoldingsTreeNode', 'children', false, children)
-    R.validateTag(constructorName, 'HoldingsAggregate', 'aggregate', false, aggregate)
+    R.validateArray(constructorName, 1, 'Tagged', 'PositionTreeNode', 'children', false, children)
+    R.validateTag(constructorName, 'PositionAggregate', 'aggregate', false, aggregate)
 
     const result = Object.create(GroupPrototype)
     result.id = id
@@ -94,91 +94,91 @@ const GroupConstructor = function Group(id, children, aggregate) {
     return result
 }
 
-HoldingsTreeNode.Group = GroupConstructor
+PositionTreeNode.Group = GroupConstructor
 
 /*
- * Construct a HoldingsTreeNode.Holding instance
- * @sig Holding :: (String, [HoldingsTreeNode], Holding) -> HoldingsTreeNode.Holding
+ * Construct a PositionTreeNode.Position instance
+ * @sig Position :: (String, [PositionTreeNode], Position) -> PositionTreeNode.Position
  */
-const HoldingConstructor = function Holding(id, children, holding) {
-    const constructorName = 'HoldingsTreeNode.Holding(id, children, holding)'
+const PositionConstructor = function Position(id, children, position) {
+    const constructorName = 'PositionTreeNode.Position(id, children, position)'
     R.validateArgumentLength(constructorName, 3, arguments)
     R.validateString(constructorName, 'id', false, id)
-    R.validateArray(constructorName, 1, 'Tagged', 'HoldingsTreeNode', 'children', false, children)
-    R.validateTag(constructorName, 'Holding', 'holding', false, holding)
+    R.validateArray(constructorName, 1, 'Tagged', 'PositionTreeNode', 'children', false, children)
+    R.validateTag(constructorName, 'Position', 'position', false, position)
 
-    const result = Object.create(HoldingPrototype)
+    const result = Object.create(PositionPrototype)
     result.id = id
     result.children = children
-    result.holding = holding
+    result.position = position
     return result
 }
 
-HoldingsTreeNode.Holding = HoldingConstructor
+PositionTreeNode.Position = PositionConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const GroupPrototype = Object.create(HoldingsTreeNodePrototype, {
+const GroupPrototype = Object.create(PositionTreeNodePrototype, {
     '@@tagName': { value: 'Group', enumerable: false },
-    '@@typeName': { value: 'HoldingsTreeNode', enumerable: false },
+    '@@typeName': { value: 'PositionTreeNode', enumerable: false },
     toString: { value: toString.group, enumerable: false },
     toJSON: { value: toJSON.group, enumerable: false },
     constructor: { value: GroupConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const HoldingPrototype = Object.create(HoldingsTreeNodePrototype, {
-    '@@tagName': { value: 'Holding', enumerable: false },
-    '@@typeName': { value: 'HoldingsTreeNode', enumerable: false },
-    toString: { value: toString.holding, enumerable: false },
-    toJSON: { value: toJSON.holding, enumerable: false },
-    constructor: { value: HoldingConstructor, enumerable: false, writable: true, configurable: true },
+const PositionPrototype = Object.create(PositionTreeNodePrototype, {
+    '@@tagName': { value: 'Position', enumerable: false },
+    '@@typeName': { value: 'PositionTreeNode', enumerable: false },
+    toString: { value: toString.position, enumerable: false },
+    toJSON: { value: toJSON.position, enumerable: false },
+    constructor: { value: PositionConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 GroupConstructor.prototype = GroupPrototype
-HoldingConstructor.prototype = HoldingPrototype
+PositionConstructor.prototype = PositionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
 GroupConstructor.is = val => val && val.constructor === GroupConstructor
-HoldingConstructor.is = val => val && val.constructor === HoldingConstructor
+PositionConstructor.is = val => val && val.constructor === PositionConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-GroupConstructor.toString = () => 'HoldingsTreeNode.Group'
-HoldingConstructor.toString = () => 'HoldingsTreeNode.Holding'
+GroupConstructor.toString = () => 'PositionTreeNode.Group'
+PositionConstructor.toString = () => 'PositionTreeNode.Position'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 GroupConstructor._from = _input => {
     const { id, children, aggregate } = _input
-    return HoldingsTreeNode.Group(id, children, aggregate)
+    return PositionTreeNode.Group(id, children, aggregate)
 }
-HoldingConstructor._from = _input => {
-    const { id, children, holding } = _input
-    return HoldingsTreeNode.Holding(id, children, holding)
+PositionConstructor._from = _input => {
+    const { id, children, position } = _input
+    return PositionTreeNode.Position(id, children, position)
 }
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
 GroupConstructor.from = GroupConstructor._from
-HoldingConstructor.from = HoldingConstructor._from
+PositionConstructor.from = PositionConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a HoldingsTreeNode instance
+ * Check if value is a PositionTreeNode instance
  * @sig is :: Any -> Boolean
  */
-HoldingsTreeNode.is = v => {
+PositionTreeNode.is = v => {
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
-    return constructor === HoldingsTreeNode.Group || constructor === HoldingsTreeNode.Holding
+    return constructor === PositionTreeNode.Group || constructor === PositionTreeNode.Position
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -187,4 +187,4 @@ HoldingsTreeNode.is = v => {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { HoldingsTreeNode }
+export { PositionTreeNode }
