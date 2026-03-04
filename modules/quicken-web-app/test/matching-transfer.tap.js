@@ -14,7 +14,14 @@ const CHECKING = 'acc_000000000001'
 const SAVINGS = 'acc_000000000002'
 
 const makeTxn = (overrides = {}) => {
-    const o = { id: 'txn_1', accountId: CHECKING, amount: -500, date: '2025-03-15', payee: 'Transfer', ...overrides }
+    const o = {
+        id: 'txn_000000000001',
+        accountId: CHECKING,
+        amount: -500,
+        date: '2025-03-15',
+        payee: 'Transfer',
+        ...overrides,
+    }
 
     // Transaction.Bank(accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee, runningBalance, transferAccountId)
     return Transaction.Bank(
@@ -38,7 +45,7 @@ const makeState = txns => ({ transactions: LookupTable(txns, Transaction, 'id') 
 
 // Two sides of a transfer: checking -> savings
 const sourceTransaction = makeTxn({
-    id: 'txn_checking',
+    id: 'txn_00000000000a',
     accountId: CHECKING,
     transferAccountId: SAVINGS,
     amount: -500,
@@ -46,7 +53,7 @@ const sourceTransaction = makeTxn({
 })
 
 const counterpartTransaction = makeTxn({
-    id: 'txn_savings',
+    id: 'txn_00000000000b',
     accountId: SAVINGS,
     transferAccountId: CHECKING,
     amount: 500,
@@ -63,18 +70,18 @@ t.test('matchingTransfer', async t => {
 
         t.test('When finding the match from the source side', async t => {
             const match = Transactions.matchingTransfer(state, sourceTransaction)
-            t.equal(match.id, 'txn_savings', 'Then it returns the counterpart transaction')
+            t.equal(match.id, 'txn_00000000000b', 'Then it returns the counterpart transaction')
         })
 
         t.test('When finding the match from the target side', async t => {
             const match = Transactions.matchingTransfer(state, counterpartTransaction)
-            t.equal(match.id, 'txn_checking', 'Then it returns the source transaction (bidirectional)')
+            t.equal(match.id, 'txn_00000000000a', 'Then it returns the source transaction (bidirectional)')
         })
     })
 
     t.test('Given a transfer with no counterpart in the target account', async t => {
         const orphanedTransfer = makeTxn({
-            id: 'txn_orphan',
+            id: 'txn_00000000000c',
             accountId: CHECKING,
             transferAccountId: SAVINGS,
             amount: -500,
@@ -92,14 +99,14 @@ t.test('matchingTransfer', async t => {
 
     t.test('Given ambiguous transfers (same accounts, date, and amount)', async t => {
         const firstMatch = makeTxn({
-            id: 'txn_savings_1',
+            id: 'txn_00000000000d',
             accountId: SAVINGS,
             transferAccountId: CHECKING,
             amount: 500,
             date: '2025-03-15',
         })
         const secondMatch = makeTxn({
-            id: 'txn_savings_2',
+            id: 'txn_00000000000e',
             accountId: SAVINGS,
             transferAccountId: CHECKING,
             amount: 500,
@@ -109,7 +116,7 @@ t.test('matchingTransfer', async t => {
 
         t.test('When finding the match', async t => {
             const match = Transactions.matchingTransfer(state, sourceTransaction)
-            t.equal(match.id, 'txn_savings_1', 'Then it returns the first match')
+            t.equal(match.id, 'txn_00000000000d', 'Then it returns the first match')
         })
     })
 })

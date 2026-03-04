@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Security
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/security.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/security.type.js - do not edit manually
 
 /** {@link module:Security} */
-/*  Security generated from: modules/quicken-type-definitions/security.type.js
+/*  Security generated from: modules/quicken-web-app/type-definitions/security.type.js
  *
  *  id    : FieldTypes.securityId,
  *  name  : "String",

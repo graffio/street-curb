@@ -29,13 +29,13 @@ const ACCOUNTS = LookupTable(
 
 const CATEGORIES = LookupTable(
     [
-        Category('cat_food', 'Food'),
-        Category('cat_dining', 'Food:Dining'),
-        Category('cat_groceries', 'Food:Groceries'),
-        Category('cat_income', 'Income'),
-        Category('cat_salary', 'Income:Salary'),
-        Category('cat_housing', 'Housing'),
-        Category('cat_rent', 'Housing:Rent'),
+        Category('cat_000000000001', 'Food'),
+        Category('cat_000000000002', 'Food:Dining'),
+        Category('cat_000000000003', 'Food:Groceries'),
+        Category('cat_000000000004', 'Income'),
+        Category('cat_000000000005', 'Income:Salary'),
+        Category('cat_000000000006', 'Housing'),
+        Category('cat_000000000007', 'Housing:Rent'),
     ],
     Category,
     'id',
@@ -44,23 +44,23 @@ const CATEGORIES = LookupTable(
 const TRANSACTIONS = LookupTable(
     [
         // Income (Jan-Mar 2025)
-        bankTx('tx01', 'acc_000000000001', '2025-01-01', 5000, 'cat_salary', 'Employer'),
-        bankTx('tx02', 'acc_000000000001', '2025-02-01', 5000, 'cat_salary', 'Employer'),
-        bankTx('tx03', 'acc_000000000001', '2025-03-01', 5000, 'cat_salary', 'Employer'),
+        bankTx('txn_000000000001', 'acc_000000000001', '2025-01-01', 5000, 'cat_000000000005', 'Employer'),
+        bankTx('txn_000000000002', 'acc_000000000001', '2025-02-01', 5000, 'cat_000000000005', 'Employer'),
+        bankTx('txn_000000000003', 'acc_000000000001', '2025-03-01', 5000, 'cat_000000000005', 'Employer'),
 
         // Food:Dining (across accounts and months)
-        bankTx('tx04', 'acc_000000000001', '2025-01-15', -50, 'cat_dining', 'Chipotle'),
-        bankTx('tx05', 'acc_000000000002', '2025-02-10', -75, 'cat_dining', 'Olive Garden'),
-        bankTx('tx06', 'acc_000000000001', '2025-03-20', -60, 'cat_dining', 'Chipotle'),
+        bankTx('txn_000000000004', 'acc_000000000001', '2025-01-15', -50, 'cat_000000000002', 'Chipotle'),
+        bankTx('txn_000000000005', 'acc_000000000002', '2025-02-10', -75, 'cat_000000000002', 'Olive Garden'),
+        bankTx('txn_000000000006', 'acc_000000000001', '2025-03-20', -60, 'cat_000000000002', 'Chipotle'),
 
         // Food:Groceries
-        bankTx('tx07', 'acc_000000000001', '2025-01-20', -200, 'cat_groceries', 'Costco'),
-        bankTx('tx08', 'acc_000000000001', '2025-02-20', -180, 'cat_groceries', 'Costco'),
+        bankTx('txn_000000000007', 'acc_000000000001', '2025-01-20', -200, 'cat_000000000003', 'Costco'),
+        bankTx('txn_000000000008', 'acc_000000000001', '2025-02-20', -180, 'cat_000000000003', 'Costco'),
 
         // Housing:Rent
-        bankTx('tx09', 'acc_000000000001', '2025-01-05', -1500, 'cat_rent', 'Landlord'),
-        bankTx('tx10', 'acc_000000000001', '2025-02-05', -1500, 'cat_rent', 'Landlord'),
-        bankTx('tx11', 'acc_000000000001', '2025-03-05', -1500, 'cat_rent', 'Landlord'),
+        bankTx('txn_000000000009', 'acc_000000000001', '2025-01-05', -1500, 'cat_000000000007', 'Landlord'),
+        bankTx('txn_00000000000a', 'acc_000000000001', '2025-02-05', -1500, 'cat_000000000007', 'Landlord'),
+        bankTx('txn_00000000000b', 'acc_000000000001', '2025-03-05', -1500, 'cat_000000000007', 'Landlord'),
     ],
     Transaction,
     'id',

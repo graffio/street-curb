@@ -34,11 +34,11 @@ const ACCOUNTS = LookupTable(
 
 const CATEGORIES = LookupTable(
     [
-        Category('cat_food', 'Food'),
-        Category('cat_dining', 'Food:Dining'),
-        Category('cat_groceries', 'Food:Groceries'),
-        Category('cat_income', 'Income'),
-        Category('cat_salary', 'Income:Salary'),
+        Category('cat_000000000001', 'Food'),
+        Category('cat_000000000002', 'Food:Dining'),
+        Category('cat_000000000003', 'Food:Groceries'),
+        Category('cat_000000000004', 'Income'),
+        Category('cat_000000000005', 'Income:Salary'),
     ],
     Category,
     'id',
@@ -46,11 +46,11 @@ const CATEGORIES = LookupTable(
 
 const TRANSACTIONS = LookupTable(
     [
-        bankTx('tx01', 'acc_000000000001', '2025-01-15', 5000, 'cat_salary', 'Employer'),
-        bankTx('tx02', 'acc_000000000001', '2025-02-15', 5000, 'cat_salary', 'Employer'),
-        bankTx('tx03', 'acc_000000000001', '2025-01-20', -50, 'cat_dining', 'Chipotle'),
-        bankTx('tx04', 'acc_000000000002', '2025-02-10', -75, 'cat_dining', 'Olive Garden'),
-        bankTx('tx05', 'acc_000000000001', '2025-01-25', -200, 'cat_groceries', 'Costco'),
+        bankTx('txn_000000000001', 'acc_000000000001', '2025-01-15', 5000, 'cat_000000000005', 'Employer'),
+        bankTx('txn_000000000002', 'acc_000000000001', '2025-02-15', 5000, 'cat_000000000005', 'Employer'),
+        bankTx('txn_000000000003', 'acc_000000000001', '2025-01-20', -50, 'cat_000000000002', 'Chipotle'),
+        bankTx('txn_000000000004', 'acc_000000000002', '2025-02-10', -75, 'cat_000000000002', 'Olive Garden'),
+        bankTx('txn_000000000005', 'acc_000000000001', '2025-01-25', -200, 'cat_000000000003', 'Costco'),
     ],
     Transaction,
     'id',

@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Category
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/category.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/category.type.js - do not edit manually
 
 /** {@link module:Category} */
-/*  Category generated from: modules/quicken-type-definitions/category.type.js
+/*  Category generated from: modules/quicken-web-app/type-definitions/category.type.js
  *
  *  id              : FieldTypes.categoryId,
  *  name            : "String",

@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Account
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/account.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/account.type.js - do not edit manually
 
 /** {@link module:Account} */
-/*  Account generated from: modules/quicken-type-definitions/account.type.js
+/*  Account generated from: modules/quicken-web-app/type-definitions/account.type.js
  *
  *  id         : FieldTypes.accountId,
  *  name       : "String",

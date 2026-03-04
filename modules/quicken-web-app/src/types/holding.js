@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Holding
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/holding.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/holding.type.js - do not edit manually
 
 /** {@link module:Holding} */
-/*  Holding generated from: modules/quicken-type-definitions/holding.type.js
+/*  Holding generated from: modules/quicken-web-app/type-definitions/holding.type.js
  *
  *  accountId                : FieldTypes.accountId,
  *  accountName              : "String",
