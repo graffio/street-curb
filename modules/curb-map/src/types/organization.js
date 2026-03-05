@@ -190,15 +190,9 @@ Organization.fromFirestore = Organization._fromFirestore
 Organization.roleChanged = (organization, action) => {
     const { userId, role } = action
     const oldMember = organization.members[userId]
-    const newMember = Member.from({
-        ...oldMember,
-        role,
-    })
+    const newMember = Member.from({ ...oldMember, role })
     const members = organization.members.addItemWithId(newMember)
-    return Organization.from({
-        ...organization,
-        members,
-    })
+    return Organization.from({ ...organization, members })
 }
 
 Organization.role = (organization, userId) => organization?.members?.[userId]?.role

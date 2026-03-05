@@ -22,9 +22,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // ImportSpecifier constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const ImportSpecifier = {
-    toString: () => 'ImportSpecifier',
-}
+const ImportSpecifier = { toString: () => 'ImportSpecifier' }
 
 // Add hidden properties
 Object.defineProperty(ImportSpecifier, '@@typeName', { value: 'ImportSpecifier', enumerable: false })

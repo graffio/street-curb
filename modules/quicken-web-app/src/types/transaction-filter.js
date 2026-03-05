@@ -189,78 +189,24 @@ TransactionFilter.from = TransactionFilter._from
 // -------------------------------------------------------------------------------------------------------------
 
 TransactionFilter.INVESTMENT_ACTIONS = [
-    {
-        id: 'Buy',
-        label: 'Buy',
-    },
-    {
-        id: 'Sell',
-        label: 'Sell',
-    },
-    {
-        id: 'Div',
-        label: 'Dividend',
-    },
-    {
-        id: 'ReinvDiv',
-        label: 'Reinvest Dividend',
-    },
-    {
-        id: 'XIn',
-        label: 'Transfer In',
-    },
-    {
-        id: 'XOut',
-        label: 'Transfer Out',
-    },
-    {
-        id: 'ContribX',
-        label: 'Contribution',
-    },
-    {
-        id: 'WithdrwX',
-        label: 'Withdrawal',
-    },
-    {
-        id: 'ShtSell',
-        label: 'Short Sell',
-    },
-    {
-        id: 'CvrShrt',
-        label: 'Cover Short',
-    },
-    {
-        id: 'CGLong',
-        label: 'Long-Term Gain',
-    },
-    {
-        id: 'CGShort',
-        label: 'Short-Term Gain',
-    },
-    {
-        id: 'MargInt',
-        label: 'Margin Interest',
-    },
-    {
-        id: 'ShrsIn',
-        label: 'Shares In',
-    },
-    {
-        id: 'ShrsOut',
-        label: 'Shares Out',
-    },
-    {
-        id: 'StkSplit',
-        label: 'Stock Split',
-    },
-    {
-        id: 'Exercise',
-        label: 'Exercise Option',
-    },
-    {
-        id: 'Expire',
-        label: 'Expire Option',
-    },
+    { id: 'Buy', label: 'Buy' },
+    { id: 'Sell', label: 'Sell' },
+    { id: 'Div', label: 'Dividend' },
+    { id: 'ReinvDiv', label: 'Reinvest Dividend' },
+    { id: 'XIn', label: 'Transfer In' },
+    { id: 'XOut', label: 'Transfer Out' },
+    { id: 'ContribX', label: 'Contribution' },
+    { id: 'WithdrwX', label: 'Withdrawal' },
+    { id: 'ShtSell', label: 'Short Sell' },
+    { id: 'CvrShrt', label: 'Cover Short' },
+    { id: 'CGLong', label: 'Long-Term Gain' },
+    { id: 'CGShort', label: 'Short-Term Gain' },
+    { id: 'MargInt', label: 'Margin Interest' },
+    { id: 'ShrsIn', label: 'Shares In' },
+    { id: 'ShrsOut', label: 'Shares Out' },
+    { id: 'StkSplit', label: 'Stock Split' },
+    { id: 'Exercise', label: 'Exercise Option' },
+    { id: 'Expire', label: 'Expire Option' },
 ]
 
 TransactionFilter.isActive = filter =>

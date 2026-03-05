@@ -21,9 +21,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // TypeDefinition constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const TypeDefinition = {
-    toString: () => 'TypeDefinition',
-}
+const TypeDefinition = { toString: () => 'TypeDefinition' }
 
 // Add hidden properties
 Object.defineProperty(TypeDefinition, '@@typeName', { value: 'TypeDefinition', enumerable: false })

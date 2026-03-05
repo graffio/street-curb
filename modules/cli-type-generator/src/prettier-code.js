@@ -18,6 +18,7 @@ const formatCode = async code => {
             arrowParens: 'avoid',
             printWidth: 120,
             semi: false,
+            objectWrap: 'collapse',
         })
     } catch (error) {
         console.warn('⚠️  Prettier formatting failed:', error.message)

@@ -72,9 +72,7 @@ import { Segment } from './segment.js'
 // Action constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const Action = {
-    toString: () => 'Action',
-}
+const Action = { toString: () => 'Action' }
 
 // Add hidden properties
 Object.defineProperty(Action, '@@typeName', { value: 'Action', enumerable: false })
@@ -108,10 +106,7 @@ Object.defineProperty(Action, '@@tagNames', {
 // Type prototype with match method
 const ActionPrototype = {}
 
-Object.defineProperty(ActionPrototype, 'match', {
-    value: R.match(Action['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(ActionPrototype, 'match', { value: R.match(Action['@@tagNames']), enumerable: false })
 
 Object.defineProperty(ActionPrototype, 'constructor', {
     value: Action,
@@ -883,9 +878,7 @@ UserForgottenConstructor.fromFirestore = UserForgottenConstructor._from
 AuthenticationCompletedConstructor.toFirestore = o => ({ ...o })
 AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstructor._from
 
-UserLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    user: User.toFirestore(o.user, encodeTimestamps),
-})
+UserLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({ user: User.toFirestore(o.user, encodeTimestamps) })
 
 UserLoadedConstructor._fromFirestore = (doc, decodeTimestamps) =>
     UserLoadedConstructor._from({
@@ -1130,177 +1123,52 @@ Action.fromFirestore = Action._fromFirestore
 
 Action.toLog = a =>
     a.match({
-        OrganizationCreated: ({ name }) => ({
-            type: 'OrganizationCreated',
-            name,
-        }),
+        OrganizationCreated: ({ name }) => ({ type: 'OrganizationCreated', name }),
         OrganizationDeleted: () => ({ type: 'OrganizationDeleted' }),
-        OrganizationUpdated: ({ name }) => ({
-            type: 'OrganizationUpdated',
-            name,
-        }),
-        MemberAdded: ({ displayName, role }) => ({
-            type: 'MemberAdded',
-            displayName,
-            role,
-        }),
+        OrganizationUpdated: ({ name }) => ({ type: 'OrganizationUpdated', name }),
+        MemberAdded: ({ displayName, role }) => ({ type: 'MemberAdded', displayName, role }),
         MemberRemoved: () => ({ type: 'MemberRemoved' }),
-        RoleChanged: ({ role }) => ({
-            type: 'RoleChanged',
-            role,
-        }),
-        UserCreated: ({ email, displayName }) => ({
-            type: 'UserCreated',
-            email,
-            displayName,
-        }),
-        UserForgotten: ({ reason }) => ({
-            type: 'UserForgotten',
-            reason,
-        }),
-        UserUpdated: ({ email, displayName, role }) => ({
-            type: 'UserUpdated',
-            email,
-            displayName,
-            role,
-        }),
-        AuthenticationCompleted: ({ email, displayName }) => ({
-            type: 'AuthenticationCompleted',
-            email,
-            displayName,
-        }),
+        RoleChanged: ({ role }) => ({ type: 'RoleChanged', role }),
+        UserCreated: ({ email, displayName }) => ({ type: 'UserCreated', email, displayName }),
+        UserForgotten: ({ reason }) => ({ type: 'UserForgotten', reason }),
+        UserUpdated: ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
+        AuthenticationCompleted: ({ email, displayName }) => ({ type: 'AuthenticationCompleted', email, displayName }),
         UserLoaded: () => ({ type: 'UserLoaded' }),
-        OrganizationSynced: ({ organization }) => ({
-            type: 'OrganizationSynced',
-            organizationId: organization.id,
-        }),
-        BlockfacesSynced: ({ blockfaces }) => ({
-            type: 'BlockfacesSynced',
-            count: blockfaces.length,
-        }),
-        BlockfaceCreated: ({ blockface }) => ({
-            type: 'BlockfaceCreated',
-            blockface,
-        }),
-        BlockfaceSelected: ({ blockface }) => ({
-            type: 'BlockfaceSelected',
-            blockface,
-        }),
-        BlockfaceSaved: ({ blockface }) => ({
-            type: 'BlockfaceSaved',
-            blockface,
-        }),
-        SegmentUseUpdated: ({ index, use }) => ({
-            type: 'SegmentUseUpdated',
-            index,
-            use,
-        }),
-        SegmentLengthUpdated: ({ index, newLength }) => ({
-            type: 'SegmentLengthUpdated',
-            index,
-            newLength,
-        }),
-        SegmentAdded: ({ targetIndex }) => ({
-            type: 'SegmentAdded',
-            targetIndex,
-        }),
-        SegmentAddedLeft: ({ index, desiredLength }) => ({
-            type: 'SegmentAddedLeft',
-            index,
-            desiredLength,
-        }),
-        SegmentsReplaced: ({ segments }) => ({
-            type: 'SegmentsReplaced',
-            segmentCount: segments.length,
-        }),
+        OrganizationSynced: ({ organization }) => ({ type: 'OrganizationSynced', organizationId: organization.id }),
+        BlockfacesSynced: ({ blockfaces }) => ({ type: 'BlockfacesSynced', count: blockfaces.length }),
+        BlockfaceCreated: ({ blockface }) => ({ type: 'BlockfaceCreated', blockface }),
+        BlockfaceSelected: ({ blockface }) => ({ type: 'BlockfaceSelected', blockface }),
+        BlockfaceSaved: ({ blockface }) => ({ type: 'BlockfaceSaved', blockface }),
+        SegmentUseUpdated: ({ index, use }) => ({ type: 'SegmentUseUpdated', index, use }),
+        SegmentLengthUpdated: ({ index, newLength }) => ({ type: 'SegmentLengthUpdated', index, newLength }),
+        SegmentAdded: ({ targetIndex }) => ({ type: 'SegmentAdded', targetIndex }),
+        SegmentAddedLeft: ({ index, desiredLength }) => ({ type: 'SegmentAddedLeft', index, desiredLength }),
+        SegmentsReplaced: ({ segments }) => ({ type: 'SegmentsReplaced', segmentCount: segments.length }),
     })
 
 Action.getSubject = (action, organizationId) =>
     action.match({
-        OrganizationCreated: () => ({
-            id: organizationId,
-            type: 'organization',
-        }),
-        OrganizationDeleted: () => ({
-            id: organizationId,
-            type: 'organization',
-        }),
-        OrganizationUpdated: () => ({
-            id: organizationId,
-            type: 'organization',
-        }),
-        MemberAdded: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        MemberRemoved: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        RoleChanged: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        UserCreated: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        UserForgotten: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        UserUpdated: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        AuthenticationCompleted: a => ({
-            id: a.email,
-            type: 'user',
-        }),
-        UserLoaded: a => ({
-            id: a.user.id,
-            type: 'user',
-        }),
-        OrganizationSynced: a => ({
-            id: a.organization.id,
-            type: 'organization',
-        }),
-        BlockfacesSynced: () => ({
-            id: 'collection',
-            type: 'blockfaces',
-        }),
-        BlockfaceCreated: a => ({
-            id: a.blockface.id,
-            type: 'blockface',
-        }),
-        BlockfaceSelected: a => ({
-            id: a.blockface.id,
-            type: 'blockface',
-        }),
-        BlockfaceSaved: a => ({
-            id: a.blockface.id,
-            type: 'blockface',
-        }),
-        SegmentUseUpdated: () => ({
-            id: 'current',
-            type: 'blockface',
-        }),
-        SegmentLengthUpdated: () => ({
-            id: 'current',
-            type: 'blockface',
-        }),
-        SegmentAdded: () => ({
-            id: 'current',
-            type: 'blockface',
-        }),
-        SegmentAddedLeft: () => ({
-            id: 'current',
-            type: 'blockface',
-        }),
-        SegmentsReplaced: () => ({
-            id: 'current',
-            type: 'blockface',
-        }),
+        OrganizationCreated: () => ({ id: organizationId, type: 'organization' }),
+        OrganizationDeleted: () => ({ id: organizationId, type: 'organization' }),
+        OrganizationUpdated: () => ({ id: organizationId, type: 'organization' }),
+        MemberAdded: a => ({ id: a.userId, type: 'user' }),
+        MemberRemoved: a => ({ id: a.userId, type: 'user' }),
+        RoleChanged: a => ({ id: a.userId, type: 'user' }),
+        UserCreated: a => ({ id: a.userId, type: 'user' }),
+        UserForgotten: a => ({ id: a.userId, type: 'user' }),
+        UserUpdated: a => ({ id: a.userId, type: 'user' }),
+        AuthenticationCompleted: a => ({ id: a.email, type: 'user' }),
+        UserLoaded: a => ({ id: a.user.id, type: 'user' }),
+        OrganizationSynced: a => ({ id: a.organization.id, type: 'organization' }),
+        BlockfacesSynced: () => ({ id: 'collection', type: 'blockfaces' }),
+        BlockfaceCreated: a => ({ id: a.blockface.id, type: 'blockface' }),
+        BlockfaceSelected: a => ({ id: a.blockface.id, type: 'blockface' }),
+        BlockfaceSaved: a => ({ id: a.blockface.id, type: 'blockface' }),
+        SegmentUseUpdated: () => ({ id: 'current', type: 'blockface' }),
+        SegmentLengthUpdated: () => ({ id: 'current', type: 'blockface' }),
+        SegmentAdded: () => ({ id: 'current', type: 'blockface' }),
+        SegmentAddedLeft: () => ({ id: 'current', type: 'blockface' }),
+        SegmentsReplaced: () => ({ id: 'current', type: 'blockface' }),
     })
 
 Action.mayI = (action, actorRole, actorId) =>
@@ -1336,14 +1204,7 @@ Action.metadata = action => {
         authStrategy,
         writesTo = [],
         validateInput = null,
-    ) => ({
-        requiresUser,
-        requiresOrganization,
-        requiresProject,
-        authStrategy,
-        writesTo,
-        validateInput,
-    })
+    ) => ({ requiresUser, requiresOrganization, requiresProject, authStrategy, writesTo, validateInput })
     return action.match({
         AuthenticationCompleted: () => f(false, false, false, 'allowAll'),
         OrganizationCreated: () => f(true, false, false, 'requireOrganizationLimit'),
@@ -1361,12 +1222,7 @@ Action.metadata = action => {
                 true,
                 true,
                 'requireActorIsOrganizationMember',
-                [
-                    {
-                        collection: 'blockfaces',
-                        path: 'action.blockface.id',
-                    },
-                ],
+                [{ collection: 'blockfaces', path: 'action.blockface.id' }],
                 (action, actionRequest, existingDocs) => {
                     const { blockface } = action
                     if (blockface.organizationId !== actionRequest.organizationId)

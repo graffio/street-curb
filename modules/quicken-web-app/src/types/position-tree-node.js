@@ -24,9 +24,7 @@ import { Position } from './position.js'
 // PositionTreeNode constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const PositionTreeNode = {
-    toString: () => 'PositionTreeNode',
-}
+const PositionTreeNode = { toString: () => 'PositionTreeNode' }
 
 // Add hidden properties
 Object.defineProperty(PositionTreeNode, '@@typeName', { value: 'PositionTreeNode', enumerable: false })

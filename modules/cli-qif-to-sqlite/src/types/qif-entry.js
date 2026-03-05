@@ -76,9 +76,7 @@ import { QifSplit } from './qif-split.js'
 // QifEntry constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const QifEntry = {
-    toString: () => 'QifEntry',
-}
+const QifEntry = { toString: () => 'QifEntry' }
 
 // Add hidden properties
 Object.defineProperty(QifEntry, '@@typeName', { value: 'QifEntry', enumerable: false })
@@ -100,10 +98,7 @@ Object.defineProperty(QifEntry, '@@tagNames', {
 // Type prototype with match method
 const QifEntryPrototype = {}
 
-Object.defineProperty(QifEntryPrototype, 'match', {
-    value: R.match(QifEntry['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(QifEntryPrototype, 'match', { value: R.match(QifEntry['@@tagNames']), enumerable: false })
 
 Object.defineProperty(QifEntryPrototype, 'constructor', {
     value: QifEntry,

@@ -25,9 +25,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // OperationDetails constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const OperationDetails = {
-    toString: () => 'OperationDetails',
-}
+const OperationDetails = { toString: () => 'OperationDetails' }
 
 // Add hidden properties
 Object.defineProperty(OperationDetails, '@@typeName', { value: 'OperationDetails', enumerable: false })

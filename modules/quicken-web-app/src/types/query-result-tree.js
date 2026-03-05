@@ -19,9 +19,7 @@ import { PositionTreeNode } from './position-tree-node.js'
 // QueryResultTree constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const QueryResultTree = {
-    toString: () => 'QueryResultTree',
-}
+const QueryResultTree = { toString: () => 'QueryResultTree' }
 
 // Add hidden properties
 Object.defineProperty(QueryResultTree, '@@typeName', { value: 'QueryResultTree', enumerable: false })

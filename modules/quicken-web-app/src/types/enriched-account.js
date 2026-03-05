@@ -113,11 +113,7 @@ EnrichedAccount.sumPositionsForAccount = (positions, accountId) => {
     const balance = accountPositions.reduce((sum, p) => sum + p.marketValue, 0)
     const dayChange = accountPositions.reduce((sum, p) => sum + p.dayGainLoss, 0)
     const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : undefined
-    return {
-        balance,
-        dayChange,
-        dayChangePct,
-    }
+    return { balance, dayChange, dayChangePct }
 }
 
 EnrichedAccount.sumBankBalance = (transactions, accountId) => {
