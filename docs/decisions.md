@@ -660,6 +660,7 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 | DSL parser removed — Claude constructs IR  | Mar 2026 | Accepted | No consumer for text DSL; Claude produces IR Tagged values directly from natural language |
 | IR prefix naming convention for query types | Mar 2026 | Accepted | All query engine types use IR prefix (IRSource, IRFilter, etc.) except root Query type   |
 | Firestore codegen default off, opt-in      | Mar 2026 | Accepted | Only curb-map uses Firestore; `firestore: true` in type def opts in, default skips       |
+| Query bridge as Redux initializer reverted | Mar 2026 | Reverted | Bridge added indirection not capability; query must own the data pipeline end-to-end      |
 
 ---
 
@@ -896,6 +897,12 @@ Future architecture decisions are data-driven and support sustainable business g
 **Context:** Position enrichment needs IRR, benchmark return, alpha, total return — extensible set of computed metrics.
 **Decision:** MetricDefinition Tagged type in a LookupTable registry. Compute signature: `(position, context) => Number`. 7 initial metrics. New metrics = new registry entries.
 **Why:** Extensible without grammar changes. Matches the query language's "stable grammar" principle. LookupTable.get() is fail-fast on unknown names.
+
+### Query bridge as Redux initializer is insufficient (2026-03-05)
+
+**Context:** Built a bridge that mapped Query IR → Redux filter state (selectedAccounts, selectedCategories, groupBy), then used existing selectors (S.Transactions.tree) to produce the view. All three seed queries used IRComputation.Identity and took the same code path.
+**Decision:** Reverted the bridge. Query IR must drive computation end-to-end — a query-owned data pipeline, not initialization of existing selector inputs. Existing selectors can't express post-aggregation predicates (e.g., "categories where spending > $1000").
+**Why:** The bridge added indirection without adding capability. It produced identical views to hardcoded reports. IRComputation variants (Compare, TimeSeries, Expression) were silently ignored. The execution engine (query-execution-engine.js) already exists — the bridge should have fed data through it, not around it.
 
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 
