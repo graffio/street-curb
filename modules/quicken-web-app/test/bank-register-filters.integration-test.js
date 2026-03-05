@@ -23,9 +23,9 @@ tap.before(async () => {
 
     // Open a second tab group with Spending by Category report — exercises multi-instance
     // module-level state bugs (e.g. CategoryFilterChip's chipSelectedIds singleton)
-    session.clickByText('Split')
-    await wait(300)
     session.clickByRef('Spending by Category')
+    await wait(300)
+    session.browser('press', ['Control+Shift+l'])
     await wait(500)
 
     // Return focus to register tab group (nth=1 skips the sidebar button)

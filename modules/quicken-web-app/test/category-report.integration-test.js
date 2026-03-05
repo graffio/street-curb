@@ -22,9 +22,9 @@ tap.before(async () => {
     await wait(500)
 
     // Open second tab group to exercise multi-instance module-level state
-    session.clickByText('Split')
-    await wait(300)
     session.clickByRef('Primary Checking')
+    await wait(300)
+    session.browser('press', ['Control+Shift+l'])
     await wait(500)
     session.browser('click', ['text=Spending by Category >> nth=1'])
     await wait(300)
