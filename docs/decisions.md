@@ -904,6 +904,18 @@ Future architecture decisions are data-driven and support sustainable business g
 **Decision:** Reverted the bridge. Query IR must drive computation end-to-end — a query-owned data pipeline, not initialization of existing selector inputs. Existing selectors can't express post-aggregation predicates (e.g., "categories where spending > $1000").
 **Why:** The bridge added indirection without adding capability. It produced identical views to hardcoded reports. IRComputation variants (Compare, TimeSeries, Expression) were silently ignored. The execution engine (query-execution-engine.js) already exists — the bridge should have fed data through it, not around it.
 
+### IR filter tree replaces flat filter list (2026-03-05)
+
+**Context:** IRFilter was a flat list of Equals/In variants. Users need compound conditions (e.g., "dining AND checking account AND over $50") that flat lists cannot express.
+**Decision:** IRFilter becomes a 10-variant boolean tree (7 leaf predicates + And/Or/Not combinators). IRSource holds an optional single root node. Pre-compiled evaluator in `build-filter-predicate.js` converts tree to `entity => Boolean`.
+**Why:** Users describe complex conditions in natural language; Claude constructs the boolean tree. Flat list would need N^2 special-case handling for combinations that the tree handles naturally via recursion.
+
+### Query IR as single source of truth for engine views (2026-03-05)
+
+**Context:** Engine-driven reports needed a state management strategy. Options: (a) derive view from IR on every render, (b) store IR in Redux and memoize, (c) store both IR and results.
+**Decision:** `state.queryIR[viewId]` is the authoritative query per view. `QueryResult.fromIR` selector merges chip filter state into IR, executes via engine, memoized with `memoizeReduxStatePerKey`. Components provide fallback IR via metadata; Redux state takes precedence.
+**Why:** IR-as-state keeps the engine in the loop for every change. Chip filter merge happens at selector level — existing chip components dispatch the same actions, no new components needed. Memoization on 7 entity state keys provides cache invalidation without per-field tracking.
+
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 
 **Context:** 30+ type-definition files in a flat directory, hard to find by purpose. Generator copies FieldTypes import paths verbatim, complicating subdirectory moves.

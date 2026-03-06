@@ -172,10 +172,12 @@ limit.
 - Regex generation from conversation
 - Filter chip UI for complex predicates
 
-#### Chip UI deferred
+#### Chip UI — implemented via selector merge
 
-Complex boolean filters don't decompose into one-chip-per-dimension. Deferred to Phase 2 alongside Claude NL interface.
-Phase 1 uses hardcoded seed queries — no chip interaction needed.
+Existing chip components (Category, Account, GroupBy) work unchanged. The `QueryResult.fromIR` selector merges chip
+filter state into the Query IR before execution — no new chip components needed. Category chips become
+`Or([Equals('category', X), ...])`, account chips become `In('account', [names])`, GroupBy overrides `IRSource.groupBy`.
+Complex boolean filters from seed queries compose cleanly with chip selections via `And([base, ...chips])`.
 
 #### Generic QueryResultPage (already built)
 
