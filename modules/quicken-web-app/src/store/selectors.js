@@ -43,7 +43,7 @@ import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
 import { toQueryDescription } from '../query-language/to-query-description.js'
-import { queryExecutionEngine } from '../query-language/query-execution-engine.js'
+import { runQuery } from '../query-language/run-query.js'
 import { IRFilter, IRSource, Query } from '../query-language/types/index.js'
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
@@ -525,7 +525,7 @@ const _queryResult = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return undefined
     const mergedIR = _mergeChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
-    const result = queryExecutionEngine(mergedIR, state)
+    const result = runQuery(mergedIR, state)
     return result.match({
         Identity: ({ tree }) => tree.nodes,
         Comparison: () => {

@@ -5,7 +5,7 @@ import { test } from 'tap'
 import { LookupTable, reduce } from '@graffio/functional'
 import { Account, Category, Security, Transaction } from '../../src/types/index.js'
 import { IRComputation, IRDomain, IRFilter, IRSource, Query } from '../../src/query-language/types/index.js'
-import { queryExecutionEngine } from '../../src/query-language/query-execution-engine.js'
+import { runQuery } from '../../src/query-language/run-query.js'
 
 // ═════════════════════════════════════════════════
 // Helpers
@@ -25,7 +25,7 @@ const toQuery = (name, groupBy, filter) =>
 
 const countTreeTransactions = nodes => reduce((sum, node) => sum + node.aggregate.count, 0, nodes)
 
-const runSeed = query => queryExecutionEngine(query, STATE).tree.nodes
+const runSeed = query => runQuery(query, STATE).tree.nodes
 
 // ═════════════════════════════════════════════════
 // Fixtures

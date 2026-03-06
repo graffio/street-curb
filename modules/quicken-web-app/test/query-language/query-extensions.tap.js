@@ -23,7 +23,7 @@ import {
     Query,
 } from '../../src/query-language/types/index.js'
 import { queryValidator } from '../../src/query-language/query-validator.js'
-import { queryExecutionEngine } from '../../src/query-language/query-execution-engine.js'
+import { runQuery } from '../../src/query-language/run-query.js'
 
 // ═════════════════════════════════════════════════
 // Fixture helpers
@@ -375,7 +375,7 @@ test('Execution — orderBy desc produces correctly sorted positions', t => {
             const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'unrealizedGainLossPercent', 'desc')
             const ir = positionsQuery('sorted_desc', source, undefined, output)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             const positions = result.tree.nodes
             t.ok(positions.length >= 2, 'Then at least 2 positions are returned')
@@ -398,7 +398,7 @@ test('Execution — orderBy asc produces ascending sort', t => {
             const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'marketValue', 'asc')
             const ir = positionsQuery('sorted_asc', source, undefined, output)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             const positions = result.tree.nodes
             t.ok(positions.length >= 2, 'Then at least 2 positions are returned')
 
@@ -420,7 +420,7 @@ test('Execution — orderBy without groupBy returns flat list', t => {
             const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'marketValue', 'desc')
             const ir = positionsQuery('flat_sorted', source, undefined, output)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
 
             // Flat list: nodes are Position leaf nodes, not Group nodes
@@ -447,7 +447,7 @@ test('Execution — limit truncates after sort', t => {
             const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'marketValue', 'desc', 2)
             const ir = positionsQuery('top_two', source, undefined, output)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             const positions = result.tree.nodes
             t.equal(positions.length, 2, 'Then only 2 positions are returned')
 
@@ -478,7 +478,7 @@ test('Execution — metrics attaches computed values to each position', t => {
                 ['total_return_pct', 'irr'],
             )
             const ir = positionsQuery('with_metrics', source)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             const positions = result.tree.nodes
             t.ok(positions.length >= 1, 'Then positions are returned')
             const first = positions[0]
@@ -503,7 +503,7 @@ test('Execution — metrics with unknown name throws', t => {
             )
             const ir = positionsQuery('bad_metric', source)
             t.throws(
-                () => queryExecutionEngine(ir, STATE),
+                () => runQuery(ir, STATE),
                 /Unknown metric 'nonexistent_metric'/,
                 'Then it throws with the unknown metric name',
             )
@@ -524,7 +524,7 @@ test('Execution — timeSeries monthly over 3 months produces 3 snapshots', t =>
             const source = positionsSource('_default', undefined, IRDateRange.Range('2025-01-01', '2025-03-31'))
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_net_worth', source, computation)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.TimeSeries.is(result), 'Then result is QueryResult.TimeSeries')
             t.equal(result.snapshots.length, 3, 'Then 3 monthly snapshots are produced')
             t.end()
@@ -540,7 +540,7 @@ test('Execution — timeSeries snapshots have correct end-of-month dates', t => 
             const source = positionsSource('_default', undefined, IRDateRange.Range('2025-01-01', '2025-03-31'))
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_dates', source, computation)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             const dates = result.snapshots.map(s => s.date)
             t.same(dates, ['2025-01-31', '2025-02-28', '2025-03-31'], 'Then dates are end-of-month')
             t.end()
@@ -556,7 +556,7 @@ test('Execution — timeSeries snapshots contain positions', t => {
             const source = positionsSource('_default', undefined, IRDateRange.Range('2025-01-01', '2025-03-31'))
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_content', source, computation)
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             const firstSnapshot = result.snapshots[0]
             t.ok(Array.isArray(firstSnapshot.positions), 'Then snapshot has a positions array')
             t.ok(firstSnapshot.positions.length >= 1, 'Then snapshot contains positions')

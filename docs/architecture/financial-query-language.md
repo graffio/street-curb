@@ -24,7 +24,7 @@ Four modules, each with a single responsibility:
 |----------------------|-----------------------------|--------------------------------------------|
 | Validator            | `query-validator.js`        | `(ir, dataSummary)` → `{valid, errors}`    |
 | Expression evaluator | `resolve-expression.js`     | `(ast, boundValues)` → number              |
-| Execution engine     | `query-execution-engine.js` | `(ir, state)` → IRResult                   |
+| Query runner         | `run-query.js`              | `(ir, state)` → IRResult                   |
 | Pipeline             | `query-pipeline.js`         | `(ir, dataSummary, state)` → phased result |
 
 ## Type System
@@ -161,7 +161,7 @@ Extracts category names, account name/type pairs, unique accountTypes, unique pa
 |------------------------------------------------|-------------------------------------------|
 | `src/query-language/query-validator.js`        | Semantic validation with fuzzy matching   |
 | `src/query-language/resolve-expression.js`     | Safe expression evaluator (replaces eval) |
-| `src/query-language/query-execution-engine.js` | IR → business module calls → IRResult     |
+| `src/query-language/run-query.js` | IR → business module calls → IRResult     |
 | `src/query-language/query-pipeline.js`         | validate → execute pipeline               |
 | `src/store/selectors.js`                       | `_dataSummary` selector                   |
 | `src/financial-computations/metric-registry.js`| MetricDefinition LookupTable (7 metrics) |

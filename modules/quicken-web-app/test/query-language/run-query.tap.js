@@ -21,7 +21,7 @@ import {
     IRSource,
     Query,
 } from '../../src/query-language/types/index.js'
-import { queryExecutionEngine } from '../../src/query-language/query-execution-engine.js'
+import { runQuery } from '../../src/query-language/run-query.js'
 
 // ═════════════════════════════════════════════════
 // Helper: build a Bank transaction with minimal boilerplate
@@ -113,7 +113,7 @@ test('Identity — transaction source with category filter', t => {
     t.test('Given a query filtering transactions by Food category', t => {
         t.test('When executing against state', t => {
             const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025))
-            const result = queryExecutionEngine(simpleQuery('food', source), STATE)
+            const result = runQuery(simpleQuery('food', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             t.ok(QueryResultTree.Category.is(result.tree), 'Then result contains a category tree')
             t.ok(result.tree.nodes.length > 0, 'Then tree is not empty')
@@ -141,7 +141,7 @@ test('Identity — positions source', t => {
                 IRComputation.Identity('_default'),
                 IROutput(['total']),
             )
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             t.ok(QueryResultTree.Positions.is(result.tree), 'Then result contains a positions tree')
             t.end()
@@ -167,7 +167,7 @@ test('Accounts source with account type filter', t => {
                 IRComputation.FilterEntities('_default'),
                 IROutput(['total']),
             )
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.FilteredEntities.is(result), 'Then result is QueryResult.FilteredEntities')
             t.ok(Array.isArray(result.entities), 'Then result contains entities array')
             t.equal(result.entities.length, 1, 'Then only one Bank account is returned')
@@ -196,7 +196,7 @@ test('Compare — two date ranges', t => {
                 IRComputation.Compare('q1', 'q2'),
                 IROutput(['total']),
             )
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.Comparison.is(result), 'Then result is QueryResult.Comparison')
             t.ok(result.left !== undefined, 'Then left result is present')
             t.ok(result.right !== undefined, 'Then right result is present')
@@ -233,7 +233,7 @@ test('Expression — savings rate calculation', t => {
                 IRComputation.Expression(expression),
                 IROutput(undefined, 'percent'),
             )
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.Scalar.is(result), 'Then result is QueryResult.Scalar')
             t.type(result.value, 'number', 'Then value is a number')
             t.ok(result.value > 0, 'Then the ratio is positive')
@@ -261,7 +261,7 @@ test('FilterEntities — filter accounts', t => {
                 IRComputation.FilterEntities('_default'),
                 IROutput(['total']),
             )
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.FilteredEntities.is(result), 'Then result is QueryResult.FilteredEntities')
             t.equal(result.entities.length, 3, 'Then all 3 accounts are returned')
             t.end()
@@ -280,7 +280,7 @@ test('Date resolution — absolute year', t => {
     t.test('Given a query with date 2025', t => {
         t.test('When executing against state', t => {
             const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025))
-            const result = queryExecutionEngine(simpleQuery('annual', source), STATE)
+            const result = runQuery(simpleQuery('annual', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is returned')
             t.ok(result.tree.nodes.length > 0, 'Then transactions within 2025 are included')
             t.end()
@@ -295,7 +295,7 @@ test('Date resolution — specific quarter', t => {
     t.test('Given a query with date Q1 2025', t => {
         t.test('When executing against state', t => {
             const source = txnSource('_default', catFilter('Food:Dining'), IRDateRange.Quarter(1, 2025))
-            const result = queryExecutionEngine(simpleQuery('q1', source), STATE)
+            const result = runQuery(simpleQuery('q1', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is returned')
 
             // Q1 2025 has tx04 (Jan Food:Dining) — only 1 dining tx in Q1
@@ -311,7 +311,7 @@ test('Date resolution — last N months', t => {
     t.test('Given a query with date last 6 months', t => {
         t.test('When executing against state', t => {
             const source = txnSource('_default', catFilter('Food'), IRDateRange.Relative('months', 6))
-            const result = queryExecutionEngine(simpleQuery('recent', source), STATE)
+            const result = runQuery(simpleQuery('recent', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is returned without error')
             t.end()
         })
@@ -329,7 +329,7 @@ test('Group by month', t => {
     t.test('Given a query grouped by month', t => {
         t.test('When executing against state with multi-month data', t => {
             const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025), 'month')
-            const result = queryExecutionEngine(simpleQuery('monthly', source), STATE)
+            const result = runQuery(simpleQuery('monthly', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             t.ok(QueryResultTree.Category.is(result.tree), 'Then tree is a category tree')
 
@@ -348,7 +348,7 @@ test('Group by category', t => {
     t.test('Given a query grouped by category', t => {
         t.test('When executing against state', t => {
             const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025), 'category')
-            const result = queryExecutionEngine(simpleQuery('by_cat', source), STATE)
+            const result = runQuery(simpleQuery('by_cat', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             t.ok(result.tree.nodes.length >= 1, 'Then tree has category groups')
             t.end()
@@ -374,7 +374,7 @@ test('Account type filtering — Credit Card only', t => {
                 IRComputation.FilterEntities('_default'),
                 IROutput(['total']),
             )
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.FilteredEntities.is(result), 'Then result is QueryResult.FilteredEntities')
             t.equal(result.entities.length, 1, 'Then only one Credit Card account is returned')
             t.equal(result.entities[0].name, 'Amex Platinum', 'Then it is Amex Platinum')
@@ -397,7 +397,7 @@ test('Account type filtering — Investment only', t => {
                 IRComputation.FilterEntities('_default'),
                 IROutput(['total']),
             )
-            const result = queryExecutionEngine(ir, STATE)
+            const result = runQuery(ir, STATE)
             t.ok(QueryResult.FilteredEntities.is(result), 'Then result is QueryResult.FilteredEntities')
             t.equal(result.entities.length, 1, 'Then only one Investment account is returned')
             t.equal(result.entities[0].name, 'Vanguard 401k', 'Then it is Vanguard 401k')

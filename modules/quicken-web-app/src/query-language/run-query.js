@@ -1,4 +1,4 @@
-// ABOUTME: Query execution engine — routes IR sources to state queries and computes results
+// ABOUTME: Executes a Query IR against Redux state — routes sources, filters, and computes results
 // ABOUTME: Resolves dates, filters data, dispatches computations via QueryResult types
 
 import { filter, find, iterate, map, reduce } from '@graffio/functional'
@@ -326,8 +326,8 @@ const SAFETY_LIMIT = 500
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Execute a query IR against Redux state, dispatching on computation type
-// @sig queryExecutionEngine :: (Query, Object) -> QueryResult
-const queryExecutionEngine = ({ sources, computation, output }, state) => {
+// @sig runQuery :: (Query, State) -> QueryResult
+const runQuery = ({ sources, computation, output }, state) => {
     const reducer = (acc, source) => ({ ...acc, [source.name]: A.collectSourceResult(source, state) })
     const executed = reduce(reducer, {}, Array.from(sources))
 
@@ -340,4 +340,4 @@ const queryExecutionEngine = ({ sources, computation, output }, state) => {
         TimeSeries    : ({ source: sourceName, interval }) => A.collectTimeSeriesResult(sourceName, interval, state, sources),
     })
 }
-export { queryExecutionEngine }
+export { runQuery }
