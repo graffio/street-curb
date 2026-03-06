@@ -80,6 +80,9 @@ export const Action = {
         SetDraggingView  : { viewId: 'String?' },
         SetDropTarget    : { groupId: 'String?' },
 
+        // Query IR actions
+        SetQueryIR             : { viewId: 'String', query: 'Object' },
+
         // Effect-only actions (reducer returns state unchanged, post performs side effect)
         InitializeSystem : {},
         OpenFile         : {},

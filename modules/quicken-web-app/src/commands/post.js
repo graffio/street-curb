@@ -210,6 +210,9 @@ const post = action => {
         SetDraggingView : () => E.dispatch(action),
         SetDropTarget   : () => E.dispatch(action),
 
+        // Query IR actions (no persistence needed)
+        SetQueryIR      : () => E.dispatch(action),
+
         // Multi-step operations (dispatch directly to Redux, bypassing post)
         InitializeSystem : () => handleInitializeSystem(E.dispatch),
         OpenFile         : () => handleOpenFile(E.dispatch),

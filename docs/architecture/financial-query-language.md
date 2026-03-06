@@ -1,8 +1,8 @@
 ---
-summary: "Query engine architecture — validator, expression evaluator, execution engine, pipeline, position enrichment, metric registry"
+summary: "Query engine architecture — validator, expression evaluator, execution engine, pipeline, position enrichment, metric registry, IR filter tree, engine-drives-views"
 keywords: [ "query", "IR", "validator", "execution", "expression", "financial", "position", "metric", "time series" ]
 module: quicken-web-app
-last_updated: "2026-03-04"
+last_updated: "2026-03-05"
 ---
 
 # Financial Query Engine
@@ -39,7 +39,7 @@ pipeline. All domain dispatch uses `.match()`.
 - `IRDomain`: Transactions, Positions, Accounts
 - `IRExpression`: Literal, Binary, Call, Reference
 - `IRDateRange`: Year, Quarter, Month, Relative, Range, Named
-- `IRFilter`: Equals, OlderThan
+- `IRFilter`: Equals, In, GreaterThan, LessThan, Between, Matches, And, Or, Not, OlderThan
 - `IRResultTree`: Category, Positions
 
 **Data types (Tagged with field validation):**
@@ -109,6 +109,47 @@ Resolves IRDateRange via `.match()` (6 variants), applies source filters, dispat
 domain-specific collectors. Calls business modules directly (TransactionFilter, CategoryTree, computePositions) — not
 selectors — to avoid viewId dependency. Imports MetricRegistry from financial-computations/ for metric resolution.
 
+## IR Filter Tree
+
+10-variant boolean tree replacing the original flat `[IRFilter]` list. IRSource holds an optional single root node
+(`IRFilter?`) — `And([...])` wraps multiple conditions, `undefined` means no filter.
+
+**Leaf variants:** Equals, In, GreaterThan, LessThan, Between, Matches, OlderThan
+**Combinators:** And, Or, Not (recursive — reference IRFilter)
+
+Pre-compiled evaluator (`build-filter-predicate.js`): takes an IRFilter tree, returns `entity => Boolean`. Compilation
+converts In values to Set (O(1) lookup), compiles Matches pattern to RegExp once, captures numeric thresholds. Guards:
+empty And/Or rejected, depth > 20 rejected, invalid regex throws with clear message.
+
+**Enrich-then-filter path:** The execution engine enriches all entities first (adding `categoryName`, `accountName`,
+etc.), then applies the compiled filter predicate. This allows filters to reference enriched fields that don't exist on
+raw entities.
+
+## Engine-Drives-Views (Plan B)
+
+Query IR stored in Redux per viewId replaces selector-based report data paths for engine-driven reports.
+
+```
+Redux state.queryIR[viewId] → QueryResult.fromIR selector → memoized engine execution → tree nodes
+                                    ↑
+                            fallbackIR from metadata (referentially stable)
+```
+
+**IR-as-Redux-state:** `state.queryIR` is a plain object keyed by viewId. `SetQueryIR` action stores a Query per view.
+Components can dispatch new Query IR to change what a view displays without re-mounting.
+
+**QueryResult.fromIR selector:** Memoized with `memoizeReduxStatePerKey` — 7 entity state keys as global invalidation
+keys, `queryIR` as per-key state. Accepts `(state, viewId, fallbackIR)` — reads IR from Redux, falls back to provided
+IR, executes via engine, extracts `tree.nodes`. The fallbackIR parameter must be referentially stable (module-level
+constant) since rest-arg stringify is the only cache discriminator when `state.queryIR[viewId]` is undefined.
+
+**Component-level IR resolution:** `QueryResultPage` branches on `metadata.defaultQueryIR` presence. When set, uses
+`QueryResult.fromIR`; otherwise falls back to the existing selector path. Engine-driven reports (`engine_spending`,
+`engine_positions`) use this path. Existing reports (`spending`, `positions`) remain on their original selector paths.
+
+**Report routing:** `TabGroup.ReportPage` checks `ENGINE_METADATA[reportType]` — engine report types get
+`QueryResultPage` with engine metadata, others route to their existing page components.
+
 ## DataSummary Selector
 
 `_dataSummary` in `selectors.js` — memoized with `memoizeReduxState(['categories', 'accounts', 'transactions'])`.
@@ -128,6 +169,9 @@ Extracts category names, account name/type pairs, unique accountTypes, unique pa
 | `type-definitions/ir-computation.type.js`      | IRComputation TaggedSum                   |
 | `type-definitions/ir-result.type.js`           | IRResult TaggedSum                        |
 | `type-definitions/query.type.js`               | Query Tagged type                         |
+| `src/query-language/build-filter-predicate.js` | IRFilter tree → compiled predicate        |
+| `src/pages/QueryResultPage.jsx`                | Engine/selector dual-path report page     |
+| `src/pages/report-metadata.js`                 | Report metadata + seed Query IR constants |
 
 ## Design Decisions
 
@@ -139,3 +183,11 @@ Extracts category names, account name/type pairs, unique accountTypes, unique pa
   semantics
 - **IR prefix convention** — all query engine types use `IR` prefix (IRSource, IRFilter, etc.) except the root `Query`
   type and non-IR data types (DataSummary, AccountSummary)
+- **IR filter tree replaces flat list** — single optional root node (`And([...])` for multiple conditions) instead of
+  `[IRFilter]` array; enables compound boolean predicates (And/Or/Not) that flat lists cannot express
+- **Query IR as single source of truth** — `state.queryIR[viewId]` is the authoritative query for a view; components
+  provide fallback IR via metadata but Redux state takes precedence
+- **Enrich-then-filter** — engine enriches all entities before filtering so predicates can reference computed fields
+  (categoryName, accountName) that don't exist on raw domain entities
+- **Engine reports additive, not replacing** — new `engine_spending`/`engine_positions` report types added alongside
+  existing `spending`/`positions`; existing selector-based reports remain unchanged until parity is fully verified

@@ -102,6 +102,9 @@
  *      viewId: "String?"
  *  SetDropTarget
  *      groupId: "String?"
+ *  SetQueryIR
+ *      viewId: "String",
+ *      query : "Object"
  *  InitializeSystem
  *  OpenFile
  *  ReopenFile
@@ -129,9 +132,7 @@ import { SortMode } from './sort-mode.js'
 // Action constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const Action = {
-    toString: () => 'Action',
-}
+const Action = { toString: () => 'Action' }
 
 // Add hidden properties
 Object.defineProperty(Action, '@@typeName', { value: 'Action', enumerable: false })
@@ -174,6 +175,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'BumpActionRegistry',
         'SetDraggingView',
         'SetDropTarget',
+        'SetQueryIR',
         'InitializeSystem',
         'OpenFile',
         'ReopenFile',
@@ -184,10 +186,7 @@ Object.defineProperty(Action, '@@tagNames', {
 // Type prototype with match method
 const ActionPrototype = {}
 
-Object.defineProperty(ActionPrototype, 'match', {
-    value: R.match(Action['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(ActionPrototype, 'match', { value: R.match(Action['@@tagNames']), enumerable: false })
 
 Object.defineProperty(ActionPrototype, 'constructor', {
     value: Action,
@@ -242,6 +241,7 @@ const toString = {
     bumpActionRegistry     : function () { return `Action.BumpActionRegistry()` },
     setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
     setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
+    setQueryIR             : function () { return `Action.SetQueryIR(${R._toString(this.viewId)}, ${R._toString(this.query)})` },
     initializeSystem       : function () { return `Action.InitializeSystem()` },
     openFile               : function () { return `Action.OpenFile()` },
     reopenFile             : function () { return `Action.ReopenFile()` },
@@ -291,6 +291,7 @@ const toJSON = {
     bumpActionRegistry     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setQueryIR             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     initializeSystem       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     openFile               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     reopenFile             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -959,6 +960,24 @@ const SetDropTargetConstructor = function SetDropTarget(groupId) {
 Action.SetDropTarget = SetDropTargetConstructor
 
 /*
+ * Construct a Action.SetQueryIR instance
+ * @sig SetQueryIR :: (String, Object) -> Action.SetQueryIR
+ */
+const SetQueryIRConstructor = function SetQueryIR(viewId, query) {
+    const constructorName = 'Action.SetQueryIR(viewId, query)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateObject(constructorName, 'query', false, query)
+
+    const result = Object.create(SetQueryIRPrototype)
+    result.viewId = viewId
+    result.query = query
+    return result
+}
+
+Action.SetQueryIR = SetQueryIRConstructor
+
+/*
  * Construct a Action.InitializeSystem instance
  * @sig InitializeSystem :: () -> Action.InitializeSystem
  */
@@ -1304,6 +1323,14 @@ const SetDropTargetPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetDropTargetConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetQueryIRPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetQueryIR', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setQueryIR, enumerable: false },
+    toJSON: { value: toJSON.setQueryIR, enumerable: false },
+    constructor: { value: SetQueryIRConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const InitializeSystemPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'InitializeSystem', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1368,6 +1395,7 @@ SetPickerPositionConstructor.prototype = SetPickerPositionPrototype
 BumpActionRegistryConstructor.prototype = BumpActionRegistryPrototype
 SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
 SetDropTargetConstructor.prototype = SetDropTargetPrototype
+SetQueryIRConstructor.prototype = SetQueryIRPrototype
 InitializeSystemConstructor.prototype = InitializeSystemPrototype
 OpenFileConstructor.prototype = OpenFilePrototype
 ReopenFileConstructor.prototype = ReopenFilePrototype
@@ -1411,6 +1439,7 @@ SetPickerPositionConstructor.is = val => val && val.constructor === SetPickerPos
 BumpActionRegistryConstructor.is = val => val && val.constructor === BumpActionRegistryConstructor
 SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
 SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
+SetQueryIRConstructor.is = val => val && val.constructor === SetQueryIRConstructor
 InitializeSystemConstructor.is = val => val && val.constructor === InitializeSystemConstructor
 OpenFileConstructor.is = val => val && val.constructor === OpenFileConstructor
 ReopenFileConstructor.is = val => val && val.constructor === ReopenFileConstructor
@@ -1454,6 +1483,7 @@ SetPickerPositionConstructor.toString = () => 'Action.SetPickerPosition'
 BumpActionRegistryConstructor.toString = () => 'Action.BumpActionRegistry'
 SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
 SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
+SetQueryIRConstructor.toString = () => 'Action.SetQueryIR'
 InitializeSystemConstructor.toString = () => 'Action.InitializeSystem'
 OpenFileConstructor.toString = () => 'Action.OpenFile'
 ReopenFileConstructor.toString = () => 'Action.ReopenFile'
@@ -1506,6 +1536,7 @@ SetPickerPositionConstructor._from = _input => Action.SetPickerPosition(_input.x
 BumpActionRegistryConstructor._from = _input => Action.BumpActionRegistry()
 SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
 SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
+SetQueryIRConstructor._from = _input => Action.SetQueryIR(_input.viewId, _input.query)
 InitializeSystemConstructor._from = _input => Action.InitializeSystem()
 OpenFileConstructor._from = _input => Action.OpenFile()
 ReopenFileConstructor._from = _input => Action.ReopenFile()
@@ -1549,6 +1580,7 @@ SetPickerPositionConstructor.from = SetPickerPositionConstructor._from
 BumpActionRegistryConstructor.from = BumpActionRegistryConstructor._from
 SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
 SetDropTargetConstructor.from = SetDropTargetConstructor._from
+SetQueryIRConstructor.from = SetQueryIRConstructor._from
 InitializeSystemConstructor.from = InitializeSystemConstructor._from
 OpenFileConstructor.from = OpenFileConstructor._from
 ReopenFileConstructor.from = ReopenFileConstructor._from
@@ -1598,6 +1630,7 @@ Action.is = v => {
         BumpActionRegistry,
         SetDraggingView,
         SetDropTarget,
+        SetQueryIR,
         InitializeSystem,
         OpenFile,
         ReopenFile,
@@ -1642,6 +1675,7 @@ Action.is = v => {
         constructor === BumpActionRegistry ||
         constructor === SetDraggingView ||
         constructor === SetDropTarget ||
+        constructor === SetQueryIR ||
         constructor === InitializeSystem ||
         constructor === OpenFile ||
         constructor === ReopenFile

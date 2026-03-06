@@ -27,9 +27,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // View constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const View = {
-    toString: () => 'View',
-}
+const View = { toString: () => 'View' }
 
 // Add hidden properties
 Object.defineProperty(View, '@@typeName', { value: 'View', enumerable: false })
@@ -38,10 +36,7 @@ Object.defineProperty(View, '@@tagNames', { value: ['Register', 'Report', 'Recon
 // Type prototype with match method
 const ViewPrototype = {}
 
-Object.defineProperty(ViewPrototype, 'match', {
-    value: R.match(View['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(ViewPrototype, 'match', { value: R.match(View['@@tagNames']), enumerable: false })
 
 Object.defineProperty(ViewPrototype, 'constructor', {
     value: View,
@@ -231,50 +226,23 @@ View.is = v => {
 // -------------------------------------------------------------------------------------------------------------
 
 View.CATEGORY_DIMENSION_LAYOUTS = {
-    category: {
-        title: 'Spending by Category',
-        subtitle: 'View spending breakdown by category hierarchy',
-    },
-    account: {
-        title: 'Spending by Account',
-        subtitle: 'View spending breakdown by account',
-    },
-    payee: {
-        title: 'Spending by Payee',
-        subtitle: 'View spending breakdown by payee',
-    },
-    month: {
-        title: 'Spending by Month',
-        subtitle: 'View spending breakdown by month',
-    },
+    category: { title: 'Spending by Category', subtitle: 'View spending breakdown by category hierarchy' },
+    account: { title: 'Spending by Account', subtitle: 'View spending breakdown by account' },
+    payee: { title: 'Spending by Payee', subtitle: 'View spending breakdown by payee' },
+    month: { title: 'Spending by Month', subtitle: 'View spending breakdown by month' },
 }
 
 View.POSITIONS_DIMENSION_LAYOUTS = {
-    account: {
-        title: 'Positions by Account',
-        subtitle: 'View portfolio positions by account',
-    },
-    security: {
-        title: 'Positions by Security',
-        subtitle: 'View portfolio positions by security',
-    },
-    securityType: {
-        title: 'Positions by Type',
-        subtitle: 'View portfolio positions by security type',
-    },
-    goal: {
-        title: 'Positions by Goal',
-        subtitle: 'View portfolio positions by investment goal',
-    },
+    account: { title: 'Positions by Account', subtitle: 'View portfolio positions by account' },
+    security: { title: 'Positions by Security', subtitle: 'View portfolio positions by security' },
+    securityType: { title: 'Positions by Type', subtitle: 'View portfolio positions by security type' },
+    goal: { title: 'Positions by Goal', subtitle: 'View portfolio positions by investment goal' },
 }
 
-View.DEFAULT_PAGE_TITLE = {
-    title: 'Dashboard',
-    subtitle: '',
-}
+View.DEFAULT_PAGE_TITLE = { title: 'Dashboard', subtitle: '' }
 
 View.toReportTitle = (reportType, groupBy) => {
-    if (reportType === 'positions')
+    if (reportType === 'positions' || reportType === 'engine_positions')
         return View.POSITIONS_DIMENSION_LAYOUTS[groupBy || 'account'] || View.POSITIONS_DIMENSION_LAYOUTS.account
     return View.CATEGORY_DIMENSION_LAYOUTS[groupBy || 'category'] || View.CATEGORY_DIMENSION_LAYOUTS.category
 }

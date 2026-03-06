@@ -42,6 +42,9 @@ import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
+import { toQueryDescription } from '../query-language/to-query-description.js'
+import { queryExecutionEngine } from '../query-language/query-execution-engine.js'
+import { IRFilter, IRSource, Query } from '../query-language/types/index.js'
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
@@ -462,6 +465,100 @@ const _dataSummary = state => {
 const dataSummary = memoizeReduxState(['categories', 'accounts', 'transactions'], _dataSummary)
 
 // ---------------------------------------------------------------------------------------------------------------------
+// QueryResult — engine-driven query execution per viewId
+// ---------------------------------------------------------------------------------------------------------------------
+
+// prettier-ignore
+const ENGINE_STATE_KEYS = ['accounts', 'categories', 'transactions', 'securities', 'lots', 'lotAllocations', 'prices', 'transactionFilters']
+
+// Merge chip filter selections from transactionFilters into the Query IR before execution.
+// Category chip: Or([Equals('category', X), ...]) — each Equals gets prefix-match via engine's toResolvedFilter.
+// Account chip: In('account', [names]) — engine aliases 'account' to accountName on enriched entities.
+// GroupBy chip: overrides IRSource.groupBy.
+// @sig _mergeChipFilters :: (Query, TransactionFilter?, LookupTable) -> Query
+// Combine base filter with chip-added filters into a single IRFilter node
+// @sig _combineFilters :: (IRFilter?, [IRFilter]) -> IRFilter?
+const _combineFilters = (baseFilter, chipFilters) => {
+    if (chipFilters.length === 0) return baseFilter
+    if (!baseFilter) return chipFilters.length === 1 ? chipFilters[0] : IRFilter.And(chipFilters)
+    return IRFilter.And([baseFilter, ...chipFilters])
+}
+
+// Build chip IRFilter nodes from category and account selections
+// @sig _buildChipFilters :: (TransactionFilter, LookupTable) -> [IRFilter]
+const _buildChipFilters = ({ selectedCategories, selectedAccounts }, accts) => {
+    const chipFilters = []
+    if (selectedCategories.length > 0) {
+        const fs = selectedCategories.map(c => IRFilter.Equals('category', c))
+        chipFilters.push(fs.length === 1 ? fs[0] : IRFilter.Or(fs))
+    }
+    const names = selectedAccounts.length > 0 ? compactMap(id => accts.get(id)?.name, selectedAccounts) : []
+    if (names.length > 0) chipFilters.push(IRFilter.In('account', names))
+    return chipFilters
+}
+
+const _mergeChipFilters = (ir, chipState, accts) => {
+    if (!chipState) return ir
+    const { name: irName, label, sources, computation, output } = ir
+    const { groupBy: chipGroupBy } = chipState
+    const source = sources.get('_default')
+    if (!source) return ir
+    const { name, domain, filter: baseFilter, dateRange, groupBy } = source
+
+    const chipFilters = _buildChipFilters(chipState, accts)
+    if (chipFilters.length === 0 && !chipGroupBy) return ir
+
+    const newSource = IRSource(
+        name,
+        domain,
+        _combineFilters(baseFilter, chipFilters),
+        dateRange,
+        chipGroupBy || groupBy,
+    )
+    const newSources = LookupTable([newSource], IRSource, 'name')
+    return Query(irName, label, newSources, computation, output)
+}
+
+// fallbackIR must be referentially stable (e.g. a module-level constant) — rest-arg stringify is the only
+// cache discriminator when state.queryIR[viewId] is undefined
+const _queryResult = (state, viewId, fallbackIR) => {
+    const ir = state.queryIR[viewId] ?? fallbackIR
+    if (!ir) return undefined
+    const mergedIR = _mergeChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const result = queryExecutionEngine(mergedIR, state)
+    return result.match({
+        Identity: ({ tree }) => tree.nodes,
+        Comparison: () => {
+            throw new Error('Unsupported QueryResult variant: Comparison')
+        },
+        Scalar: () => {
+            throw new Error('Unsupported QueryResult variant: Scalar')
+        },
+        FilteredEntities: () => {
+            throw new Error('Unsupported QueryResult variant: FilteredEntities')
+        },
+        TimeSeries: () => {
+            throw new Error('Unsupported QueryResult variant: TimeSeries')
+        },
+    })
+}
+
+// Describe the merged Query IR as human-readable text — cheap, no heavy memoization needed
+// @sig _queryDescription :: (State, String, Query?) -> String
+const _queryDescription = (state, viewId, fallbackIR) => {
+    const ir = state.queryIR[viewId] ?? fallbackIR
+    if (!ir) return ''
+    const mergedIR = _mergeChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    return toQueryDescription(mergedIR)
+}
+
+// prettier-ignore
+const QueryResult = {
+    fromIR:      memoizeReduxStatePerKey(ENGINE_STATE_KEYS, 'queryIR', _queryResult),
+    description: _queryDescription,
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Positions
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -647,6 +744,7 @@ export {
     Accounts,
     Categories,
     Positions,
+    QueryResult,
     Transactions,
     UI,
 

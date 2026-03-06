@@ -2,13 +2,13 @@
 // ABOUTME: Resolves dates, filters data, dispatches computations via QueryResult types
 
 import { filter, find, iterate, map, reduce } from '@graffio/functional'
-import { PositionTreeNode, QueryResult, QueryResultTree, Transaction } from '../types/index.js'
-import { computePositions } from '../financial-computations/compute-positions.js'
 import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
+import { computePositions } from '../financial-computations/compute-positions.js'
 import { MetricRegistry } from '../financial-computations/metric-registry.js'
+import { PositionTreeNode, QueryResult, QueryResultTree, Transaction } from '../types/index.js'
 import { CategoryTree } from '../utils/category-tree.js'
-import { resolveExpression } from './resolve-expression.js'
 import { buildFilterPredicate } from './build-filter-predicate.js'
+import { resolveExpression } from './resolve-expression.js'
 import { IRFilter } from './types/ir-filter.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -328,20 +328,16 @@ const SAFETY_LIMIT = 500
 // Execute a query IR against Redux state, dispatching on computation type
 // @sig queryExecutionEngine :: (Query, Object) -> QueryResult
 const queryExecutionEngine = ({ sources, computation, output }, state) => {
-    const executed = reduce(
-        (results, source) => ({ ...results, [source.name]: A.collectSourceResult(source, state) }),
-        {},
-        Array.from(sources),
-    )
+    const reducer = (acc, source) => ({ ...acc, [source.name]: A.collectSourceResult(source, state) })
+    const executed = reduce(reducer, {}, Array.from(sources))
 
+    // prettier-ignore
     return computation.match({
-        Identity: ({ source }) => QueryResult.Identity(A.collectPostProcessedResult(executed[source], output), source),
-        Compare: ({ left, right }) => QueryResult.Comparison(executed[left], executed[right], left),
-        Expression: ({ expression }) =>
-            QueryResult.Scalar(resolveExpression(expression, A.collectBoundValues(executed)), expression),
-        FilterEntities: ({ source }) => QueryResult.FilteredEntities(executed[source], source),
-        TimeSeries: ({ source: sourceName, interval }) =>
-            A.collectTimeSeriesResult(sourceName, interval, state, sources),
+        Identity      : ({ source })                       => QueryResult.Identity(A.collectPostProcessedResult(executed[source], output), source),
+        Compare       : ({ left, right })                  => QueryResult.Comparison(executed[left], executed[right], left),
+        Expression    : ({ expression })                   => QueryResult.Scalar(resolveExpression(expression, A.collectBoundValues(executed)), expression),
+        FilterEntities: ({ source })                       => QueryResult.FilteredEntities(executed[source], source),
+        TimeSeries    : ({ source: sourceName, interval }) => A.collectTimeSeriesResult(sourceName, interval, state, sources),
     })
 }
 export { queryExecutionEngine }
