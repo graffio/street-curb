@@ -8,6 +8,8 @@ import { buildPositionsTree } from '../financial-computations/build-positions-tr
 import { MetricRegistry } from '../financial-computations/metric-registry.js'
 import { CategoryTree } from '../utils/category-tree.js'
 import { resolveExpression } from './resolve-expression.js'
+import { buildFilterPredicate } from './build-filter-predicate.js'
+import { IRFilter } from './types/ir-filter.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -19,22 +21,6 @@ const P = {
     // Check if a date falls within a resolved date range (or passes if no range)
     // @sig isInDateRange :: ({ start: String, end: String } | undefined, String) -> Boolean
     isInDateRange: (dateRange, date) => !dateRange || (date >= dateRange.start && date <= dateRange.end),
-
-    // Check if a value is in a filter list, or pass if the filter list is empty
-    // @sig isFilterMatch :: ([String], String) -> Boolean
-    isFilterMatch: (filterValues, value) => filterValues.length === 0 || filterValues.includes(value),
-
-    // Check if a transaction passes all source filters and date range
-    // @sig isTransactionMatch :: ([String], [String], [String], Object, Transaction) -> Boolean
-    isTransactionMatch: (categoryIds, accountIds, payees, dateRange, t) => {
-        const { accountId, categoryId, date, payee } = t
-        return (
-            P.isInDateRange(dateRange, date) &&
-            P.isFilterMatch(categoryIds, categoryId) &&
-            P.isFilterMatch(accountIds, accountId) &&
-            P.isFilterMatch(payees, payee)
-        )
-    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -104,30 +90,31 @@ const T = {
         })
     },
 
-    // Resolve category name to matching category IDs (exact match + children via prefix)
-    // @sig toCategoryIds :: (String, LookupTable) -> [String]
-    toCategoryIds: (categoryName, categories) =>
-        map(
-            c => c.id,
-            filter(c => c.name === categoryName || c.name.startsWith(categoryName + ':'), Array.from(categories)),
-        ),
+    // Escape regex special characters in a string for safe interpolation into patterns
+    // @sig toEscapedRegex :: String -> String
+    toEscapedRegex: s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
 
-    // Resolve account name to account ID
-    // @sig toAccountId :: (String, LookupTable) -> String
-    toAccountId: (accountName, accounts) => {
-        const account = find(a => a.name === accountName, Array.from(accounts))
-        if (!account) throw new Error(`Unknown account '${accountName}'`)
-        return account.id
+    // Resolve entity-level Equals('category', X) to Matches on categoryName with hierarchy prefix
+    // Other filter variants pass through unchanged — aliases on enriched data handle field mapping
+    // @sig toResolvedFilter :: IRFilter -> IRFilter
+    toResolvedFilter: node => {
+        const { Equals, And, Or, Not, Matches } = IRFilter
+        const { field, value, filters, filter: childFilter } = node
+        if (Equals.is(node) && field === 'category') return Matches('category', `^${T.toEscapedRegex(value)}(:|$)`)
+        if (And.is(node)) return And(map(T.toResolvedFilter, filters))
+        if (Or.is(node)) return Or(map(T.toResolvedFilter, filters))
+        if (Not.is(node)) return Not(T.toResolvedFilter(childFilter))
+        return node
     },
 
-    // Extract filter values for a specific field from IR source filters
-    // Only called for entity fields (category, account, payee) which are always IRFilter.Equals
-    // @sig toFilterValues :: (String, [IRFilter]) -> [String]
-    toFilterValues: (field, filters) =>
-        map(
-            f => f.value,
-            filter(f => f.field === field, filters),
-        ),
+    // Add aliases so IRFilter field names match enriched transaction properties
+    // category → categoryName, account → accountName (payee already matches)
+    // @sig toFilterableTransaction :: Object -> Object
+    toFilterableTransaction: t => ({ ...t, category: t.categoryName, account: t.accountName }),
+
+    // Add alias so accountType filter matches Account.type property
+    // @sig toFilterableAccount :: Object -> Object
+    toFilterableAccount: a => ({ ...a, accountType: a.type }),
 
     // Advance a date by one interval step, returning a new Date
     // @sig toAdvancedDate :: (Date, String) -> Date
@@ -164,32 +151,26 @@ const T = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const A = {
-    // Execute a transaction source: apply filters, resolve dates, build tree
+    // Execute a transaction source: date-filter, enrich all, then apply compiled predicate
     // @sig collectTransactionResult :: (IRSource, Object) -> [CategoryTreeNode]
     collectTransactionResult: (source, state) => {
         const { accounts, categories, transactions } = state
-        const { dateRange: dateDescriptor, filters, groupBy } = source
+        const { dateRange: dateDescriptor, filter: rootFilter, groupBy } = source
         const dateRange = T.toDateRange(dateDescriptor)
-        const categoryIds = T.toFilterValues('category', filters).flatMap(n => T.toCategoryIds(n, categories))
-        const accountIds = map(n => T.toAccountId(n, accounts), T.toFilterValues('account', filters))
-        const payees = T.toFilterValues('payee', filters)
-
-        const filtered = filter(
-            t => P.isTransactionMatch(categoryIds, accountIds, payees, dateRange, t),
-            Array.from(transactions),
-        )
-
-        const enriched = Transaction.enrichAll(filtered, categories, accounts)
-        return CategoryTree.buildTransactionTree(groupBy || 'category', enriched)
+        const dateFiltered = filter(t => P.isInDateRange(dateRange, t.date), Array.from(transactions))
+        const enriched = Transaction.enrichAll(dateFiltered, categories, accounts)
+        const filtered = rootFilter
+            ? filter(buildFilterPredicate(T.toResolvedFilter(rootFilter)), map(T.toFilterableTransaction, enriched))
+            : enriched
+        return CategoryTree.buildTransactionTree(groupBy || 'category', filtered)
     },
 
-    // Execute an accounts source: filter by accountType if specified
+    // Execute an accounts source: apply compiled filter predicate if specified
     // @sig collectAccountResult :: (IRSource, Object) -> [Account]
-    collectAccountResult: ({ filters }, { accounts }) => {
-        const typeFilters = T.toFilterValues('accountType', filters)
-        return typeFilters.length > 0
-            ? filter(a => typeFilters.includes(a.type), Array.from(accounts))
-            : Array.from(accounts)
+    collectAccountResult: ({ filter: rootFilter }, { accounts }) => {
+        if (!rootFilter) return Array.from(accounts)
+        const predicate = buildFilterPredicate(rootFilter)
+        return filter(a => predicate(T.toFilterableAccount(a)), Array.from(accounts))
     },
 
     // Execute a positions source: compute positions as of date, optionally with metrics
@@ -204,8 +185,10 @@ const A = {
             position => PositionTreeNode.Position(`${position.accountId}|${position.securityId}`, [], position),
             positions,
         )
-        if (metrics) return map(node => A.collectPositionMetrics(node, metrics, state, asOfDate), nodes)
-        return nodes
+        if (!metrics) return nodes
+        const benchmarkSecurityId = A.findBenchmarkSecurityId(state)
+        const context = { ...state, asOfDate, benchmarkSecurityId }
+        return map(node => A.collectPositionMetrics(node, metrics, context), nodes)
     },
 
     // Route a source to the correct domain executor via IRDomain.match()
@@ -246,10 +229,9 @@ const A = {
     },
 
     // Compute requested metrics for a position tree node, returning node with metrics attached
-    // @sig collectPositionMetrics :: (PositionTreeNode, [String], Object, String) -> PositionTreeNode
-    collectPositionMetrics: (node, metricNames, state, asOfDate) => {
+    // @sig collectPositionMetrics :: (PositionTreeNode, [String], Object) -> PositionTreeNode
+    collectPositionMetrics: (node, metricNames, context) => {
         const { id, children, position } = node
-        const context = { ...state, asOfDate, benchmarkSecurityId: A.findBenchmarkSecurityId(state) }
         const metrics = reduce((acc, name) => A.collectMetric(acc, position, context, name), {}, metricNames)
         return PositionTreeNode.Position(id, children, position, metrics)
     },

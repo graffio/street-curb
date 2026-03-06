@@ -34,8 +34,8 @@ const bankTx = (id, accountId, date, amount, categoryId, payee) =>
 // Helper: build IR objects for common patterns
 // ═════════════════════════════════════════════════
 
-const txnSource = (name, filters, dateRange, groupBy) =>
-    IRSource(name, IRDomain.Transactions(), filters, dateRange, groupBy)
+const txnSource = (name, filter, dateRange, groupBy) =>
+    IRSource(name, IRDomain.Transactions(), filter, dateRange, groupBy)
 
 const catFilter = category => IRFilter.Equals('category', category)
 
@@ -112,7 +112,7 @@ const STATE = {
 test('Identity — transaction source with category filter', t => {
     t.test('Given a query filtering transactions by Food category', t => {
         t.test('When executing against state', t => {
-            const source = txnSource('_default', [catFilter('Food')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025))
             const result = queryExecutionEngine(simpleQuery('food', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             t.ok(QueryResultTree.Category.is(result.tree), 'Then result contains a category tree')
@@ -133,7 +133,7 @@ test('Identity — transaction source with category filter', t => {
 test('Identity — positions source', t => {
     t.test('Given a positions query', t => {
         t.test('When executing against state with investment account', t => {
-            const source = IRSource('_default', IRDomain.Positions(), [], IRDateRange.Year(2025))
+            const source = IRSource('_default', IRDomain.Positions(), undefined, IRDateRange.Year(2025))
             const ir = Query(
                 'positions',
                 'Positions view',
@@ -159,7 +159,7 @@ test('Identity — positions source', t => {
 test('Accounts source with account type filter', t => {
     t.test('Given a query filtering accounts by Bank type', t => {
         t.test('When executing against state', t => {
-            const source = IRSource('_default', IRDomain.Accounts(), [IRFilter.Equals('accountType', 'Bank')])
+            const source = IRSource('_default', IRDomain.Accounts(), IRFilter.Equals('accountType', 'Bank'))
             const ir = Query(
                 'banks',
                 'Bank accounts',
@@ -187,8 +187,8 @@ test('Accounts source with account type filter', t => {
 test('Compare — two date ranges', t => {
     t.test('Given a compare query with Q1 vs Q2 food spending', t => {
         t.test('When executing against state', t => {
-            const q1 = txnSource('q1', [catFilter('Food')], IRDateRange.Quarter(1, 2025))
-            const q2 = txnSource('q2', [catFilter('Food')], IRDateRange.Quarter(2, 2025))
+            const q1 = txnSource('q1', catFilter('Food'), IRDateRange.Quarter(1, 2025))
+            const q2 = txnSource('q2', catFilter('Food'), IRDateRange.Quarter(2, 2025))
             const ir = Query(
                 'compare',
                 'Q1 vs Q2 food',
@@ -215,8 +215,8 @@ test('Compare — two date ranges', t => {
 test('Expression — savings rate calculation', t => {
     t.test('Given a compute expression: abs(food.total) / abs(income.total) * 100', t => {
         t.test('When executing against state with income and food transactions', t => {
-            const income = txnSource('income', [catFilter('Income')], IRDateRange.Quarter(1, 2025))
-            const food = txnSource('food', [catFilter('Food')], IRDateRange.Quarter(1, 2025))
+            const income = txnSource('income', catFilter('Income'), IRDateRange.Quarter(1, 2025))
+            const food = txnSource('food', catFilter('Food'), IRDateRange.Quarter(1, 2025))
             const expression = IRExpression.Binary(
                 '*',
                 IRExpression.Binary(
@@ -253,7 +253,7 @@ test('Expression — savings rate calculation', t => {
 test('FilterEntities — filter accounts', t => {
     t.test('Given a query for all accounts (no type filter)', t => {
         t.test('When executing against state', t => {
-            const source = IRSource('_default', IRDomain.Accounts(), [])
+            const source = IRSource('_default', IRDomain.Accounts(), undefined)
             const ir = Query(
                 'all_accounts',
                 'All accounts',
@@ -279,7 +279,7 @@ test('FilterEntities — filter accounts', t => {
 test('Date resolution — absolute year', t => {
     t.test('Given a query with date 2025', t => {
         t.test('When executing against state', t => {
-            const source = txnSource('_default', [catFilter('Food')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025))
             const result = queryExecutionEngine(simpleQuery('annual', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is returned')
             t.ok(result.tree.nodes.length > 0, 'Then transactions within 2025 are included')
@@ -294,7 +294,7 @@ test('Date resolution — absolute year', t => {
 test('Date resolution — specific quarter', t => {
     t.test('Given a query with date Q1 2025', t => {
         t.test('When executing against state', t => {
-            const source = txnSource('_default', [catFilter('Food:Dining')], IRDateRange.Quarter(1, 2025))
+            const source = txnSource('_default', catFilter('Food:Dining'), IRDateRange.Quarter(1, 2025))
             const result = queryExecutionEngine(simpleQuery('q1', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is returned')
 
@@ -310,7 +310,7 @@ test('Date resolution — specific quarter', t => {
 test('Date resolution — last N months', t => {
     t.test('Given a query with date last 6 months', t => {
         t.test('When executing against state', t => {
-            const source = txnSource('_default', [catFilter('Food')], IRDateRange.Relative('months', 6))
+            const source = txnSource('_default', catFilter('Food'), IRDateRange.Relative('months', 6))
             const result = queryExecutionEngine(simpleQuery('recent', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is returned without error')
             t.end()
@@ -328,7 +328,7 @@ test('Date resolution — last N months', t => {
 test('Group by month', t => {
     t.test('Given a query grouped by month', t => {
         t.test('When executing against state with multi-month data', t => {
-            const source = txnSource('_default', [catFilter('Food')], IRDateRange.Year(2025), 'month')
+            const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025), 'month')
             const result = queryExecutionEngine(simpleQuery('monthly', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             t.ok(QueryResultTree.Category.is(result.tree), 'Then tree is a category tree')
@@ -347,7 +347,7 @@ test('Group by month', t => {
 test('Group by category', t => {
     t.test('Given a query grouped by category', t => {
         t.test('When executing against state', t => {
-            const source = txnSource('_default', [catFilter('Food')], IRDateRange.Year(2025), 'category')
+            const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025), 'category')
             const result = queryExecutionEngine(simpleQuery('by_cat', source), STATE)
             t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             t.ok(result.tree.nodes.length >= 1, 'Then tree has category groups')
@@ -366,7 +366,7 @@ test('Group by category', t => {
 test('Account type filtering — Credit Card only', t => {
     t.test('Given a query filtering by Credit Card account type', t => {
         t.test('When executing against state', t => {
-            const source = IRSource('_default', IRDomain.Accounts(), [IRFilter.Equals('accountType', 'Credit Card')])
+            const source = IRSource('_default', IRDomain.Accounts(), IRFilter.Equals('accountType', 'Credit Card'))
             const ir = Query(
                 'credit',
                 'Credit card accounts',
@@ -389,7 +389,7 @@ test('Account type filtering — Credit Card only', t => {
 test('Account type filtering — Investment only', t => {
     t.test('Given a query filtering by Investment account type', t => {
         t.test('When executing against state', t => {
-            const source = IRSource('_default', IRDomain.Accounts(), [IRFilter.Equals('accountType', 'Investment')])
+            const source = IRSource('_default', IRDomain.Accounts(), IRFilter.Equals('accountType', 'Investment'))
             const ir = Query(
                 'invest',
                 'Investment accounts',

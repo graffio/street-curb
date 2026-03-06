@@ -17,8 +17,8 @@ import { queryValidator } from '../../src/query-language/query-validator.js'
 // Helpers: build IR objects for common patterns
 // ═════════════════════════════════════════════════
 
-const txnSource = (name, filters, dateRange, groupBy) =>
-    IRSource(name, IRDomain.Transactions(), filters, dateRange, groupBy)
+const txnSource = (name, filter, dateRange, groupBy) =>
+    IRSource(name, IRDomain.Transactions(), filter, dateRange, groupBy)
 
 const catFilter = category => IRFilter.Equals('category', category)
 const acctFilter = account => IRFilter.Equals('account', account)
@@ -79,7 +79,7 @@ const SUMMARY = DataSummary(
 test('Valid query', t => {
     t.test('Given a query with valid category and date', t => {
         t.test('When validating against the data summary', t => {
-            const source = txnSource('_default', [catFilter('Food')], IRDateRange.Relative('months', 6), 'month')
+            const source = txnSource('_default', catFilter('Food'), IRDateRange.Relative('months', 6), 'month')
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, true, 'Then the query is valid')
             t.equal(result.errors.length, 0, 'Then there are no errors')
@@ -90,7 +90,7 @@ test('Valid query', t => {
 
     t.test('Given a query with a full subcategory path', t => {
         t.test('When validating', t => {
-            const source = txnSource('_default', [catFilter('Food:Dining')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('Food:Dining'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, true, 'Then the full path is accepted')
             t.end()
@@ -108,7 +108,7 @@ test('Valid query', t => {
 test('Misspelled category', t => {
     t.test('Given a query with category "Fod" (typo for Food)', t => {
         t.test('When validating', t => {
-            const source = txnSource('_default', [catFilter('Fod')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('Fod'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, false, 'Then the query is invalid')
             t.equal(result.errors.length, 1, 'Then there is one error')
@@ -132,7 +132,7 @@ test('Misspelled category', t => {
 test('Bare subcategory', t => {
     t.test('Given a query with bare subcategory "Dining"', t => {
         t.test('When validating', t => {
-            const source = txnSource('_default', [catFilter('Dining')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('Dining'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, false, 'Then the query is invalid')
             t.equal(result.errors.length, 1, 'Then there is one error')
@@ -152,7 +152,7 @@ test('Bare subcategory', t => {
 test('Category prefix matching', t => {
     t.test('Given a query with parent category "Food" (children Food:Dining etc exist)', t => {
         t.test('When validating', t => {
-            const source = txnSource('_default', [catFilter('Food')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('Food'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, true, 'Then the parent category is accepted via prefix matching')
             t.end()
@@ -170,7 +170,7 @@ test('Category prefix matching', t => {
 test('Nonexistent account', t => {
     t.test('Given a query with account "Checking" (partial match for Chase Checking)', t => {
         t.test('When validating', t => {
-            const source = txnSource('_default', [acctFilter('Checking')], IRDateRange.Year(2025))
+            const source = txnSource('_default', acctFilter('Checking'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, false, 'Then the query is invalid')
             t.equal(result.errors.length, 1, 'Then there is one error')
@@ -191,7 +191,7 @@ test('Nonexistent account', t => {
 test('Wrong account type', t => {
     t.test('Given a query with accountType "Brokerage" (not a valid type)', t => {
         t.test('When validating', t => {
-            const source = txnSource('_default', [typeFilter('Brokerage')], IRDateRange.Year(2025))
+            const source = txnSource('_default', typeFilter('Brokerage'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, false, 'Then the query is invalid')
             t.equal(result.errors.length, 1, 'Then there is one error')
@@ -211,7 +211,7 @@ test('Wrong account type', t => {
 test('Misspelled payee', t => {
     t.test('Given a query with payee "Amazn" (typo for Amazon)', t => {
         t.test('When validating', t => {
-            const source = txnSource('_default', [payeeFilter('Amazn')], IRDateRange.Year(2025))
+            const source = txnSource('_default', payeeFilter('Amazn'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, false, 'Then the query is invalid')
             t.equal(result.errors.length, 1, 'Then there is one error')
@@ -232,8 +232,12 @@ test('Misspelled payee', t => {
 test('Multiple errors collected', t => {
     t.test('Given a query with bad category, bad account, and bad payee across sources', t => {
         t.test('When validating', t => {
-            const food = txnSource('food', [catFilter('Groceries'), acctFilter('My Checking')], IRDateRange.Year(2025))
-            const income = txnSource('income', [catFilter('Salary')], IRDateRange.Year(2025))
+            const food = txnSource(
+                'food',
+                IRFilter.And([catFilter('Groceries'), acctFilter('My Checking')]),
+                IRDateRange.Year(2025),
+            )
+            const income = txnSource('income', catFilter('Salary'), IRDateRange.Year(2025))
             const expression = IRExpression.Binary(
                 '/',
                 IRExpression.Call('abs', [IRExpression.Reference('food', 'total')]),
@@ -276,7 +280,7 @@ test('Multiple errors collected', t => {
 test('Expression referencing undefined source', t => {
     t.test('Given an expression referencing a source name not defined in the query', t => {
         t.test('When validating', t => {
-            const income = txnSource('income', [catFilter('Income')], IRDateRange.Year(2025))
+            const income = txnSource('income', catFilter('Income'), IRDateRange.Year(2025))
             const expression = IRExpression.Binary(
                 '-',
                 IRExpression.Call('abs', [IRExpression.Reference('income', 'total')]),
@@ -312,7 +316,7 @@ test('Max suggestions limit', t => {
         t.test('When validating', t => {
             // "In" is a prefix of Income, Income:Salary, Income:Bonus, Income:Dividends
             // but suggestions should be capped at 3
-            const source = txnSource('_default', [catFilter('In')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('In'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, false, 'Then the query is invalid')
             t.ok(result.errors[0].suggestions.length <= 3, 'Then at most 3 suggestions are returned')
@@ -332,7 +336,7 @@ test('Levenshtein distance threshold', t => {
     t.test('Given a value that is distance 4+ from all candidates', t => {
         t.test('When validating', t => {
             // "Zzzqqqxxx" is far from any category
-            const source = txnSource('_default', [catFilter('Zzzqqqxxx')], IRDateRange.Year(2025))
+            const source = txnSource('_default', catFilter('Zzzqqqxxx'), IRDateRange.Year(2025))
             const result = queryValidator(simpleQuery(source), SUMMARY)
             t.equal(result.valid, false, 'Then the query is invalid')
             t.equal(result.errors[0].suggestions.length, 0, 'Then no suggestions are returned for distant values')
@@ -351,8 +355,8 @@ test('Levenshtein distance threshold', t => {
 test('Valid compare query', t => {
     t.test('Given a compare query referencing two defined sources', t => {
         t.test('When validating', t => {
-            const q1 = txnSource('q1', [catFilter('Food:Dining')], IRDateRange.Quarter(1, 2025))
-            const q4 = txnSource('q4', [catFilter('Food:Dining')], IRDateRange.Quarter(4, 2025))
+            const q1 = txnSource('q1', catFilter('Food:Dining'), IRDateRange.Quarter(1, 2025))
+            const q4 = txnSource('q4', catFilter('Food:Dining'), IRDateRange.Quarter(4, 2025))
             const ir = Query(
                 'compare',
                 'Q1 vs Q4',
@@ -373,8 +377,8 @@ test('Valid compare query', t => {
 test('Valid expression query', t => {
     t.test('Given an expression referencing defined sources', t => {
         t.test('When validating', t => {
-            const income = txnSource('income', [catFilter('Income')], IRDateRange.Year(2025))
-            const expenses = txnSource('expenses', [catFilter('Food')], IRDateRange.Year(2025))
+            const income = txnSource('income', catFilter('Income'), IRDateRange.Year(2025))
+            const expenses = txnSource('expenses', catFilter('Food'), IRDateRange.Year(2025))
             const expression = IRExpression.Binary(
                 '*',
                 IRExpression.Binary(

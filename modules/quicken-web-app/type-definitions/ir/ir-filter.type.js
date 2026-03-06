@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum type for query source filter predicates
-// ABOUTME: Two variants — Equals for exact match, OlderThan for date-relative filtering
+// ABOUTME: Boolean tree with leaf predicates and And/Or/Not combinators for compound filtering
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -12,7 +12,18 @@ export const IRFilter = {
     name: 'IRFilter',
     kind: 'taggedSum',
     variants: {
-        Equals:    { field: /^(category|account|payee|accountType)$/, value: 'String' },
-        OlderThan: { field: /^lastActivity$/, days: 'Number' },
+        // Leaf predicates
+        Equals:      { field: /^(category|account|payee|accountType)$/, value: 'String' },
+        OlderThan:   { field: /^lastActivity$/, days: 'Number' },
+        In:          { field: 'String', values: '[String]' },
+        GreaterThan: { field: 'String', value: 'Number' },
+        LessThan:    { field: 'String', value: 'Number' },
+        Between:     { field: 'String', low: 'Number', high: 'Number' },
+        Matches:     { field: 'String', pattern: 'String' },
+
+        // Combinators
+        And:         { filters: '[IRFilter]' },
+        Or:          { filters: '[IRFilter]' },
+        Not:         { filter: 'IRFilter' },
     },
 }

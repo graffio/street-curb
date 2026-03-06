@@ -3,6 +3,7 @@
 
 import { filter, find, flatMap, reduce, map, uniq } from '@graffio/functional'
 import { MetricRegistry } from '../financial-computations/metric-registry.js'
+import { IRFilter } from './types/ir-filter.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -127,17 +128,12 @@ const A = {
         return uniq(all).slice(0, MAX_SUGGESTIONS)
     },
 
-    // Collect validation errors for a single entity filter
-    // Only called for IRFilter.Equals variants (OlderThan is not an entity filter)
-    // @sig collectFilterErrors :: (IRFilter, DataSummary, String) -> [Object]
-    collectFilterErrors: (f, summary, sourceName) => {
-        if (!P.isEntityFilter(f)) return []
-
-        const { field, value } = f
+    // Validate a single entity field value (category, account, payee, accountType) against data summary
+    // @sig collectEntityValueErrors :: (String, String, DataSummary, String) -> [Object]
+    collectEntityValueErrors: (field, value, summary, sourceName) => {
         const candidates = field === 'account' ? map(a => a.name, summary.accounts) : summary[ENTITY_FIELDS[field]]
         const hasMatch = field === 'category' ? P.isCategoryMatch(value, candidates) : P.isExactMatch(value, candidates)
         if (hasMatch) return []
-
         const suggestions = A.findSuggestions(value, candidates)
         const hint = T.formatHint(suggestions)
         const fieldLabel = ENTITY_LABELS[field]
@@ -151,10 +147,42 @@ const A = {
         ]
     },
 
+    // Validate a Matches filter pattern is a valid regex
+    // @sig collectMatchesErrors :: (IRFilter, String) -> [Object]
+    collectMatchesErrors: ({ field, pattern }, sourceName) => {
+        try {
+            new RegExp(pattern) // eslint-disable-line no-new
+            return []
+        } catch (_) {
+            return [
+                F.createError(
+                    `${sourceName}.${field}`,
+                    pattern,
+                    `Invalid regex pattern '${pattern}' in source '${sourceName}'`,
+                ),
+            ]
+        }
+    },
+
+    // Collect validation errors for a filter tree (recurses through And/Or/Not)
+    // @sig collectFilterErrors :: (IRFilter, DataSummary, String) -> [Object]
+    collectFilterErrors: (f, summary, sourceName) => {
+        const { And, Or, Not, Equals, In, Matches } = IRFilter
+        const { field, value, values, filters, filter: childFilter } = f
+        if (And.is(f)) return flatMap(child => A.collectFilterErrors(child, summary, sourceName), filters)
+        if (Or.is(f)) return flatMap(child => A.collectFilterErrors(child, summary, sourceName), filters)
+        if (Not.is(f)) return A.collectFilterErrors(childFilter, summary, sourceName)
+        if (Matches.is(f)) return A.collectMatchesErrors(f, sourceName)
+        if (Equals.is(f)) return A.collectEntityValueErrors(field, value, summary, sourceName)
+        if (In.is(f) && P.isEntityFilter(f))
+            return flatMap(v => A.collectEntityValueErrors(field, v, summary, sourceName), values)
+        return []
+    },
+
     // Collect validation errors for all filters in a source
     // @sig collectSourceErrors :: (IRSource, String, DataSummary) -> [Object]
     collectSourceErrors: (source, sourceName, summary) =>
-        flatMap(f => A.collectFilterErrors(f, summary, sourceName), source.filters),
+        source.filter ? A.collectFilterErrors(source.filter, summary, sourceName) : [],
 
     // Collect validation errors for a single IRExpression.Reference
     // @sig collectReferenceErrors :: (String, [String]) -> [Object]

@@ -55,8 +55,8 @@ const lot = (id, accountId, securityId, purchaseDate, quantity, costBasis) =>
 
 const price = (id, securityId, date, priceValue) => Price(id, securityId, date, priceValue)
 
-const positionsSource = (name, filters = [], dateRange, groupBy, metrics) =>
-    IRSource(name, IRDomain.Positions(), filters, dateRange, groupBy, metrics)
+const positionsSource = (name, filter, dateRange, groupBy, metrics) =>
+    IRSource(name, IRDomain.Positions(), filter, dateRange, groupBy, metrics)
 
 const positionsQuery = (name, source, computation, output) =>
     Query(
@@ -166,7 +166,7 @@ const STATE = {
 test('Validator — valid orderBy accepted', t => {
     t.test('Given a positions query with orderBy total_return_pct desc', t => {
         t.test('When validating against the data summary', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025))
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025))
             const output = IROutput(['marketValue'], undefined, 'total_return_pct', 'desc')
             const ir = positionsQuery('top_performers', source, undefined, output)
             const result = queryValidator(ir, SUMMARY)
@@ -182,7 +182,7 @@ test('Validator — valid orderBy accepted', t => {
 test('Validator — unknown orderBy field rejected', t => {
     t.test('Given a positions query with orderBy on a non-existent field', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025))
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025))
             const output = IROutput(['marketValue'], undefined, 'nonexistent_metric', 'desc')
             const ir = positionsQuery('bad_order', source, undefined, output)
             const result = queryValidator(ir, SUMMARY)
@@ -205,7 +205,7 @@ test('Validator — unknown orderBy field rejected', t => {
 test('Validator — valid limit accepted', t => {
     t.test('Given a positions query with limit 10', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025))
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025))
             const output = IROutput(['marketValue'], undefined, undefined, undefined, 10)
             const ir = positionsQuery('top_ten', source, undefined, output)
             const result = queryValidator(ir, SUMMARY)
@@ -220,7 +220,7 @@ test('Validator — valid limit accepted', t => {
 test('Validator — negative limit rejected', t => {
     t.test('Given a positions query with limit -5', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025))
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025))
             const output = IROutput(['marketValue'], undefined, undefined, undefined, -5)
             const ir = positionsQuery('bad_limit', source, undefined, output)
             const result = queryValidator(ir, SUMMARY)
@@ -239,7 +239,7 @@ test('Validator — negative limit rejected', t => {
 test('Validator — zero limit rejected', t => {
     t.test('Given a positions query with limit 0', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025))
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025))
             const output = IROutput(['marketValue'], undefined, undefined, undefined, 0)
             const ir = positionsQuery('zero_limit', source, undefined, output)
             const result = queryValidator(ir, SUMMARY)
@@ -254,7 +254,7 @@ test('Validator — zero limit rejected', t => {
 test('Validator — limit with groupBy rejected', t => {
     t.test('Given a positions query with both limit and groupBy', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025), 'account')
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025), 'account')
             const output = IROutput(['marketValue'], undefined, undefined, undefined, 10)
             const ir = positionsQuery('grouped_limit', source, undefined, output)
             const result = queryValidator(ir, SUMMARY)
@@ -277,7 +277,7 @@ test('Validator — limit with groupBy rejected', t => {
 test('Validator — valid metrics accepted', t => {
     t.test('Given a positions query with registered metric names', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025), undefined, [
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025), undefined, [
                 'total_return_pct',
                 'irr',
             ])
@@ -294,7 +294,7 @@ test('Validator — valid metrics accepted', t => {
 test('Validator — unknown metric name rejected', t => {
     t.test('Given a positions query with an unregistered metric name', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Year(2025), undefined, [
+            const source = positionsSource('_default', undefined, IRDateRange.Year(2025), undefined, [
                 'total_return_pct',
                 'fake_metric',
             ])
@@ -319,7 +319,7 @@ test('Validator — unknown metric name rejected', t => {
 test('Validator — valid timeSeries accepted', t => {
     t.test('Given a positions query with monthly timeSeries', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2025-01-01', '2025-03-31'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2025-01-01', '2025-03-31'))
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_series', source, computation)
             const result = queryValidator(ir, SUMMARY)
@@ -349,7 +349,7 @@ test('Type system — invalid timeSeries interval rejected at construction', t =
 test('Validator — timeSeries with excessive date points rejected', t => {
     t.test('Given a daily timeSeries over 2 years (730+ points)', t => {
         t.test('When validating', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2023-01-01', '2024-12-31'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2023-01-01', '2024-12-31'))
             const computation = IRComputation.TimeSeries(source.name, 'daily')
             const ir = positionsQuery('too_many_points', source, computation)
             const result = queryValidator(ir, SUMMARY)
@@ -372,7 +372,7 @@ test('Validator — timeSeries with excessive date points rejected', t => {
 test('Execution — orderBy desc produces correctly sorted positions', t => {
     t.test('Given 3 positions with different unrealized gains', t => {
         t.test('When executing with orderBy unrealizedGainLossPercent desc', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2024-01-01', '2025-03-01'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'unrealizedGainLossPercent', 'desc')
             const ir = positionsQuery('sorted_desc', source, undefined, output)
             const result = queryExecutionEngine(ir, STATE)
@@ -395,7 +395,7 @@ test('Execution — orderBy desc produces correctly sorted positions', t => {
 test('Execution — orderBy asc produces ascending sort', t => {
     t.test('Given positions with different market values', t => {
         t.test('When executing with orderBy marketValue asc', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2024-01-01', '2025-03-01'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'marketValue', 'asc')
             const ir = positionsQuery('sorted_asc', source, undefined, output)
             const result = queryExecutionEngine(ir, STATE)
@@ -417,7 +417,7 @@ test('Execution — orderBy asc produces ascending sort', t => {
 test('Execution — orderBy without groupBy returns flat list', t => {
     t.test('Given a positions query with orderBy but no groupBy', t => {
         t.test('When executing', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2024-01-01', '2025-03-01'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'marketValue', 'desc')
             const ir = positionsQuery('flat_sorted', source, undefined, output)
             const result = queryExecutionEngine(ir, STATE)
@@ -444,7 +444,7 @@ test('Execution — orderBy without groupBy returns flat list', t => {
 test('Execution — limit truncates after sort', t => {
     t.test('Given 3 positions and limit 2 with orderBy desc', t => {
         t.test('When executing', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2024-01-01', '2025-03-01'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2024-01-01', '2025-03-01'))
             const output = IROutput(['marketValue'], undefined, 'marketValue', 'desc', 2)
             const ir = positionsQuery('top_two', source, undefined, output)
             const result = queryExecutionEngine(ir, STATE)
@@ -470,10 +470,13 @@ test('Execution — limit truncates after sort', t => {
 test('Execution — metrics attaches computed values to each position', t => {
     t.test('Given a positions query requesting total_return_pct and irr metrics', t => {
         t.test('When executing', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2024-01-01', '2025-03-01'), undefined, [
-                'total_return_pct',
-                'irr',
-            ])
+            const source = positionsSource(
+                '_default',
+                undefined,
+                IRDateRange.Range('2024-01-01', '2025-03-01'),
+                undefined,
+                ['total_return_pct', 'irr'],
+            )
             const ir = positionsQuery('with_metrics', source)
             const result = queryExecutionEngine(ir, STATE)
             const positions = result.tree.nodes
@@ -491,9 +494,13 @@ test('Execution — metrics attaches computed values to each position', t => {
 test('Execution — metrics with unknown name throws', t => {
     t.test('Given a positions query requesting a non-existent metric', t => {
         t.test('When executing', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2024-01-01', '2025-03-01'), undefined, [
-                'nonexistent_metric',
-            ])
+            const source = positionsSource(
+                '_default',
+                undefined,
+                IRDateRange.Range('2024-01-01', '2025-03-01'),
+                undefined,
+                ['nonexistent_metric'],
+            )
             const ir = positionsQuery('bad_metric', source)
             t.throws(
                 () => queryExecutionEngine(ir, STATE),
@@ -514,7 +521,7 @@ test('Execution — metrics with unknown name throws', t => {
 test('Execution — timeSeries monthly over 3 months produces 3 snapshots', t => {
     t.test('Given a monthly timeSeries query from Jan to Mar 2025', t => {
         t.test('When executing', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2025-01-01', '2025-03-31'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2025-01-01', '2025-03-31'))
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_net_worth', source, computation)
             const result = queryExecutionEngine(ir, STATE)
@@ -530,7 +537,7 @@ test('Execution — timeSeries monthly over 3 months produces 3 snapshots', t =>
 test('Execution — timeSeries snapshots have correct end-of-month dates', t => {
     t.test('Given a monthly timeSeries query from Jan to Mar 2025', t => {
         t.test('When examining snapshot dates', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2025-01-01', '2025-03-31'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2025-01-01', '2025-03-31'))
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_dates', source, computation)
             const result = queryExecutionEngine(ir, STATE)
@@ -546,7 +553,7 @@ test('Execution — timeSeries snapshots have correct end-of-month dates', t => 
 test('Execution — timeSeries snapshots contain positions', t => {
     t.test('Given a monthly timeSeries query', t => {
         t.test('When examining snapshot content', t => {
-            const source = positionsSource('_default', [], IRDateRange.Range('2025-01-01', '2025-03-31'))
+            const source = positionsSource('_default', undefined, IRDateRange.Range('2025-01-01', '2025-03-31'))
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_content', source, computation)
             const result = queryExecutionEngine(ir, STATE)

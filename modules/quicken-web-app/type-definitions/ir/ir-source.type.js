@@ -16,7 +16,7 @@ export const IRSource = {
     fields: {
         name:      FieldTypes.sourceName,
         domain:    'IRDomain',
-        filters:   '[IRFilter]',
+        filter:    'IRFilter?',
         dateRange: 'IRDateRange?',
         groupBy:   { pattern: FieldTypes.groupDimension, optional: true },
         metrics:   '[String]?',
