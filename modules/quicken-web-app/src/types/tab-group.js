@@ -6,7 +6,7 @@
  *
  *  id          : FieldTypes.tabGroupId,
  *  views       : "{View:id}",
- *  activeViewId: /^(reg|rpt|rec)_[a-z0-9_]+$/,
+ *  activeViewId: /^(reg|rpt|rec|inv|qry)_[a-z0-9_]+$/,
  *  width       : "Number"
  *
  */
@@ -26,14 +26,14 @@ import { View } from './view.js'
 /*
  * Construct a TabGroup instance
  * @sig TabGroup :: (String, {View}, ActiveViewId?, Number) -> TabGroup
- *     ActiveViewId = /^(reg|rpt|rec)_[a-z0-9_]+$/
+ *     ActiveViewId = /^(reg|rpt|rec|inv|qry)_[a-z0-9_]+$/
  */
 const TabGroup = function TabGroup(id, views, activeViewId, width) {
     const constructorName = 'TabGroup(id, views, activeViewId, width)'
 
     R.validateRegex(constructorName, FieldTypes.tabGroupId, 'id', false, id)
     R.validateLookupTable(constructorName, 'View', 'views', false, views)
-    R.validateRegex(constructorName, /^(reg|rpt|rec)_[a-z0-9_]+$/, 'activeViewId', true, activeViewId)
+    R.validateRegex(constructorName, /^(reg|rpt|rec|inv|qry)_[a-z0-9_]+$/, 'activeViewId', true, activeViewId)
     R.validateNumber(constructorName, 'width', false, width)
 
     const result = Object.create(prototype)

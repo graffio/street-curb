@@ -17,9 +17,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // ImportIssue constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const ImportIssue = {
-    toString: () => 'ImportIssue',
-}
+const ImportIssue = { toString: () => 'ImportIssue' }
 
 // Add hidden properties
 Object.defineProperty(ImportIssue, '@@typeName', { value: 'ImportIssue', enumerable: false })
@@ -28,10 +26,7 @@ Object.defineProperty(ImportIssue, '@@tagNames', { value: ['SingleAccount', 'Mis
 // Type prototype with match method
 const ImportIssuePrototype = {}
 
-Object.defineProperty(ImportIssuePrototype, 'match', {
-    value: R.match(ImportIssue['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(ImportIssuePrototype, 'match', { value: R.match(ImportIssue['@@tagNames']), enumerable: false })
 
 Object.defineProperty(ImportIssuePrototype, 'constructor', {
     value: ImportIssue,

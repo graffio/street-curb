@@ -212,10 +212,7 @@ Blockface.updateSegmentUse = (blockface, updateSegmentUseAction) => {
         blockface.segments.map((segment, i) => (i === index ? Segment.updateUse(segment, use) : segment)),
         Segment,
     )
-    return Blockface.from({
-        ...blockface,
-        segments,
-    })
+    return Blockface.from({ ...blockface, segments })
 }
 
 Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
@@ -237,10 +234,7 @@ Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
             blockface.segments.map((s, i) => (i === index ? Segment(s.id, s.use, roundedLength) : s)),
             Segment,
         )
-        return Blockface.from({
-            ...blockface,
-            segments: newSegments,
-        })
+        return Blockface.from({ ...blockface, segments: newSegments })
     }
     const nextSegment = blockface.segments[index + 1]
     const newNextLength = Blockface._roundToPrecision(nextSegment.length - lengthDelta)
@@ -253,10 +247,7 @@ Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
         }),
         Segment,
     )
-    return Blockface.from({
-        ...blockface,
-        segments: newSegments,
-    })
+    return Blockface.from({ ...blockface, segments: newSegments })
 }
 
 Blockface.addSegment = (blockface, addSegmentAction) => {
@@ -271,10 +262,7 @@ Blockface.addSegment = (blockface, addSegmentAction) => {
     const newSegments = [...blockface.segments]
     const insertIndex = targetIndex >= 0 ? targetIndex + 1 : newSegments.length
     newSegments.splice(insertIndex, 0, newSegment)
-    return Blockface.from({
-        ...blockface,
-        segments: LookupTable(newSegments, Segment),
-    })
+    return Blockface.from({ ...blockface, segments: LookupTable(newSegments, Segment) })
 }
 
 Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
@@ -301,36 +289,21 @@ Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
         ],
         Segment,
     )
-    return Blockface.from({
-        ...blockface,
-        segments: newSegments,
-    })
+    return Blockface.from({ ...blockface, segments: newSegments })
 }
 
-Blockface.updateMetadata = (blockface, updatedBy) =>
-    Blockface.from({
-        ...blockface,
-        updatedBy,
-        updatedAt: new Date(),
-    })
+Blockface.updateMetadata = (blockface, updatedBy) => Blockface.from({ ...blockface, updatedBy, updatedAt: new Date() })
 
 Blockface.replaceSegments = (blockface, replaceSegmentsAction) => {
     const { segments } = replaceSegmentsAction
     if (!blockface) return blockface
     const newTaggedSegments = LookupTable.is(segments) ? segments : LookupTable(segments, Segment)
-    return Blockface.from({
-        ...blockface,
-        segments: newTaggedSegments,
-    })
+    return Blockface.from({ ...blockface, segments: newTaggedSegments })
 }
 
 Blockface.totalLength = blockface => {
     if (!blockface?.geometry?.coordinates) return 240
-    const lengthKm = length({
-        type: 'Feature',
-        geometry: blockface.geometry,
-        properties: {},
-    })
+    const lengthKm = length({ type: 'Feature', geometry: blockface.geometry, properties: {} })
     return Math.round(lengthKm * 3280.84)
 }
 

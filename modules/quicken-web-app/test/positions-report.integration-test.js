@@ -22,9 +22,9 @@ tap.before(async () => {
     await wait(500)
 
     // Open second tab group to exercise multi-instance module-level state
-    session.clickByText('Split')
-    await wait(300)
     session.clickByRef('Primary Checking')
+    await wait(300)
+    session.browser('press', ['Control+Shift+l'])
     await wait(500)
     session.browser('click', ['text=Investment Positions >> nth=1'])
     await wait(300)
@@ -63,7 +63,7 @@ tap.test('positions: by Security shows individual securities with shares and val
     const securityView = session.browser('snapshot')
 
     // Verify at least 3 individual securities
-    const spotCheckSecurities = expected.positions.filter(p => p.account === 'Fidelity Brokerage').slice(0, 3)
+    const spotCheckSecurities = expected.holdings.filter(p => p.account === 'Fidelity Brokerage').slice(0, 3)
     spotCheckSecurities.forEach(({ marketValue, shares, symbol }) => {
         t.ok(securityView.includes(symbol), `shows security: ${symbol}`)
         const isWhole = Number.isInteger(shares)
@@ -158,7 +158,7 @@ tap.test('positions: as-of date shows correct historical values', async t => {
     t.notOk(afterAsOf.includes('Something went wrong'), 'no crash after as-of date change')
 
     // Verify account totals from positionsAsOf
-    const { accountTotals } = expected.positionsAsOf
+    const { accountTotals } = expected.holdingsAsOf
     Object.entries(accountTotals).forEach(([name, total]) => {
         const formatted = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         t.ok(afterAsOf.includes(formatted), `${name} shows historical total $${formatted}`)

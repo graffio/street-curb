@@ -118,9 +118,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // ASTNode constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const ASTNode = {
-    toString: () => 'ASTNode',
-}
+const ASTNode = { toString: () => 'ASTNode' }
 
 // Add hidden properties
 Object.defineProperty(ASTNode, '@@typeName', { value: 'ASTNode', enumerable: false })
@@ -168,10 +166,7 @@ Object.defineProperty(ASTNode, '@@tagNames', {
 // Type prototype with match method
 const ASTNodePrototype = {}
 
-Object.defineProperty(ASTNodePrototype, 'match', {
-    value: R.match(ASTNode['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(ASTNodePrototype, 'match', { value: R.match(ASTNode['@@tagNames']), enumerable: false })
 
 Object.defineProperty(ASTNodePrototype, 'constructor', {
     value: ASTNode,

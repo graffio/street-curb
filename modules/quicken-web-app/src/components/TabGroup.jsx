@@ -10,6 +10,8 @@ import { post } from '../commands/post.js'
 import { CategoryReportPage } from '../pages/CategoryReportPage.jsx'
 import { InvestmentRegisterPage } from '../pages/InvestmentRegisterPage.jsx'
 import { InvestmentReportPage } from '../pages/InvestmentReportPage.jsx'
+import { QueryResultPage } from '../pages/QueryResultPage.jsx'
+import { ReportMetadata } from '../pages/report-metadata.js'
 import { TransactionRegisterPage } from '../pages/TransactionRegisterPage.jsx'
 import * as S from '../store/selectors.js'
 import { Account, Action } from '../types/index.js'
@@ -190,10 +192,28 @@ const TabBar = ({ groupId }) => {
     )
 }
 
+// prettier-ignore
+const ENGINE_METADATA = {
+    engine_spending:          ReportMetadata.ENGINE_TRANSACTION_TREE_METADATA,
+    engine_positions:         ReportMetadata.ENGINE_POSITION_TREE_METADATA,
+    engine_large_txn:         ReportMetadata.SEED_QUERY_METADATA.large_transactions,
+    engine_no_transfers:      ReportMetadata.SEED_QUERY_METADATA.exclude_transfers,
+    engine_amount_range:      ReportMetadata.SEED_QUERY_METADATA.amount_range,
+    engine_dining:            ReportMetadata.SEED_QUERY_METADATA.dining_multi_account,
+    engine_payee:             ReportMetadata.SEED_QUERY_METADATA.payee_pattern,
+}
+
 // Self-selecting report page — renders correct report type based on reportType
 // @sig ReportPage :: { viewId: String, reportType: String } -> ReactElement
-const ReportPage = ({ viewId, reportType }) =>
-    reportType === 'positions' ? <InvestmentReportPage viewId={viewId} /> : <CategoryReportPage viewId={viewId} />
+const ReportPage = ({ viewId, reportType }) => {
+    const engineMetadata = ENGINE_METADATA[reportType]
+    if (engineMetadata) return <QueryResultPage viewId={viewId} metadata={engineMetadata} />
+    return reportType === 'positions' ? (
+        <InvestmentReportPage viewId={viewId} />
+    ) : (
+        <CategoryReportPage viewId={viewId} />
+    )
+}
 
 // Renders the appropriate page component for the active view — self-selects group from state
 // @sig ViewContent :: { groupId: String } -> ReactElement

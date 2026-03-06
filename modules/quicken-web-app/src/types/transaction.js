@@ -54,9 +54,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // Transaction constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const Transaction = {
-    toString: () => 'Transaction',
-}
+const Transaction = { toString: () => 'Transaction' }
 
 // Add hidden properties
 Object.defineProperty(Transaction, '@@typeName', { value: 'Transaction', enumerable: false })
@@ -65,10 +63,7 @@ Object.defineProperty(Transaction, '@@tagNames', { value: ['Bank', 'Investment']
 // Type prototype with match method
 const TransactionPrototype = {}
 
-Object.defineProperty(TransactionPrototype, 'match', {
-    value: R.match(Transaction['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(TransactionPrototype, 'match', { value: R.match(Transaction['@@tagNames']), enumerable: false })
 
 Object.defineProperty(TransactionPrototype, 'constructor', {
     value: Transaction,
@@ -391,10 +386,7 @@ Transaction.matchesSecurityText = (query, txn, securities) => {
     return matches(security.symbol) || matches(security.name)
 }
 
-Transaction.toRegisterRow = txn => ({
-    transaction: txn,
-    runningBalance: txn.runningBalance,
-})
+Transaction.toRegisterRow = txn => ({ transaction: txn, runningBalance: txn.runningBalance })
 
 Transaction.toEnriched = (txn, categories, accounts) => ({
     ...txn,
@@ -508,11 +500,7 @@ Transaction.balanceBreakdown = transactions => {
         .filter(txn => txn.cleared === 'R' || txn.cleared === 'c')
         .reduce((sum, txn) => sum + txn.amount, 0)
     const total = transactions.reduce((sum, txn) => sum + txn.amount, 0)
-    return {
-        cleared,
-        uncleared: total - cleared,
-        total,
-    }
+    return { cleared, uncleared: total - cleared, total }
 }
 
 Transaction.reconciliationDifference = (statementBalance, transactions) => {

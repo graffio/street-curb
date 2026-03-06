@@ -17,9 +17,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // SortMode constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const SortMode = {
-    toString: () => 'SortMode',
-}
+const SortMode = { toString: () => 'SortMode' }
 
 // Add hidden properties
 Object.defineProperty(SortMode, '@@typeName', { value: 'SortMode', enumerable: false })
@@ -31,10 +29,7 @@ Object.defineProperty(SortMode, '@@tagNames', {
 // Type prototype with match method
 const SortModePrototype = {}
 
-Object.defineProperty(SortModePrototype, 'match', {
-    value: R.match(SortMode['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(SortModePrototype, 'match', { value: R.match(SortMode['@@tagNames']), enumerable: false })
 
 Object.defineProperty(SortModePrototype, 'constructor', {
     value: SortMode,

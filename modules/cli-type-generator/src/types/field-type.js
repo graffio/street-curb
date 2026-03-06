@@ -22,9 +22,7 @@ import { RegExp } from './reg-exp.js'
 // FieldType constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const FieldType = {
-    toString: () => 'FieldType',
-}
+const FieldType = { toString: () => 'FieldType' }
 
 // Add hidden properties
 Object.defineProperty(FieldType, '@@typeName', { value: 'FieldType', enumerable: false })
@@ -36,10 +34,7 @@ Object.defineProperty(FieldType, '@@tagNames', {
 // Type prototype with match method
 const FieldTypePrototype = {}
 
-Object.defineProperty(FieldTypePrototype, 'match', {
-    value: R.match(FieldType['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(FieldTypePrototype, 'match', { value: R.match(FieldType['@@tagNames']), enumerable: false })
 
 Object.defineProperty(FieldTypePrototype, 'constructor', {
     value: FieldType,

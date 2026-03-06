@@ -33,9 +33,7 @@ import { Account } from './account.js'
 // QueryResult constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const QueryResult = {
-    toString: () => 'QueryResult',
-}
+const QueryResult = { toString: () => 'QueryResult' }
 
 // Add hidden properties
 Object.defineProperty(QueryResult, '@@typeName', { value: 'QueryResult', enumerable: false })
@@ -47,10 +45,7 @@ Object.defineProperty(QueryResult, '@@tagNames', {
 // Type prototype with match method
 const QueryResultPrototype = {}
 
-Object.defineProperty(QueryResultPrototype, 'match', {
-    value: R.match(QueryResult['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(QueryResultPrototype, 'match', { value: R.match(QueryResult['@@tagNames']), enumerable: false })
 
 Object.defineProperty(QueryResultPrototype, 'constructor', {
     value: QueryResult,

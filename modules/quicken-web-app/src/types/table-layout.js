@@ -97,25 +97,14 @@ TableLayout.from = TableLayout._from
 //
 // -------------------------------------------------------------------------------------------------------------
 
-TableLayout.toSorting = layout =>
-    layout.sortOrder.map(s => ({
-        id: s.id,
-        desc: s.isDescending,
-    }))
+TableLayout.toSorting = layout => layout.sortOrder.map(s => ({ id: s.id, desc: s.isDescending }))
 
 TableLayout.toDataTableProps = tableLayout => {
     const { columnDescriptors, sortOrder } = tableLayout
     const columnOrder = columnDescriptors.map(d => d.id)
     const columnSizing = Object.fromEntries(columnDescriptors.map(d => [d.id, d.width]))
-    const sorting = sortOrder.map(s => ({
-        id: s.id,
-        desc: s.isDescending,
-    }))
-    return {
-        sorting,
-        columnSizing,
-        columnOrder,
-    }
+    const sorting = sortOrder.map(s => ({ id: s.id, desc: s.isDescending }))
+    return { sorting, columnSizing, columnOrder }
 }
 
 TableLayout.reconcile = (tableLayout, columns) => {

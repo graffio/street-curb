@@ -75,6 +75,7 @@ const createEmptyState = () => ({
     pickerSearch: '',
     pickerPosition: undefined,
     actionRegistryVersion: 0,
+    queryIR: {},
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -153,6 +154,9 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         // Drag state actions
         SetDraggingView : () => ({ ...state, draggingViewId: action.viewId }),
         SetDropTarget   : () => ({ ...state, dropTargetGroupId: action.groupId }),
+
+        // Query IR actions
+        SetQueryIR       : () => ({ ...state, queryIR: { ...state.queryIR, [action.viewId]: action.query } }),
 
         // Effect-only actions (handled in post.js, no state change)
         InitializeSystem : () => state,

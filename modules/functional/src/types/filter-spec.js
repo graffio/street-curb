@@ -26,9 +26,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // FilterSpec constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const FilterSpec = {
-    toString: () => 'FilterSpec',
-}
+const FilterSpec = { toString: () => 'FilterSpec' }
 
 // Add hidden properties
 Object.defineProperty(FilterSpec, '@@typeName', { value: 'FilterSpec', enumerable: false })
@@ -40,10 +38,7 @@ Object.defineProperty(FilterSpec, '@@tagNames', {
 // Type prototype with match method
 const FilterSpecPrototype = {}
 
-Object.defineProperty(FilterSpecPrototype, 'match', {
-    value: R.match(FilterSpec['@@tagNames']),
-    enumerable: false,
-})
+Object.defineProperty(FilterSpecPrototype, 'match', { value: R.match(FilterSpec['@@tagNames']), enumerable: false })
 
 Object.defineProperty(FilterSpecPrototype, 'constructor', {
     value: FilterSpec,

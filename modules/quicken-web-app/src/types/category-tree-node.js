@@ -22,9 +22,7 @@ import { CategoryAggregate } from './category-aggregate.js'
 // CategoryTreeNode constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const CategoryTreeNode = {
-    toString: () => 'CategoryTreeNode',
-}
+const CategoryTreeNode = { toString: () => 'CategoryTreeNode' }
 
 // Add hidden properties
 Object.defineProperty(CategoryTreeNode, '@@typeName', { value: 'CategoryTreeNode', enumerable: false })
