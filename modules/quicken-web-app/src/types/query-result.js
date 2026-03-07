@@ -14,11 +14,19 @@
  *      value     : "Number",
  *      expression: "Object"
  *  FilteredEntities
- *      entities: "[Account]",
+ *      entities: "[Object]",
  *      source  : FieldTypes.sourceName
  *  TimeSeries
  *      snapshots: "[Object]",
  *      source   : FieldTypes.sourceName
+ *  Pivot
+ *      columns  : "[String]",
+ *      rows     : "[String]",
+ *      cells    : "Object",
+ *      computed : "Object",
+ *      rowTotals: "Object"
+ *  RunningBalance
+ *      entries: "[Object]"
  *
  */
 
@@ -26,7 +34,6 @@ import { FieldTypes } from './field-types.js'
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { QueryResultTree } from './query-result-tree.js'
-import { Account } from './account.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -38,7 +45,7 @@ const QueryResult = { toString: () => 'QueryResult' }
 // Add hidden properties
 Object.defineProperty(QueryResult, '@@typeName', { value: 'QueryResult', enumerable: false })
 Object.defineProperty(QueryResult, '@@tagNames', {
-    value: ['Identity', 'Comparison', 'Scalar', 'FilteredEntities', 'TimeSeries'],
+    value: ['Identity', 'Comparison', 'Scalar', 'FilteredEntities', 'TimeSeries', 'Pivot', 'RunningBalance'],
     enumerable: false,
 })
 
@@ -68,6 +75,8 @@ const toString = {
     scalar          : function () { return `QueryResult.Scalar(${R._toString(this.value)}, ${R._toString(this.expression)})` },
     filteredEntities: function () { return `QueryResult.FilteredEntities(${R._toString(this.entities)}, ${R._toString(this.source)})` },
     timeSeries      : function () { return `QueryResult.TimeSeries(${R._toString(this.snapshots)}, ${R._toString(this.source)})` },
+    pivot           : function () { return `QueryResult.Pivot(${R._toString(this.columns)}, ${R._toString(this.rows)}, ${R._toString(this.cells)}, ${R._toString(this.computed)}, ${R._toString(this.rowTotals)})` },
+    runningBalance  : function () { return `QueryResult.RunningBalance(${R._toString(this.entries)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -82,6 +91,8 @@ const toJSON = {
     scalar          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     filteredEntities: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     timeSeries      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    pivot           : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    runningBalance  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -148,12 +159,12 @@ QueryResult.Scalar = ScalarConstructor
 
 /*
  * Construct a QueryResult.FilteredEntities instance
- * @sig FilteredEntities :: ([Account], String) -> QueryResult.FilteredEntities
+ * @sig FilteredEntities :: ([Object], String) -> QueryResult.FilteredEntities
  */
 const FilteredEntitiesConstructor = function FilteredEntities(entities, source) {
     const constructorName = 'QueryResult.FilteredEntities(entities, source)'
     R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateArray(constructorName, 1, 'Tagged', 'Account', 'entities', false, entities)
+    R.validateArray(constructorName, 1, 'Object', undefined, 'entities', false, entities)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
 
     const result = Object.create(FilteredEntitiesPrototype)
@@ -181,6 +192,46 @@ const TimeSeriesConstructor = function TimeSeries(snapshots, source) {
 }
 
 QueryResult.TimeSeries = TimeSeriesConstructor
+
+/*
+ * Construct a QueryResult.Pivot instance
+ * @sig Pivot :: ([String], [String], Object, Object, Object) -> QueryResult.Pivot
+ */
+const PivotConstructor = function Pivot(columns, rows, cells, computed, rowTotals) {
+    const constructorName = 'QueryResult.Pivot(columns, rows, cells, computed, rowTotals)'
+    R.validateArgumentLength(constructorName, 5, arguments)
+    R.validateArray(constructorName, 1, 'String', undefined, 'columns', false, columns)
+    R.validateArray(constructorName, 1, 'String', undefined, 'rows', false, rows)
+    R.validateObject(constructorName, 'cells', false, cells)
+    R.validateObject(constructorName, 'computed', false, computed)
+    R.validateObject(constructorName, 'rowTotals', false, rowTotals)
+
+    const result = Object.create(PivotPrototype)
+    result.columns = columns
+    result.rows = rows
+    result.cells = cells
+    result.computed = computed
+    result.rowTotals = rowTotals
+    return result
+}
+
+QueryResult.Pivot = PivotConstructor
+
+/*
+ * Construct a QueryResult.RunningBalance instance
+ * @sig RunningBalance :: ([Object]) -> QueryResult.RunningBalance
+ */
+const RunningBalanceConstructor = function RunningBalance(entries) {
+    const constructorName = 'QueryResult.RunningBalance(entries)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateArray(constructorName, 1, 'Object', undefined, 'entries', false, entries)
+
+    const result = Object.create(RunningBalancePrototype)
+    result.entries = entries
+    return result
+}
+
+QueryResult.RunningBalance = RunningBalanceConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -227,6 +278,22 @@ const TimeSeriesPrototype = Object.create(QueryResultPrototype, {
     constructor: { value: TimeSeriesConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const PivotPrototype = Object.create(QueryResultPrototype, {
+    '@@tagName': { value: 'Pivot', enumerable: false },
+    '@@typeName': { value: 'QueryResult', enumerable: false },
+    toString: { value: toString.pivot, enumerable: false },
+    toJSON: { value: toJSON.pivot, enumerable: false },
+    constructor: { value: PivotConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const RunningBalancePrototype = Object.create(QueryResultPrototype, {
+    '@@tagName': { value: 'RunningBalance', enumerable: false },
+    '@@typeName': { value: 'QueryResult', enumerable: false },
+    toString: { value: toString.runningBalance, enumerable: false },
+    toJSON: { value: toJSON.runningBalance, enumerable: false },
+    constructor: { value: RunningBalanceConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
@@ -235,6 +302,8 @@ ComparisonConstructor.prototype = ComparisonPrototype
 ScalarConstructor.prototype = ScalarPrototype
 FilteredEntitiesConstructor.prototype = FilteredEntitiesPrototype
 TimeSeriesConstructor.prototype = TimeSeriesPrototype
+PivotConstructor.prototype = PivotPrototype
+RunningBalanceConstructor.prototype = RunningBalancePrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
@@ -243,6 +312,8 @@ ComparisonConstructor.is = val => val && val.constructor === ComparisonConstruct
 ScalarConstructor.is = val => val && val.constructor === ScalarConstructor
 FilteredEntitiesConstructor.is = val => val && val.constructor === FilteredEntitiesConstructor
 TimeSeriesConstructor.is = val => val && val.constructor === TimeSeriesConstructor
+PivotConstructor.is = val => val && val.constructor === PivotConstructor
+RunningBalanceConstructor.is = val => val && val.constructor === RunningBalanceConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
@@ -251,6 +322,8 @@ ComparisonConstructor.toString = () => 'QueryResult.Comparison'
 ScalarConstructor.toString = () => 'QueryResult.Scalar'
 FilteredEntitiesConstructor.toString = () => 'QueryResult.FilteredEntities'
 TimeSeriesConstructor.toString = () => 'QueryResult.TimeSeries'
+PivotConstructor.toString = () => 'QueryResult.Pivot'
+RunningBalanceConstructor.toString = () => 'QueryResult.RunningBalance'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
@@ -262,6 +335,11 @@ ComparisonConstructor._from = _input => {
 ScalarConstructor._from = _input => QueryResult.Scalar(_input.value, _input.expression)
 FilteredEntitiesConstructor._from = _input => QueryResult.FilteredEntities(_input.entities, _input.source)
 TimeSeriesConstructor._from = _input => QueryResult.TimeSeries(_input.snapshots, _input.source)
+PivotConstructor._from = _input => {
+    const { columns, rows, cells, computed, rowTotals } = _input
+    return QueryResult.Pivot(columns, rows, cells, computed, rowTotals)
+}
+RunningBalanceConstructor._from = _input => QueryResult.RunningBalance(_input.entries)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -270,6 +348,8 @@ ComparisonConstructor.from = ComparisonConstructor._from
 ScalarConstructor.from = ScalarConstructor._from
 FilteredEntitiesConstructor.from = FilteredEntitiesConstructor._from
 TimeSeriesConstructor.from = TimeSeriesConstructor._from
+PivotConstructor.from = PivotConstructor._from
+RunningBalanceConstructor.from = RunningBalanceConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
 
@@ -278,7 +358,7 @@ TimeSeriesConstructor.from = TimeSeriesConstructor._from
  * @sig is :: Any -> Boolean
  */
 QueryResult.is = v => {
-    const { Identity, Comparison, Scalar, FilteredEntities, TimeSeries } = QueryResult
+    const { Identity, Comparison, Scalar, FilteredEntities, TimeSeries, Pivot, RunningBalance } = QueryResult
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return (
@@ -286,7 +366,9 @@ QueryResult.is = v => {
         constructor === Comparison ||
         constructor === Scalar ||
         constructor === FilteredEntities ||
-        constructor === TimeSeries
+        constructor === TimeSeries ||
+        constructor === Pivot ||
+        constructor === RunningBalance
     )
 }
 
