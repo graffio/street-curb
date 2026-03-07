@@ -185,12 +185,24 @@ test('buildChipPatch — builds patch object from chip state', t => {
         t.equal(patch.dateRange.end, '2025-12-31', 'Then end is ISO formatted')
         t.end()
     })
-    t.test('Given asOfDate chip', t => {
+    t.test('Given asOfDate chip on PositionQuery', t => {
         const state = { ...emptyChipState, asOfDate: '2025-06-15' }
         const patch = buildChipPatch(posQuery, state, ACCOUNTS)
         t.ok(patch.dateRange, 'Then patch has dateRange')
         t.equal(patch.dateRange.start, '2025-06-15', 'Then start equals asOfDate')
         t.equal(patch.dateRange.end, '2025-06-15', 'Then end equals asOfDate')
+        t.end()
+    })
+    t.test('Given asOfDate chip on TransactionQuery', t => {
+        const state = { ...emptyChipState, asOfDate: '2025-06-15' }
+        const patch = buildChipPatch(txQuery, state, ACCOUNTS)
+        t.ok(patch.dateRange, 'Then patch has dateRange (variant-agnostic)')
+        t.equal(patch.dateRange.start, '2025-06-15', 'Then start equals asOfDate')
+        t.end()
+    })
+    t.test('Given undefined asOfDate (default)', t => {
+        const patch = buildChipPatch(txQuery, emptyChipState, ACCOUNTS)
+        t.notOk(patch.dateRange, 'Then no dateRange patch when asOfDate is undefined')
         t.end()
     })
     t.test('Given asOfDate and dateRange chips together', t => {

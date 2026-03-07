@@ -9,7 +9,7 @@ import { TransactionFilter } from '../../types/index.js'
 const createDefaultFilter = viewId =>
     TransactionFilter(
         viewId,
-        new Date().toISOString().slice(0, 10), // asOfDate
+        undefined, // asOfDate
         { start: undefined, end: undefined }, // dateRange
         'all', // dateRangeKey
         '', // filterQuery

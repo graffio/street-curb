@@ -70,6 +70,8 @@ const buildChipFilters = ({ selectedCategories, selectedAccounts, filterQuery },
 }
 
 // Build a patch object from chip state — only includes fields that changed
+// asOfDate takes priority over dateRange when both are set (asOfDate is a point-in-time valuation date,
+// only set explicitly by the user via AsOfDateChip on position pages — never defaulted)
 // @sig buildChipPatch :: (Object, Object, LookupTable) -> Object
 const buildChipPatch = (ir, { asOfDate, dateRange, groupBy, ...rest }, accts) => {
     const chipFilters = buildChipFilters(rest, accts)

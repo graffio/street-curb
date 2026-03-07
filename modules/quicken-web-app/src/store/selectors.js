@@ -492,7 +492,7 @@ const _positionsAsOf = (state, viewId) => {
         accounts,
         securities,
         transactions,
-        asOfDate,
+        asOfDate: asOfDate ?? new Date().toISOString().slice(0, 10),
         selectedAccountIds: selectedAccounts,
         filterQuery,
     })
@@ -531,7 +531,7 @@ const _enrichedPosition = (state, accountId, securityId) => {
         transactions,
         securities,
         prices,
-        asOfDate,
+        asOfDate: asOfDate ?? new Date().toISOString().slice(0, 10),
         benchmarkSecurityId: benchmark?.id,
     }
 
