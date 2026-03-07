@@ -2,7 +2,6 @@
 // ABOUTME: Thin state accessors and memoized derived selectors
 import {
     applySort,
-    compactMap,
     containsIgnoreCase,
     LookupTable,
     memoizeOnce,
@@ -34,7 +33,7 @@ import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
 import { toFinancialQueryDescription } from '../query-language/to-financial-query-description.js'
 import { runFinancialQuery } from '../query-language/run-financial-query.js'
-import { FinancialQuery, IRDateRange, IRFilter, IRGrouping } from '../query-language/types/index.js'
+import { MergeChipFilters } from '../query-language/merge-chip-filters.js'
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
@@ -446,137 +445,12 @@ const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAc
 // prettier-ignore
 const ENGINE_STATE_KEYS = ['accounts', 'categories', 'transactions', 'securities', 'lots', 'lotAllocations', 'prices', 'transactionFilters']
 
-// Merge chip filter selections from transactionFilters into the Query IR before execution.
-// Category chip: Or([Equals('category', X), ...]) — each Equals gets prefix-match via engine's toResolvedFilter.
-// Account chip: In('account', [names]) — engine aliases 'account' to accountName on enriched entities.
-// GroupBy chip: overrides IRGrouping.rows.
-// @sig _mergeFinancialQueryChipFilters :: (FinancialQuery, TransactionFilter?, LookupTable) -> FinancialQuery
-// Combine base filter with chip-added filters into a single IRFilter node
-// @sig _combineFilters :: (IRFilter?, [IRFilter]) -> IRFilter?
-const _combineFilters = (baseFilter, chipFilters) => {
-    if (chipFilters.length === 0) return baseFilter
-    if (!baseFilter) return chipFilters.length === 1 ? chipFilters[0] : IRFilter.And(chipFilters)
-    return IRFilter.And([baseFilter, ...chipFilters])
-}
-
-// Build chip IRFilter nodes from category, account, and text search selections
-// @sig _buildChipFilters :: (TransactionFilter, LookupTable) -> [IRFilter]
-const _buildChipFilters = ({ selectedCategories, selectedAccounts, filterQuery }, accts) => {
-    const chipFilters = []
-    if (selectedCategories.length > 0) {
-        const fs = selectedCategories.map(c => IRFilter.Equals('category', c))
-        chipFilters.push(fs.length === 1 ? fs[0] : IRFilter.Or(fs))
-    }
-    const names = selectedAccounts.length > 0 ? compactMap(id => accts.get(id)?.name, selectedAccounts) : []
-    if (names.length > 0) chipFilters.push(IRFilter.In('account', names))
-    if (filterQuery?.length > 0) {
-        const escaped = filterQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        chipFilters.push(
-            IRFilter.Or([
-                IRFilter.Matches('payee', escaped),
-                IRFilter.Matches('category', escaped),
-                IRFilter.Matches('memo', escaped),
-                IRFilter.Matches('amount', escaped),
-                IRFilter.Matches('date', escaped),
-                IRFilter.Matches('number', escaped),
-                IRFilter.Matches('investmentAction', escaped),
-            ]),
-        )
-    }
-    return chipFilters
-}
-
-// Convert chip dateRange ({ start: Date, end: Date }) to IRDateRange.Range, or undefined if no range set
-// @sig _toChipDateRange :: ({ start: Date?, end: Date? }?) -> IRDateRange?
-const _toIso = d => d.toISOString().slice(0, 10)
-
-const _toChipDateRange = chipDateRange => {
-    if (!chipDateRange?.start || !chipDateRange?.end) return undefined
-    const { start, end } = chipDateRange
-    return IRDateRange.Range(_toIso(start), _toIso(end))
-}
-
-// Convert chip asOfDate (ISO string like "2025-03-06") to IRDateRange.Range for a single day
-// @sig _toAsOfDateRange :: (String?) -> IRDateRange?
-const _toAsOfDateRange = asOfDate => (asOfDate ? IRDateRange.Range(asOfDate, asOfDate) : undefined)
-
-// Merge chip filters into a FinancialQuery variant — reconstruct with merged filter/grouping/dateRange
-const _mergeFinancialQueryChipFilters = (ir, chipState, accts) => {
-    if (!chipState) return ir
-    const { groupBy: chipGroupBy } = chipState
-    const chipFilters = _buildChipFilters(chipState, accts)
-    const chipDateRange = _toChipDateRange(chipState.dateRange)
-    const chipAsOfRange = _toAsOfDateRange(chipState.asOfDate)
-    if (chipFilters.length === 0 && !chipGroupBy && !chipDateRange && !chipAsOfRange) return ir
-
-    return ir.match({
-        TransactionQuery: ({ name, description, filter: baseFilter, dateRange, grouping, computed }) => {
-            const mergedFilter = _combineFilters(baseFilter, chipFilters)
-            const mergedGrouping =
-                chipGroupBy && grouping ? IRGrouping(chipGroupBy, grouping.columns, grouping.only) : grouping
-            return FinancialQuery.TransactionQuery(
-                name,
-                description,
-                mergedFilter,
-                chipDateRange || dateRange,
-                mergedGrouping,
-                computed,
-            )
-        },
-        PositionQuery: ({
-            name,
-            description,
-            filter: baseFilter,
-            dateRange,
-            grouping,
-            metrics,
-            orderByField,
-            orderByDirection,
-            limit,
-        }) => {
-            const mergedFilter = _combineFilters(baseFilter, chipFilters)
-            const mergedGrouping =
-                chipGroupBy && grouping ? IRGrouping(chipGroupBy, grouping.columns, grouping.only) : grouping
-            return FinancialQuery.PositionQuery(
-                name,
-                description,
-                mergedFilter,
-                chipAsOfRange || chipDateRange || dateRange,
-                mergedGrouping,
-                metrics,
-                orderByField,
-                orderByDirection,
-                limit,
-            )
-        },
-        AccountQuery: ({ name, description, filter: baseFilter }) =>
-            FinancialQuery.AccountQuery(name, description, _combineFilters(baseFilter, chipFilters)),
-        ExpressionQuery: () => ir,
-        SnapshotQuery: ({ name, description, domain, filter: baseFilter, dateRange, interval }) =>
-            FinancialQuery.SnapshotQuery(
-                name,
-                description,
-                domain,
-                _combineFilters(baseFilter, chipFilters),
-                chipDateRange || dateRange,
-                interval,
-            ),
-        RunningBalanceQuery: ({ name, description, filter: baseFilter, dateRange }) =>
-            FinancialQuery.RunningBalanceQuery(
-                name,
-                description,
-                _combineFilters(baseFilter, chipFilters),
-                chipDateRange || dateRange,
-            ),
-    })
-}
-
 // fallbackIR must be referentially stable (e.g. a module-level constant) — rest-arg stringify is the only
 // cache discriminator when state.queryIR[viewId] is undefined
 const _queryResult = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return undefined
-    const mergedIR = _mergeFinancialQueryChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
 
     const result = runFinancialQuery(mergedIR, state)
     return result.match({
@@ -594,7 +468,7 @@ const _queryResult = (state, viewId, fallbackIR) => {
 const _queryDescription = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return ''
-    const mergedIR = _mergeFinancialQueryChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
     return toFinancialQueryDescription(mergedIR)
 }
 
