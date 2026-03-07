@@ -1,7 +1,6 @@
 // ABOUTME: Static metadata constants that configure QueryResultPage for each report domain
 // ABOUTME: Each constant bundles columns, filters, tree config, and chip row overrides
 
-import { LookupTable } from '@graffio/functional'
 import { CategoryReportColumns, InvestmentReportColumns } from '../columns/index.js'
 import { AccountFilterChip } from '../components/filter-chips/AccountFilterChip.jsx'
 import { AsOfDateChip } from '../components/filter-chips/AsOfDateChip.jsx'
@@ -9,8 +8,19 @@ import { CategoryFilterChip } from '../components/filter-chips/CategoryFilterChi
 import { DateFilterChip } from '../components/filter-chips/DateFilterChip.jsx'
 import { GroupByFilterChip } from '../components/filter-chips/GroupByFilterChip.jsx'
 import { SearchFilterChip } from '../components/filter-chips/SearchFilterChip.jsx'
-import { IRComputation, IRDomain, IRFilter, IRSource, Query } from '../query-language/types/index.js'
+import {
+    ComputedRow,
+    FinancialQuery,
+    IRDateRange,
+    IRFilter,
+    IRGrouping,
+    PivotExpression,
+} from '../query-language/types/index.js'
 import * as S from '../store/selectors.js'
+import { FilteredEntitiesResultPage } from './FilteredEntitiesResultPage.jsx'
+import { PivotResultPage } from './PivotResultPage.jsx'
+import { RunningBalanceResultPage } from './RunningBalanceResultPage.jsx'
+import { TimeSeriesResultPage } from './TimeSeriesResultPage.jsx'
 
 const { AccountFilterColumn } = AccountFilterChip
 const { AsOfDateColumn } = AsOfDateChip
@@ -18,25 +28,6 @@ const { CategoryFilterColumn } = CategoryFilterChip
 const { DateFilterColumn } = DateFilterChip
 const { GroupByFilterColumn, investmentGroupByItems } = GroupByFilterChip
 const { SearchFilterColumn } = SearchFilterChip
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Transformers
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const T = {
-    // Build a Query IR with a single Identity source
-    // @sig toQuery :: (String, IRDomain, String, IRFilter?) -> Query
-    toQuery: (name, domain, groupBy, filter) =>
-        Query(
-            name,
-            undefined,
-            LookupTable([IRSource('_default', domain, filter, undefined, groupBy)], IRSource, 'name'),
-            IRComputation.Identity('_default'),
-            undefined,
-        ),
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -75,15 +66,23 @@ const POSITION_TREE_METADATA = {
 }
 
 const ENGINE_TRANSACTION_FILTERS = [
+    { component: DateFilterColumn },
     { component: CategoryFilterColumn },
     { component: AccountFilterColumn },
     { component: GroupByFilterColumn },
+    { component: SearchFilterColumn },
 ]
 
 const ENGINE_TRANSACTION_TREE_METADATA = {
     ...TRANSACTION_TREE_METADATA,
     selector: undefined,
-    defaultQueryIR: T.toQuery('transactions', IRDomain.Transactions(), 'category'),
+    defaultQueryIR: FinancialQuery.TransactionQuery(
+        'transactions',
+        undefined,
+        undefined,
+        undefined,
+        IRGrouping('category'),
+    ),
     filters: ENGINE_TRANSACTION_FILTERS,
 }
 
@@ -91,20 +90,26 @@ const ENGINE_POSITION_TREE_METADATA = {
     ...POSITION_TREE_METADATA,
     selector: undefined,
     countSelector: undefined,
-    defaultQueryIR: T.toQuery('positions', IRDomain.Positions(), 'account'),
+    defaultQueryIR: FinancialQuery.PositionQuery('positions', undefined, undefined, undefined, IRGrouping('account')),
     filters: [
+        { component: AsOfDateColumn },
         { component: AccountFilterColumn },
         { component: GroupByFilterColumn, props: { items: investmentGroupByItems } },
+        { component: SearchFilterColumn },
     ],
 }
 
 // prettier-ignore
 const SEED_QUERIES = {
-    large_transactions:   T.toQuery('large_transactions', IRDomain.Transactions(), 'category', IRFilter.LessThan('amount', -500)),
-    dining_multi_account: T.toQuery('dining_multi_account', IRDomain.Transactions(), 'category', IRFilter.And([IRFilter.Equals('category', 'Food:Dining'), IRFilter.In('account', ['Checking', 'Savings'])])),
-    exclude_transfers:    T.toQuery('exclude_transfers', IRDomain.Transactions(), 'category', IRFilter.Not(IRFilter.Equals('category', 'Transfer'))),
-    payee_pattern:        T.toQuery('payee_pattern', IRDomain.Transactions(), 'category', IRFilter.Matches('payee', '^WAL')),
-    amount_range:         T.toQuery('amount_range', IRDomain.Transactions(), 'category', IRFilter.Between('amount', -1000, -100)),
+    large_transactions:   FinancialQuery.TransactionQuery('large_transactions', undefined, IRFilter.LessThan('amount', -500), undefined, IRGrouping('category')),
+    dining_multi_account: FinancialQuery.TransactionQuery('dining_multi_account', undefined, IRFilter.And([IRFilter.Equals('category', 'Food'), IRFilter.In('account', ['Primary Checking', 'Chase Sapphire'])]), undefined, IRGrouping('category')),
+    exclude_transfers:    FinancialQuery.TransactionQuery('exclude_transfers', undefined, IRFilter.Not(IRFilter.Equals('category', 'Transfer')), undefined, IRGrouping('category')),
+    payee_pattern:        FinancialQuery.TransactionQuery('payee_pattern', undefined, IRFilter.Matches('payee', '^Pac'), undefined, IRGrouping('category')),
+    amount_range:         FinancialQuery.TransactionQuery('amount_range', undefined, IRFilter.Between('amount', -1000, -100), undefined, IRGrouping('category')),
+    category_by_year:     FinancialQuery.TransactionQuery('category_by_year', 'Spending by category per year', undefined, undefined, IRGrouping('category', 'year'), [ComputedRow('Food % of Income', PivotExpression.Binary('/', PivotExpression.RowRef('Food'), PivotExpression.Binary('*', PivotExpression.RowRef('Income'), PivotExpression.Literal(-1))))]),
+    bank_accounts:        FinancialQuery.AccountQuery('bank_accounts', 'Bank accounts', IRFilter.Equals('accountType', 'Bank')),
+    net_worth:            FinancialQuery.SnapshotQuery('net_worth', 'Net worth over time', 'balances', undefined, IRDateRange.Year(2025), 'monthly'),
+    running_balance:      FinancialQuery.RunningBalanceQuery('running_balance', 'Running balance'),
 }
 
 // Seed query metadata — pre-filtered engine reports demonstrating compound IR filters
@@ -115,6 +120,10 @@ const SEED_QUERY_METADATA = {
     amount_range:         { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.amount_range },
     dining_multi_account: { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.dining_multi_account },
     payee_pattern:        { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.payee_pattern },
+    net_worth:            { page: TimeSeriesResultPage, defaultQueryIR: SEED_QUERIES.net_worth, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
+    category_by_year:     { page: PivotResultPage, defaultQueryIR: SEED_QUERIES.category_by_year, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
+    running_balance:      { page: RunningBalanceResultPage, defaultQueryIR: SEED_QUERIES.running_balance, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
+    bank_accounts:        { page: FilteredEntitiesResultPage, defaultQueryIR: SEED_QUERIES.bank_accounts, filters: [] },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
