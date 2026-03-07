@@ -201,12 +201,21 @@ const ENGINE_METADATA = {
     engine_amount_range:      ReportMetadata.SEED_QUERY_METADATA.amount_range,
     engine_dining:            ReportMetadata.SEED_QUERY_METADATA.dining_multi_account,
     engine_payee:             ReportMetadata.SEED_QUERY_METADATA.payee_pattern,
+    engine_net_worth:         ReportMetadata.SEED_QUERY_METADATA.net_worth,
+    engine_category_by_year:  ReportMetadata.SEED_QUERY_METADATA.category_by_year,
+    engine_running_balance:   ReportMetadata.SEED_QUERY_METADATA.running_balance,
+    engine_bank_accounts:     ReportMetadata.SEED_QUERY_METADATA.bank_accounts,
 }
 
 // Self-selecting report page — renders correct report type based on reportType
+// Page-per-type dispatch: metadata.page (component ref) overrides default QueryResultPage
 // @sig ReportPage :: { viewId: String, reportType: String } -> ReactElement
 const ReportPage = ({ viewId, reportType }) => {
     const engineMetadata = ENGINE_METADATA[reportType]
+    if (engineMetadata?.page) {
+        const Page = engineMetadata.page
+        return <Page viewId={viewId} metadata={engineMetadata} />
+    }
     if (engineMetadata) return <QueryResultPage viewId={viewId} metadata={engineMetadata} />
     return reportType === 'positions' ? (
         <InvestmentReportPage viewId={viewId} />
