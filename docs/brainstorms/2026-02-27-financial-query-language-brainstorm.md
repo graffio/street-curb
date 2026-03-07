@@ -44,13 +44,14 @@ With page-per-type infrastructure and the engine in place, these are just new se
 - Claude integration (formulate, summarize, suggest) — three narrow text-in/text-out roles
 - Parameterization syntax (relative dates, account groups)
 - Community sharing mechanism
+- Search (find + highlight matches in place, without filtering rows out) — distinct from the Filter chip which removes non-matching rows
 
 ## Test Gaps
 
 ### Unit tests needed
 
 - ~~**`_mergeFinancialQueryChipFilters` (selectors.js)**~~ — DONE: Extracted to `merge-chip-filters.js` (variant-agnostic),
-  69 unit tests in `merge-chip-filters.tap.js`
+  72 unit tests in `merge-chip-filters.tap.js`
 - ~~**`to-financial-query-description.js`**~~ — DONE: 22 unit tests in `to-financial-query-description.tap.js`
 - **`toPivotColumns` / `toPivotData` (PivotResultPage.jsx)** — pure factory functions that build TanStack column defs
   from pivot result shapes. Untested.

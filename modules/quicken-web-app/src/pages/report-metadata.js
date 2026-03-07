@@ -121,9 +121,9 @@ const SEED_QUERY_METADATA = {
     dining_multi_account: { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.dining_multi_account },
     payee_pattern:        { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.payee_pattern },
     net_worth:            { page: TimeSeriesResultPage, defaultQueryIR: SEED_QUERIES.net_worth, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
-    category_by_year:     { page: PivotResultPage, defaultQueryIR: SEED_QUERIES.category_by_year, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
-    running_balance:      { page: RunningBalanceResultPage, defaultQueryIR: SEED_QUERIES.running_balance, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
-    bank_accounts:        { page: FilteredEntitiesResultPage, defaultQueryIR: SEED_QUERIES.bank_accounts, filters: [] },
+    category_by_year:     { page: PivotResultPage, defaultQueryIR: SEED_QUERIES.category_by_year, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
+    running_balance:      { page: RunningBalanceResultPage, defaultQueryIR: SEED_QUERIES.running_balance, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
+    bank_accounts:        { page: FilteredEntitiesResultPage, defaultQueryIR: SEED_QUERIES.bank_accounts, filters: [{ component: SearchFilterColumn }] },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

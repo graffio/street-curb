@@ -237,6 +237,73 @@ const T = {
         return { count: rows.reduce((sum, r) => sum + r.count, 0), symbols: rows.map(r => r.symbol).filter(Boolean) }
     },
 
+    // Round a running balance row to 2 decimal places
+    // @sig toRoundedBalanceEntry :: Object -> Object
+    toRoundedBalanceEntry: ({ account, date, payee, amount, cumulativeBalance }) => ({
+        account,
+        date,
+        payee,
+        amount: Math.round(amount * 100) / 100,
+        cumulativeBalance: Math.round(cumulativeBalance * 100) / 100,
+    }),
+
+    // Query first N transactions sorted by date with running cumulative total (for RunningBalanceQuery)
+    // @sig toRunningBalanceEntries :: (Database, Number) -> [Object]
+    toRunningBalanceEntries: (db, limit = 10) =>
+        db
+            .prepare(
+                `SELECT a.name as account, t.date, t.payee, t.amount,
+                    SUM(t.amount) OVER (ORDER BY t.date, t.id) as cumulativeBalance
+                 FROM transactions t
+                 JOIN accounts a ON t.accountId = a.id
+                 ORDER BY t.date, t.id
+                 LIMIT ?`,
+            )
+            .all(limit)
+            .map(T.toRoundedBalanceEntry),
+
+    // Query final running balance (sum of all transactions)
+    // @sig toRunningBalanceTotal :: Database -> Number
+    toRunningBalanceTotal: db => {
+        const row = db.prepare('SELECT SUM(amount) as total FROM transactions').get()
+        return Math.round(row.total * 100) / 100
+    },
+
+    // Format month index to YYYY-MM-DD month-end date string
+    // @sig toMonthEndDate :: (Number, Number) -> String
+    toMonthEndDate: (year, i) => {
+        const m = i + 1
+        const lastDay = new Date(year, m, 0).getDate()
+        return `${year}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    },
+
+    // Compute net worth (cash + investment market values) as of a date
+    // @sig toNetWorthAtDate :: (Database, String) -> Object
+    toNetWorthAtDate: (db, date) => {
+        const investmentAccountIds = db
+            .prepare("SELECT id FROM accounts WHERE type IN ('Investment', '401(k)/403(b)')")
+            .all()
+            .map(r => r.id)
+        const placeholders = investmentAccountIds.map(() => '?').join(',')
+        const cashRow = db
+            .prepare(
+                `SELECT COALESCE(SUM(amount), 0) as total FROM transactions
+                 WHERE date <= ? AND accountId NOT IN (${placeholders})`,
+            )
+            .get(date, ...investmentAccountIds)
+        const investmentTotals = T.toMarketValuesAsOf(db, date)
+        const investmentTotal = Object.values(investmentTotals).reduce((s, v) => s + v, 0)
+        return { date, total: Math.round((cashRow.total + investmentTotal) * 100) / 100 }
+    },
+
+    // Query net worth at each month-end for a year (cash balances + investment market values)
+    // @sig toNetWorthSnapshots :: (Database, Number) -> [Object]
+    toNetWorthSnapshots: (db, year) => {
+        const hasData = date => db.prepare('SELECT 1 FROM transactions WHERE date <= ? LIMIT 1').get(date)
+        const months = Array.from({ length: 12 }, (_, i) => T.toMonthEndDate(year, i))
+        return months.filter(hasData).map(date => T.toNetWorthAtDate(db, date))
+    },
+
     // Query a single payee that does NOT match a category on an account
     // @sig toNonCategoryPayee :: (Database, String, String) -> String
     toNonCategoryPayee: (db, accountName, categoryName) => {
@@ -435,10 +502,10 @@ const E = {
             },
             spotChecks: T.toSpotChecks(db),
             dateFiltered: {
-                startDate: '2024-02-01',
-                endDate: '2024-02-28',
-                accountCounts: T.toDateFilteredAccountCounts(db, '2024-02-01', '2024-02-28'),
-                categoryTotals: T.toDateFilteredCategoryTotals(db, '2024-02-01', '2024-02-28'),
+                startDate: '2024-03-01',
+                endDate: '2024-03-31',
+                accountCounts: T.toDateFilteredAccountCounts(db, '2024-03-01', '2024-03-31'),
+                categoryTotals: T.toDateFilteredCategoryTotals(db, '2024-03-01', '2024-03-31'),
             },
             perSecurityCounts: T.toPerSecurityCounts(db, 'Fidelity Brokerage'),
             categoryFiltered: {
@@ -451,10 +518,15 @@ const E = {
                 db,
                 'Primary Checking',
                 'Food',
-                '2024-02-01',
-                '2024-02-28',
+                '2024-03-01',
+                '2024-03-31',
             ),
             securityActionIntersection: T.toSecurityActionIntersection(db, 'Fidelity Brokerage', 'VTI', 'Buy'),
+            runningBalance: {
+                firstEntries: T.toRunningBalanceEntries(db, 10),
+                totalBalance: T.toRunningBalanceTotal(db),
+            },
+            netWorthSnapshots: T.toNetWorthSnapshots(db, 2025),
         }
         writeFileSync(expectedPath, JSON.stringify(expected, undefined, 2))
         console.log(`  Written: ${expectedPath}`)

@@ -97,7 +97,7 @@ const T = {
 
     toFilterableTransaction: t => ({ ...t, category: t.categoryName, account: t.accountName }),
 
-    toFilterableAccount: a => ({ ...a, accountType: a.type }),
+    toFilterableAccount: a => ({ ...a, accountType: a.type, account: a.name }),
 
     toFilterablePosition: p => {
         const { accountName, securityName, securityType } = p

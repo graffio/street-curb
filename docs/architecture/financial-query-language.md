@@ -18,12 +18,12 @@ Claude → FinancialQuery IR → Execution Engine → QueryResult → Page Compo
                                Redux state              .match() → view dispatch
 ```
 
-| Module               | File                                | Input → Output                        |
-|----------------------|-------------------------------------|---------------------------------------|
-| Execution engine     | `run-financial-query.js`            | `(ir, state)` → QueryResult          |
-| Description          | `to-financial-query-description.js` | `(ir)` → human-readable string       |
-| Filter compiler      | `build-filter-predicate.js`         | `(IRFilter)` → `entity => Boolean`   |
-| Expression evaluator | `resolve-expression.js`             | `(ast, boundValues)` → number        |
+| Module               | File                                | Input → Output                     |
+|----------------------|-------------------------------------|------------------------------------|
+| Execution engine     | `run-financial-query.js`            | `(ir, state)` → QueryResult        |
+| Description          | `to-financial-query-description.js` | `(ir)` → human-readable string     |
+| Filter compiler      | `build-filter-predicate.js`         | `(IRFilter)` → `entity => Boolean` |
+| Expression evaluator | `resolve-expression.js`             | `(ast, boundValues)` → number      |
 
 ## FinancialQuery IR
 
@@ -31,14 +31,14 @@ Domain-specific TaggedSum — each variant carries only its domain-relevant fiel
 
 ### 6 Variants
 
-| Variant            | Fields                                                    | → QueryResult      |
-|--------------------|-----------------------------------------------------------|---------------------|
-| TransactionQuery   | name, description?, filter?, dateRange?, grouping?, computed? | Identity or Pivot |
-| PositionQuery      | name, description?, filter?, dateRange?, grouping?, metrics?, orderBy?, limit? | Identity |
-| AccountQuery       | name, description?, filter?                               | FilteredEntities    |
-| ExpressionQuery    | name, description?, left, right, expression               | Scalar              |
-| SnapshotQuery      | name, description?, domain, filter?, dateRange, interval  | TimeSeries          |
-| RunningBalanceQuery| name, description?, filter?, dateRange?                   | RunningBalance      |
+| Variant             | Fields                                                                         | → QueryResult     |
+|---------------------|--------------------------------------------------------------------------------|-------------------|
+| TransactionQuery    | name, description?, filter?, dateRange?, grouping?, computed?                  | Identity or Pivot |
+| PositionQuery       | name, description?, filter?, dateRange?, grouping?, metrics?, orderBy?, limit? | Identity          |
+| AccountQuery        | name, description?, filter?                                                    | FilteredEntities  |
+| ExpressionQuery     | name, description?, left, right, expression                                    | Scalar            |
+| SnapshotQuery       | name, description?, domain, filter?, dateRange, interval                       | TimeSeries        |
+| RunningBalanceQuery | name, description?, filter?, dateRange?                                        | RunningBalance    |
 
 ### Supporting Types
 
@@ -96,7 +96,7 @@ Chip → IR mapping:
 - GroupBy chip → overrides `IRGrouping.rows`
 - Search chip → `IRFilter.Or([Matches('payee', q), Matches('category', q), Matches('memo', q), ...])`
 - Date chip → patch `dateRange`
-- AsOfDate chip → patch `dateRange` (takes priority over date chip)
+- AsOfDate chip → patch `dateRange` (takes priority; only set explicitly, never defaulted)
 
 Memoized with `memoizeReduxStatePerKey` — 8 entity state keys as global invalidation, `queryIR` as per-key state.
 FallbackIR from metadata must be referentially stable (module-level constant).
@@ -105,14 +105,14 @@ FallbackIR from metadata must be referentially stable (module-level constant).
 
 Separate page component per QueryResult variant, dispatched via `metadata.page` in report-metadata.js:
 
-| QueryResult      | Page Component              | Rendering                              |
-|------------------|-----------------------------|----------------------------------------|
-| Identity         | QueryResultPage             | DataTable with tree columns            |
-| Scalar           | (inline)                    | Single computed value                  |
-| Pivot            | PivotResultPage             | DataTable with dynamic year columns    |
-| TimeSeries       | TimeSeriesResultPage        | D3 line chart + snapshot table         |
-| RunningBalance   | RunningBalanceResultPage    | Flat DataTable with cumulative balance |
-| FilteredEntities | FilteredEntitiesResultPage  | Flat DataTable (accounts)              |
+| QueryResult      | Page Component             | Rendering                              |
+|------------------|----------------------------|----------------------------------------|
+| Identity         | QueryResultPage            | DataTable with tree columns            |
+| Scalar           | (inline)                   | Single computed value                  |
+| Pivot            | PivotResultPage            | DataTable with dynamic year columns    |
+| TimeSeries       | TimeSeriesResultPage       | D3 line chart + snapshot table         |
+| RunningBalance   | RunningBalanceResultPage   | Flat DataTable with cumulative balance |
+| FilteredEntities | FilteredEntitiesResultPage | Flat DataTable (accounts)              |
 
 **Charting:** D3 scales (`d3-scale`) for math, React for SVG rendering. `TimeSeriesChart.jsx` uses `scaleUtc` +
 `scaleLinear`. No high-level chart library.
@@ -130,41 +130,41 @@ registry (`financial-computations/metric-registry.js`). Compute signature: `(pos
 
 Decomposed into single-function modules in `financial-computations/`:
 
-| File                       | What                                                    |
-|----------------------------|---------------------------------------------------------|
-| `compute-positions.js`     | Lot aggregation + price enrichment → Position           |
-| `compute-realized-gains.js`| Realized gain from lot allocations (short/long term)    |
-| `compute-dividend-income.js`| Dividend income from investment transactions           |
-| `compute-irr.js`           | Internal rate of return via Newton's method             |
-| `compute-benchmark-return.js`| SPY return inception-matched per position             |
-| `compute-total-return.js`  | unrealized + realized + dividends (dollars and percent) |
-| `metric-registry.js`       | LookupTable of 7 MetricDefinitions                     |
-| `build-positions-tree.js`  | Group positions into PositionTreeNode tree              |
+| File                          | What                                                    |
+|-------------------------------|---------------------------------------------------------|
+| `compute-positions.js`        | Lot aggregation + price enrichment → Position           |
+| `compute-realized-gains.js`   | Realized gain from lot allocations (short/long term)    |
+| `compute-dividend-income.js`  | Dividend income from investment transactions            |
+| `compute-irr.js`              | Internal rate of return via Newton's method             |
+| `compute-benchmark-return.js` | SPY return inception-matched per position               |
+| `compute-total-return.js`     | unrealized + realized + dividends (dollars and percent) |
+| `metric-registry.js`          | LookupTable of 7 MetricDefinitions                      |
+| `build-positions-tree.js`     | Group positions into PositionTreeNode tree              |
 
 ## Key Files
 
-| File                                           | Purpose                                        |
-|------------------------------------------------|------------------------------------------------|
-| `src/query-language/run-financial-query.js`    | FinancialQuery IR → QueryResult (6 variants)   |
-| `src/query-language/to-financial-query-description.js` | IR → human-readable description        |
-| `src/query-language/build-filter-predicate.js` | IRFilter tree → compiled predicate             |
-| `src/query-language/resolve-expression.js`     | Expression evaluator (replaces eval)           |
-| `src/query-language/merge-chip-filters.js`     | Variant-agnostic chip state → IR merge         |
-| `src/store/selectors.js`                       | Memoized query execution per viewId            |
-| `src/pages/report-metadata.js`                 | Seed queries + page/filter metadata            |
-| `src/pages/PivotResultPage.jsx`               | Pivot table with dynamic columns               |
-| `src/pages/TimeSeriesResultPage.jsx`           | D3 chart + snapshot table                      |
-| `src/pages/RunningBalanceResultPage.jsx`       | Register-style running balance                 |
-| `src/pages/FilteredEntitiesResultPage.jsx`     | Filtered entity list (accounts)                |
-| `src/pages/QueryResultPage.jsx`               | Tree-based report page                         |
-| `src/components/TimeSeriesChart.jsx`           | D3 scales + React SVG line chart               |
-| `src/components/FilterChipRow.jsx`             | Shared filter chip row for all page types      |
-| `src/financial-computations/metric-registry.js`| MetricDefinition LookupTable (7 metrics)       |
-| `src/financial-computations/compute-positions.js`| Lot aggregation + price → Position           |
-| `type-definitions/ir/financial-query.type.js`  | FinancialQuery TaggedSum                       |
-| `type-definitions/ir/ir-grouping.type.js`      | IRGrouping Tagged type                         |
-| `type-definitions/ir/computed-row.type.js`     | ComputedRow Tagged type                        |
-| `type-definitions/ir/pivot-expression.type.js` | PivotExpression TaggedSum                      |
+| File                                                   | Purpose                                      |
+|--------------------------------------------------------|----------------------------------------------|
+| `src/query-language/run-financial-query.js`            | FinancialQuery IR → QueryResult (6 variants) |
+| `src/query-language/to-financial-query-description.js` | IR → human-readable description              |
+| `src/query-language/build-filter-predicate.js`         | IRFilter tree → compiled predicate           |
+| `src/query-language/resolve-expression.js`             | Expression evaluator (replaces eval)         |
+| `src/query-language/merge-chip-filters.js`             | Variant-agnostic chip state → IR merge       |
+| `src/store/selectors.js`                               | Memoized query execution per viewId          |
+| `src/pages/report-metadata.js`                         | Seed queries + page/filter metadata          |
+| `src/pages/PivotResultPage.jsx`                        | Pivot table with dynamic columns             |
+| `src/pages/TimeSeriesResultPage.jsx`                   | D3 chart + snapshot table                    |
+| `src/pages/RunningBalanceResultPage.jsx`               | Register-style running balance               |
+| `src/pages/FilteredEntitiesResultPage.jsx`             | Filtered entity list (accounts)              |
+| `src/pages/QueryResultPage.jsx`                        | Tree-based report page                       |
+| `src/components/TimeSeriesChart.jsx`                   | D3 scales + React SVG line chart             |
+| `src/components/FilterChipRow.jsx`                     | Shared filter chip row for all page types    |
+| `src/financial-computations/metric-registry.js`        | MetricDefinition LookupTable (7 metrics)     |
+| `src/financial-computations/compute-positions.js`      | Lot aggregation + price → Position           |
+| `type-definitions/ir/financial-query.type.js`          | FinancialQuery TaggedSum                     |
+| `type-definitions/ir/ir-grouping.type.js`              | IRGrouping Tagged type                       |
+| `type-definitions/ir/computed-row.type.js`             | ComputedRow Tagged type                      |
+| `type-definitions/ir/pivot-expression.type.js`         | PivotExpression TaggedSum                    |
 
 ## Design Decisions
 
@@ -172,7 +172,8 @@ Decomposed into single-function modules in `financial-computations/`:
 - **Domain-specific query types** — FinancialQuery variants carry only domain-relevant fields, dispatched via `.match()`
 - **Executor calls business modules, not selectors** — avoids viewId dependency; memoization at selector level
 - **Enrich-then-filter** — engine enriches all entities before filtering so predicates can reference computed fields
-- **Query IR as single source of truth** — `state.queryIR[viewId]` is authoritative; chip filters merge at selector level
+- **Query IR as single source of truth** — `state.queryIR[viewId]` is authoritative; chip filters merge at selector
+  level
 - **Page-per-type dispatch** — each QueryResult variant gets its own page component via `metadata.page` reference
 - **Variant-agnostic chip merge** — `constructor.from({ ...ir, ...patch })` avoids per-variant reconstruction
 - **D3 for math, React for rendering** — `d3-scale` for scales, React for SVG elements, no chart library wrapper

@@ -63,6 +63,7 @@ const buildChipFilters = ({ selectedCategories, selectedAccounts, filterQuery },
                 IRFilter.Matches('date', escaped),
                 IRFilter.Matches('number', escaped),
                 IRFilter.Matches('investmentAction', escaped),
+                IRFilter.Matches('account', escaped),
             ]),
         )
     }

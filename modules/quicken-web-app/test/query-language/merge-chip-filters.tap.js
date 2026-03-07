@@ -125,7 +125,7 @@ test('buildChipFilters — converts chip state to IRFilter nodes', t => {
         const result = buildChipFilters(state, ACCOUNTS)
         t.equal(result.length, 1, 'Then returns one filter')
         t.equal(result[0]['@@tagName'], 'Or', 'Then it is an Or combinator')
-        t.equal(result[0].filters.length, 7, 'Then Or searches 7 fields')
+        t.equal(result[0].filters.length, 8, 'Then Or searches 8 fields')
         t.end()
     })
     t.test('Given a search query with regex special chars', t => {
