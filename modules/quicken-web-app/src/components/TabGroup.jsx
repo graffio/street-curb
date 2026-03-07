@@ -102,14 +102,13 @@ const Tab = ({ viewId, groupId }) => {
     const isActive = group.activeViewId === viewId
     const isActiveGroup = tabLayout.activeTabGroupId === groupId
     const { title } = view
-    const tagName = view['@@tagName']
-    const icon = VIEW_ICONS[tagName] || '○'
+    const icon = view.match({ Register: () => '☰', Report: () => '◑', Reconciliation: () => '✓' })
 
     const tabProps = {
         draggable: true,
         onDragStart: handleDragStart,
         onDragEnd: () => post(Action.SetDraggingView(undefined)),
-        style: TabStyles.toTabStyle(tagName, isActive, isDragging, isActiveGroup),
+        style: TabStyles.toTabStyle(view, isActive, isDragging, isActiveGroup),
         onClick: () => post(Action.SetActiveView(groupId, viewId)),
     }
 
@@ -252,7 +251,6 @@ const ViewContent = ({ groupId }) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
 const TAB_TITLE_STYLE = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }
 const CLOSE_BUTTON_STYLE = { padding: '0 4px', flexShrink: 0 }
 const EMPTY_STATE_STYLE = { height: '100%' }

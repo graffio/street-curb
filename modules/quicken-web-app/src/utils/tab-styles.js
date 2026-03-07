@@ -23,16 +23,22 @@ const VIEW_COLORS = {
 // @sig toViewColor :: (View, Boolean) -> String
 const toViewColor = (view, isActiveGroup) => {
     if (!view) return 'var(--accent-8)'
-    const colors = VIEW_COLORS[view['@@tagName']]
-    if (!colors) throw new Error(`Unknown view type: ${view['@@tagName']}`)
+    const colors = view.match({
+        Register: () => VIEW_COLORS.Register,
+        Report: () => VIEW_COLORS.Report,
+        Reconciliation: () => VIEW_COLORS.Reconciliation,
+    })
     return isActiveGroup ? colors.focused : colors.active
 }
 
 // Computes tab styling based on view type and state
-// @sig toTabStyle :: (String, Boolean, Boolean, Boolean) -> Object
-const toTabStyle = (tagName, active, isDragging, activeGroup) => {
-    const entry = VIEW_COLORS[tagName]
-    if (!entry) throw new Error(`Unknown view type for tab style: ${tagName}`)
+// @sig toTabStyle :: (View, Boolean, Boolean, Boolean) -> Object
+const toTabStyle = (view, active, isDragging, activeGroup) => {
+    const entry = view.match({
+        Register: () => VIEW_COLORS.Register,
+        Report: () => VIEW_COLORS.Report,
+        Reconciliation: () => VIEW_COLORS.Reconciliation,
+    })
     const { focused, active: activeColor, inactive } = entry
     const bg = active && activeGroup ? focused : active ? activeColor : inactive
     return {
