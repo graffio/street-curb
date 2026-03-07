@@ -6,9 +6,6 @@
  *  Equals
  *      field: /^(category|account|payee|accountType)$/,
  *      value: "String"
- *  OlderThan
- *      field: /^lastActivity$/,
- *      days : "Number"
  *  In
  *      field : "String",
  *      values: "[String]"
@@ -46,7 +43,7 @@ const IRFilter = { toString: () => 'IRFilter' }
 // Add hidden properties
 Object.defineProperty(IRFilter, '@@typeName', { value: 'IRFilter', enumerable: false })
 Object.defineProperty(IRFilter, '@@tagNames', {
-    value: ['Equals', 'OlderThan', 'In', 'GreaterThan', 'LessThan', 'Between', 'Matches', 'And', 'Or', 'Not'],
+    value: ['Equals', 'In', 'GreaterThan', 'LessThan', 'Between', 'Matches', 'And', 'Or', 'Not'],
     enumerable: false,
 })
 
@@ -72,7 +69,6 @@ IRFilter.prototype = IRFilterPrototype
 // prettier-ignore
 const toString = {
     equals     : function () { return `IRFilter.Equals(${R._toString(this.field)}, ${R._toString(this.value)})` },
-    olderThan  : function () { return `IRFilter.OlderThan(${R._toString(this.field)}, ${R._toString(this.days)})` },
     in         : function () { return `IRFilter.In(${R._toString(this.field)}, ${R._toString(this.values)})` },
     greaterThan: function () { return `IRFilter.GreaterThan(${R._toString(this.field)}, ${R._toString(this.value)})` },
     lessThan   : function () { return `IRFilter.LessThan(${R._toString(this.field)}, ${R._toString(this.value)})` },
@@ -91,7 +87,6 @@ const toString = {
 // prettier-ignore
 const toJSON = {
     equals     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    olderThan  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     in         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     greaterThan: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     lessThan   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -126,25 +121,6 @@ const EqualsConstructor = function Equals(field, value) {
 }
 
 IRFilter.Equals = EqualsConstructor
-
-/*
- * Construct a IRFilter.OlderThan instance
- * @sig OlderThan :: (Field, Number) -> IRFilter.OlderThan
- *     Field = /^lastActivity$/
- */
-const OlderThanConstructor = function OlderThan(field, days) {
-    const constructorName = 'IRFilter.OlderThan(field, days)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateRegex(constructorName, /^lastActivity$/, 'field', false, field)
-    R.validateNumber(constructorName, 'days', false, days)
-
-    const result = Object.create(OlderThanPrototype)
-    result.field = field
-    result.days = days
-    return result
-}
-
-IRFilter.OlderThan = OlderThanConstructor
 
 /*
  * Construct a IRFilter.In instance
@@ -299,14 +275,6 @@ const EqualsPrototype = Object.create(IRFilterPrototype, {
     constructor: { value: EqualsConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const OlderThanPrototype = Object.create(IRFilterPrototype, {
-    '@@tagName': { value: 'OlderThan', enumerable: false },
-    '@@typeName': { value: 'IRFilter', enumerable: false },
-    toString: { value: toString.olderThan, enumerable: false },
-    toJSON: { value: toJSON.olderThan, enumerable: false },
-    constructor: { value: OlderThanConstructor, enumerable: false, writable: true, configurable: true },
-})
-
 const InPrototype = Object.create(IRFilterPrototype, {
     '@@tagName': { value: 'In', enumerable: false },
     '@@typeName': { value: 'IRFilter', enumerable: false },
@@ -375,7 +343,6 @@ const NotPrototype = Object.create(IRFilterPrototype, {
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 EqualsConstructor.prototype = EqualsPrototype
-OlderThanConstructor.prototype = OlderThanPrototype
 InConstructor.prototype = InPrototype
 GreaterThanConstructor.prototype = GreaterThanPrototype
 LessThanConstructor.prototype = LessThanPrototype
@@ -388,7 +355,6 @@ NotConstructor.prototype = NotPrototype
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
 EqualsConstructor.is = val => val && val.constructor === EqualsConstructor
-OlderThanConstructor.is = val => val && val.constructor === OlderThanConstructor
 InConstructor.is = val => val && val.constructor === InConstructor
 GreaterThanConstructor.is = val => val && val.constructor === GreaterThanConstructor
 LessThanConstructor.is = val => val && val.constructor === LessThanConstructor
@@ -401,7 +367,6 @@ NotConstructor.is = val => val && val.constructor === NotConstructor
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
 EqualsConstructor.toString = () => 'IRFilter.Equals'
-OlderThanConstructor.toString = () => 'IRFilter.OlderThan'
 InConstructor.toString = () => 'IRFilter.In'
 GreaterThanConstructor.toString = () => 'IRFilter.GreaterThan'
 LessThanConstructor.toString = () => 'IRFilter.LessThan'
@@ -414,7 +379,6 @@ NotConstructor.toString = () => 'IRFilter.Not'
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 EqualsConstructor._from = _input => IRFilter.Equals(_input.field, _input.value)
-OlderThanConstructor._from = _input => IRFilter.OlderThan(_input.field, _input.days)
 InConstructor._from = _input => IRFilter.In(_input.field, _input.values)
 GreaterThanConstructor._from = _input => IRFilter.GreaterThan(_input.field, _input.value)
 LessThanConstructor._from = _input => IRFilter.LessThan(_input.field, _input.value)
@@ -430,7 +394,6 @@ NotConstructor._from = _input => IRFilter.Not(_input.filter)
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
 EqualsConstructor.from = EqualsConstructor._from
-OlderThanConstructor.from = OlderThanConstructor._from
 InConstructor.from = InConstructor._from
 GreaterThanConstructor.from = GreaterThanConstructor._from
 LessThanConstructor.from = LessThanConstructor._from
@@ -447,12 +410,11 @@ NotConstructor.from = NotConstructor._from
  * @sig is :: Any -> Boolean
  */
 IRFilter.is = v => {
-    const { Equals, OlderThan, In, GreaterThan, LessThan, Between, Matches, And, Or, Not } = IRFilter
+    const { Equals, In, GreaterThan, LessThan, Between, Matches, And, Or, Not } = IRFilter
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return (
         constructor === Equals ||
-        constructor === OlderThan ||
         constructor === In ||
         constructor === GreaterThan ||
         constructor === LessThan ||

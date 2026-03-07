@@ -14,7 +14,6 @@ export const IRFilter = {
     variants: {
         // Leaf predicates
         Equals:      { field: /^(category|account|payee|accountType)$/, value: 'String' },
-        OlderThan:   { field: /^lastActivity$/, days: 'Number' },
         In:          { field: 'String', values: '[String]' },
         GreaterThan: { field: 'String', value: 'Number' },
         LessThan:    { field: 'String', value: 'Number' },

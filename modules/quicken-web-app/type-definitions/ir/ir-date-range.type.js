@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum type for date range specifications in query source clauses
-// ABOUTME: Six variants covering absolute, relative, and named date ranges
+// ABOUTME: Five variants covering absolute and relative date ranges
 
 import { FieldTypes } from '../field-types.js'
 
@@ -19,6 +19,5 @@ export const IRDateRange = {
         Month:    { month: 'Number', year: 'Number' },
         Relative: { unit: FieldTypes.timeUnit, count: 'Number' },
         Range:    { start: 'String', end: 'String' },
-        Named:    { name: FieldTypes.namedPeriod },
     },
 }

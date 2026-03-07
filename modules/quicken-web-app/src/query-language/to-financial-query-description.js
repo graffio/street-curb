@@ -18,7 +18,6 @@ const T = {
             LessThan: ({ field, value }) => `${field} < ${value}`,
             Between: ({ field, low, high }) => `${field} ${low}–${high}`,
             Matches: ({ field, pattern }) => `${field} ~ /${pattern}/`,
-            OlderThan: ({ count, unit }) => `older than ${count} ${unit}`,
             And: ({ filters }) => filters.map(T.toFilterDescription).join(' and '),
             Or: ({ filters }) => `(${filters.map(T.toFilterDescription).join(' or ')})`,
             Not: ({ filter }) => `not ${T.toFilterDescription(filter)}`,

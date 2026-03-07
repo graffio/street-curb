@@ -78,9 +78,6 @@ const T = {
             Month: ({ month, year }) => T.toMonthRange(year, month),
             Relative: ({ unit, count }) => T.toRelativeDateRange(unit, count),
             Range: ({ start, end }) => ({ start, end }),
-            Named: ({ name }) => {
-                throw new Error(`Named date range '${name}' not yet supported`)
-            },
         })
     },
 
@@ -147,8 +144,6 @@ const T = {
         return 'Unknown'
     },
 
-    toRowBucket: (txn, dimension) => T.toColumnBucket(txn, dimension),
-
     // Build a running balance entry from a transaction and prior balance
     // @sig toRunningBalanceEntry :: (Object, Number) -> { entry: Object, balance: Number }
     toRunningBalanceEntry: (t, balance) => {
@@ -187,7 +182,7 @@ const A = {
     // Accumulate a transaction into the pivot cells grid, column set, and row set
     // @sig collectPivotCell :: (Object, Object, String, String) -> undefined
     collectPivotCell: (txn, cells, rowDim, colDim) => {
-        const row = T.toRowBucket(txn, rowDim)
+        const row = T.toColumnBucket(txn, rowDim)
         const col = T.toColumnBucket(txn, colDim)
         cells.columnSet.add(col)
         cells.rowSet.add(row)
@@ -395,7 +390,6 @@ const A = {
             Scalar: ({ value }) => value,
             Pivot: ({ rowTotals }) => reduce((sum, [, v]) => sum + v, 0, Object.entries(rowTotals)),
             FilteredEntities: () => 0,
-            Comparison: () => 0,
             TimeSeries: () => 0,
             RunningBalance: () => 0,
         }),

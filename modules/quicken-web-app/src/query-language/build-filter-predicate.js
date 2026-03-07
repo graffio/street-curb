@@ -33,7 +33,6 @@ const T = {
         // prettier-ignore
         return node.match({
             Equals     : ({ field, value })     => entity => entity[field] === value,
-            OlderThan  : ({ field, days })      => entity => entity[field] > days,
             GreaterThan: ({ field, value })     => entity => entity[field] > value,
             LessThan   : ({ field, value })     => entity => entity[field] < value,
             Between    : ({ field, low, high }) => entity => entity[field] >= low && entity[field] <= high,

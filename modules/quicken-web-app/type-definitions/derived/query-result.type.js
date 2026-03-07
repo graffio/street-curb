@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum type for query execution results
-// ABOUTME: Seven variants — Identity, Comparison, Scalar, FilteredEntities, TimeSeries, Pivot, RunningBalance
+// ABOUTME: Six variants — Identity, Scalar, FilteredEntities, TimeSeries, Pivot, RunningBalance
 
 import { FieldTypes } from '../field-types.js'
 
@@ -15,7 +15,6 @@ export const QueryResult = {
     kind: 'taggedSum',
     variants: {
         Identity:         { tree: 'QueryResultTree', source: FieldTypes.sourceName },
-        Comparison:       { left: 'QueryResultTree', right: 'QueryResultTree', source: FieldTypes.sourceName },
         Scalar:           { value: 'Number', expression: 'Object' },
         FilteredEntities: { entities: '[Object]', source: FieldTypes.sourceName },
         TimeSeries:       { snapshots: '[Object]', source: FieldTypes.sourceName },

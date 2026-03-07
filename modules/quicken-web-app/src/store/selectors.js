@@ -450,7 +450,7 @@ const ENGINE_STATE_KEYS = ['accounts', 'categories', 'transactions', 'securities
 // Category chip: Or([Equals('category', X), ...]) — each Equals gets prefix-match via engine's toResolvedFilter.
 // Account chip: In('account', [names]) — engine aliases 'account' to accountName on enriched entities.
 // GroupBy chip: overrides IRGrouping.rows.
-// @sig _mergeChipFilters :: (FinancialQuery, TransactionFilter?, LookupTable) -> FinancialQuery
+// @sig _mergeFinancialQueryChipFilters :: (FinancialQuery, TransactionFilter?, LookupTable) -> FinancialQuery
 // Combine base filter with chip-added filters into a single IRFilter node
 // @sig _combineFilters :: (IRFilter?, [IRFilter]) -> IRFilter?
 const _combineFilters = (baseFilter, chipFilters) => {
@@ -571,21 +571,16 @@ const _mergeFinancialQueryChipFilters = (ir, chipState, accts) => {
     })
 }
 
-const _mergeChipFilters = _mergeFinancialQueryChipFilters
-
 // fallbackIR must be referentially stable (e.g. a module-level constant) — rest-arg stringify is the only
 // cache discriminator when state.queryIR[viewId] is undefined
 const _queryResult = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return undefined
-    const mergedIR = _mergeChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = _mergeFinancialQueryChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
 
     const result = runFinancialQuery(mergedIR, state)
     return result.match({
         Identity: ({ tree }) => tree.nodes,
-        Comparison: () => {
-            throw new Error('Unsupported QueryResult variant: Comparison')
-        },
         Scalar: r => r,
         FilteredEntities: r => r,
         Pivot: r => r,
@@ -599,7 +594,7 @@ const _queryResult = (state, viewId, fallbackIR) => {
 const _queryDescription = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return ''
-    const mergedIR = _mergeChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = _mergeFinancialQueryChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
     return toFinancialQueryDescription(mergedIR)
 }
 
