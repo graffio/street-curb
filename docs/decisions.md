@@ -907,7 +907,7 @@ Future architecture decisions are data-driven and support sustainable business g
 ### IR filter tree replaces flat filter list (2026-03-05)
 
 **Context:** IRFilter was a flat list of Equals/In variants. Users need compound conditions (e.g., "dining AND checking account AND over $50") that flat lists cannot express.
-**Decision:** IRFilter becomes a 10-variant boolean tree (7 leaf predicates + And/Or/Not combinators). IRSource holds an optional single root node. Pre-compiled evaluator in `build-filter-predicate.js` converts tree to `entity => Boolean`.
+**Decision:** IRFilter becomes a 10-variant boolean tree (7 leaf predicates + And/Or/Not combinators). Each FinancialQuery variant holds an optional single filter root node. Pre-compiled evaluator in `build-filter-predicate.js` converts tree to `entity => Boolean`.
 **Why:** Users describe complex conditions in natural language; Claude constructs the boolean tree. Flat list would need N^2 special-case handling for combinations that the tree handles naturally via recursion.
 
 ### Query IR as single source of truth for engine views (2026-03-05)
@@ -915,6 +915,18 @@ Future architecture decisions are data-driven and support sustainable business g
 **Context:** Engine-driven reports needed a state management strategy. Options: (a) derive view from IR on every render, (b) store IR in Redux and memoize, (c) store both IR and results.
 **Decision:** `state.queryIR[viewId]` is the authoritative query per view. `QueryResult.fromIR` selector merges chip filter state into IR, executes via engine, memoized with `memoizeReduxStatePerKey`. Components provide fallback IR via metadata; Redux state takes precedence.
 **Why:** IR-as-state keeps the engine in the loop for every change. Chip filter merge happens at selector level — existing chip components dispatch the same actions, no new components needed. Memoization on 7 entity state keys provides cache invalidation without per-field tracking.
+
+### FinancialQuery replaces Query+IRSource+IRDomain+IRComputation (2026-03-07)
+
+**Context:** The old 4-type assembly (Query + IRSource + IRDomain + IRComputation) required constructing 4+ intermediate objects for simple queries. Named sources and IRComputation were pure indirection for the common case.
+**Decision:** FinancialQuery TaggedSum with 6 domain-specific variants (TransactionQuery, PositionQuery, AccountQuery, ExpressionQuery, SnapshotQuery, RunningBalanceQuery). Each variant carries only its domain-relevant fields. Engine dispatches via single `.match()`. IRGrouping replaces groupBy string with pivot support (rows × columns). ComputedRow enables per-column expressions on pivot queries.
+**Why:** Most queries collapse from 4+ constructor calls to 1. New capabilities (pivot tables, time series snapshots, running balances) are first-class variants, not IRComputation hacks. Spikes 8-10 validated the approach with 122 assertions.
+
+### Page-per-type view dispatch for QueryResult variants (2026-03-07)
+
+**Context:** QueryResultPage only rendered Identity (tree) results via DataTable. New QueryResult variants (Pivot, TimeSeries, RunningBalance, FilteredEntities) needed rendering but don't fit the tree model.
+**Decision:** Separate page component per result type, dispatched via `metadata.page` component reference in report-metadata.js. D3 scales + React SVG for charting (no high-level chart library). FilterChipRow extracted as shared component.
+**Why:** Each result type has fundamentally different rendering needs (pivot grid vs line chart vs flat table). Component reference dispatch avoids if/else chains on type strings. D3 scales are pure functions that fit our functional style.
 
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 

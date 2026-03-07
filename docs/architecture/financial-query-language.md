@@ -1,56 +1,126 @@
 ---
-summary: "Query engine architecture — validator, expression evaluator, execution engine, pipeline, position enrichment, metric registry, IR filter tree, engine-drives-views"
-keywords: [ "query", "IR", "validator", "execution", "expression", "financial", "position", "metric", "time series" ]
+summary: "Query engine architecture — FinancialQuery IR with 6 query variants, 6 result variants, pivot/snapshot/running balance, page-per-type views, D3 charting, position enrichment, metric registry"
+keywords: [ "query", "IR", "execution", "expression", "financial", "position", "metric", "pivot", "snapshot", "FinancialQuery" ]
 module: quicken-web-app
-last_updated: "2026-03-05"
+last_updated: "2026-03-07"
 ---
 
 # Financial Query Engine
 
-Query engine that takes IR (constructed by Claude from natural language), validates against user data, and executes
-against Redux state.
+Query engine that takes FinancialQuery IR, executes against Redux state, and produces typed QueryResult variants that
+drive page-per-type views. Claude constructs IR Tagged values from natural language — no DSL parser.
 
 ## Architecture
 
 ```
-Claude → Query IR → Validator → Execution Engine → IRResult
-                       ↑              ↑
-                   DataSummary    Redux state
+Claude → FinancialQuery IR → Execution Engine → QueryResult → Page Component
+                                    ↑                              ↓
+                               Redux state              .match() → view dispatch
 ```
 
-Four modules, each with a single responsibility:
+| Module               | File                                | Input → Output                        |
+|----------------------|-------------------------------------|---------------------------------------|
+| Execution engine     | `run-financial-query.js`            | `(ir, state)` → QueryResult          |
+| Description          | `to-financial-query-description.js` | `(ir)` → human-readable string       |
+| Filter compiler      | `build-filter-predicate.js`         | `(IRFilter)` → `entity => Boolean`   |
+| Expression evaluator | `resolve-expression.js`             | `(ast, boundValues)` → number        |
 
-| Module               | File                        | Input → Output                             |
-|----------------------|-----------------------------|--------------------------------------------|
-| Validator            | `query-validator.js`        | `(ir, dataSummary)` → `{valid, errors}`    |
-| Expression evaluator | `resolve-expression.js`     | `(ast, boundValues)` → number              |
-| Query runner         | `run-query.js`              | `(ir, state)` → IRResult                   |
-| Pipeline             | `query-pipeline.js`         | `(ir, dataSummary, state)` → phased result |
+## FinancialQuery IR
 
-## Type System
+Domain-specific TaggedSum — each variant carries only its domain-relevant fields.
 
-13 Tagged/TaggedSum types in `type-definitions/`. All IR nodes are Tagged — no plain `{type}` objects anywhere in the
-pipeline. All domain dispatch uses `.match()`.
+### 6 Variants
 
-**Core TaggedSums (exhaustive dispatch):**
+| Variant            | Fields                                                    | → QueryResult      |
+|--------------------|-----------------------------------------------------------|---------------------|
+| TransactionQuery   | name, description?, filter?, dateRange?, grouping?, computed? | Identity or Pivot |
+| PositionQuery      | name, description?, filter?, dateRange?, grouping?, metrics?, orderBy?, limit? | Identity |
+| AccountQuery       | name, description?, filter?                               | FilteredEntities    |
+| ExpressionQuery    | name, description?, left, right, expression               | Scalar              |
+| SnapshotQuery      | name, description?, domain, filter?, dateRange, interval  | TimeSeries          |
+| RunningBalanceQuery| name, description?, filter?, dateRange?                   | RunningBalance      |
 
-- `IRComputation`: Identity, Compare, Expression, FilterEntities, TimeSeries
-- `IRResult`: Identity, Comparison, Scalar, FilteredEntities, TimeSeries
-- `IRDomain`: Transactions, Positions, Accounts
-- `IRExpression`: Literal, Binary, Call, Reference
-- `IRDateRange`: Year, Quarter, Month, Relative, Range, Named
-- `IRFilter`: Equals, In, GreaterThan, LessThan, Between, Matches, And, Or, Not, OlderThan
-- `IRResultTree`: Category, Positions
+### Supporting Types
 
-**Data types (Tagged with field validation):**
+- **IRGrouping(rows, columns?, only?)** — shared by TransactionQuery/PositionQuery. Single dimension = flat tree.
+  Two dimensions = pivot table. `only` restricts which column values appear.
+- **ComputedRow(name, expression)** — per-column expressions on pivot queries. Uses PivotExpression AST.
+- **PivotExpression**: RowRef(name), Literal(value), Binary(op, left, right) — evaluated per column bucket.
+- **IRDateRange**: Year, Quarter, Month, Relative, Range — resolved to ISO date strings at execution time.
+- **IRExpression**: Literal, Binary, Call, Reference — recursive AST for cross-query arithmetic.
 
-- Query (sources as `LookupTable<IRSource>`), IRSource, IROutput, AccountSummary, DataSummary, MetricDefinition
+### IRFilter (9-variant boolean tree)
 
-**FieldTypes:** `sourceName` (`/^[a-z_][a-z0-9_]*$/`), `groupDimension` (`/^(month|quarter|...)$/`), `arithmeticOp` (
-`/^[/+*-]$/`), `timeUnit` (`/^(months|days|weeks|years)$/`), `namedPeriod`, `accountType`
+**Leaf variants:** Equals, In, GreaterThan, LessThan, Between, Matches
+**Combinators:** And, Or, Not (recursive)
 
-**Cross-type references:** IRComputation.Expression.expression → IRExpression, Query.sources → LookupTable of IRSource,
-DataSummary.accounts → [AccountSummary], IRResult.Identity.tree → IRResultTree
+Pre-compiled evaluator (`build-filter-predicate.js`): takes an IRFilter tree, returns `entity => Boolean`. Compilation
+converts In values to Set (O(1) lookup), compiles Matches pattern to RegExp once, captures numeric thresholds. Guards:
+empty And/Or rejected, depth > 20 rejected, invalid regex throws with clear message.
+
+## Execution Engine
+
+`run-financial-query.js` dispatches via `FinancialQuery.match()` to domain-specific collectors:
+
+- **TransactionQuery**: enrich → filter → group. With `columns` in IRGrouping → pivot (rows × columns grid,
+  ComputedRow expressions evaluated per column).
+- **PositionQuery**: computePositions → filter → group. Uses `toFilterablePosition` for field mapping.
+- **AccountQuery**: filter accounts by predicate → FilteredEntities result.
+- **ExpressionQuery**: recursive dispatch on left/right sub-queries (depth limit 10) → evaluate IRExpression.
+- **SnapshotQuery**: generate date points at interval, compute cumulative balances or positions at each → TimeSeries.
+- **RunningBalanceQuery**: filter + sort transactions, accumulate running balance per entry.
+
+**Enrich-then-filter:** The engine enriches all entities first (adding `categoryName`, `accountName`, etc.), then
+applies the compiled filter predicate. This allows filters to reference enriched fields.
+
+Shared helpers: `toResolvedFilter` (category prefix expansion — `Equals('category', 'Food')` becomes
+`Matches('category', '^Food(:|$)')` to match subcategories), `buildFilterPredicate` (IRFilter → entity predicate),
+`toFilterableTransaction`/`toFilterablePosition` (field mapping for predicate evaluation).
+
+## Chip Merge & Selector Integration
+
+`merge-chip-filters.js` converts UI chip state into IR patches and applies them variant-agnostically via
+`constructor.from({ ...ir, ...patch })`. Variants without a given field (e.g. ExpressionQuery has no `filter`)
+silently ignore patch keys through `_from` destructuring.
+
+```
+Redux state.queryIR[viewId] → applyChipFilters → runFinancialQuery → QueryResult
+                                      ↑
+                              transactionFilters[viewId] (chip state)
+```
+
+Chip → IR mapping:
+
+- Category chips → `IRFilter.Or([Equals('category', x), ...])`
+- Account chips → `IRFilter.In('account', [names])`
+- GroupBy chip → overrides `IRGrouping.rows`
+- Search chip → `IRFilter.Or([Matches('payee', q), Matches('category', q), Matches('memo', q), ...])`
+- Date chip → patch `dateRange`
+- AsOfDate chip → patch `dateRange` (takes priority over date chip)
+
+Memoized with `memoizeReduxStatePerKey` — 8 entity state keys as global invalidation, `queryIR` as per-key state.
+FallbackIR from metadata must be referentially stable (module-level constant).
+
+## Page-Per-Type View Layer
+
+Separate page component per QueryResult variant, dispatched via `metadata.page` in report-metadata.js:
+
+| QueryResult      | Page Component              | Rendering                              |
+|------------------|-----------------------------|----------------------------------------|
+| Identity         | QueryResultPage             | DataTable with tree columns            |
+| Scalar           | (inline)                    | Single computed value                  |
+| Pivot            | PivotResultPage             | DataTable with dynamic year columns    |
+| TimeSeries       | TimeSeriesResultPage        | D3 line chart + snapshot table         |
+| RunningBalance   | RunningBalanceResultPage    | Flat DataTable with cumulative balance |
+| FilteredEntities | FilteredEntitiesResultPage  | Flat DataTable (accounts)              |
+
+**Charting:** D3 scales (`d3-scale`) for math, React for SVG rendering. `TimeSeriesChart.jsx` uses `scaleUtc` +
+`scaleLinear`. No high-level chart library.
+
+**FilterChipRow:** Extracted shared component used by all page types for consistent chip rendering.
+
+**Seed queries:** `SEED_QUERIES` in report-metadata.js defines 9 pre-configured queries. `SEED_QUERY_METADATA` maps
+each to its page component and filter chip configuration. `picker-config.js` wires them into the sidebar.
 
 ## Position Enrichment & Metric Registry
 
@@ -71,123 +141,38 @@ Decomposed into single-function modules in `financial-computations/`:
 | `metric-registry.js`       | LookupTable of 7 MetricDefinitions                     |
 | `build-positions-tree.js`  | Group positions into PositionTreeNode tree              |
 
-## Query Language Extensions (Plan C)
-
-| Clause        | IR location    | Purpose                                       |
-|---------------|----------------|-----------------------------------------------|
-| `order by`    | IROutput       | Sort results by metric or position field       |
-| `limit`       | IROutput       | Return top/bottom N (flat results only)        |
-| `metrics`     | IRSource       | Request specific computed metrics per position |
-| `time series` | IRComputation  | Position snapshots at interval dates           |
-
-Validator checks: metric names against registry, orderBy against position fields + registry, limit > 0 and not combined
-with groupBy, timeSeries date points <= 100.
-
-Execution engine: metrics resolved via MetricRegistry.get(). TimeSeries generates date points and calls
-computePositions at each. orderBy/limit applied as post-processing on IRResultTree.Positions.
-
-## Validator
-
-Checks entity references (categories, accounts, payees, accountTypes) against DataSummary. Four matching strategies in
-priority order:
-
-1. **Prefix** — "Food" matches when "Food:Dining" exists (mirrors execution engine)
-2. **Hierarchical** — "Dining" suggests "Food:Dining" (split on `:`)
-3. **Substring**
-4. **Levenshtein** — distance <= 3, pre-filtered by length proximity
-
-Max 3 suggestions per error. Validates computation source refs via `.match()`.
-
-## Expression Evaluator
-
-Recursive AST walker with `.match()` dispatch on IRExpression variants. Fail-fast on: unknown
-source/field/operator/function, division by zero, depth limit (100).
-
-## Execution Engine
-
-Resolves IRDateRange via `.match()` (6 variants), applies source filters, dispatches via IRDomain.match() to
-domain-specific collectors. Calls business modules directly (TransactionFilter, CategoryTree, computePositions) — not
-selectors — to avoid viewId dependency. Imports MetricRegistry from financial-computations/ for metric resolution.
-
-## IR Filter Tree
-
-10-variant boolean tree replacing the original flat `[IRFilter]` list. IRSource holds an optional single root node
-(`IRFilter?`) — `And([...])` wraps multiple conditions, `undefined` means no filter.
-
-**Leaf variants:** Equals, In, GreaterThan, LessThan, Between, Matches, OlderThan
-**Combinators:** And, Or, Not (recursive — reference IRFilter)
-
-Pre-compiled evaluator (`build-filter-predicate.js`): takes an IRFilter tree, returns `entity => Boolean`. Compilation
-converts In values to Set (O(1) lookup), compiles Matches pattern to RegExp once, captures numeric thresholds. Guards:
-empty And/Or rejected, depth > 20 rejected, invalid regex throws with clear message.
-
-**Enrich-then-filter path:** The execution engine enriches all entities first (adding `categoryName`, `accountName`,
-etc.), then applies the compiled filter predicate. This allows filters to reference enriched fields that don't exist on
-raw entities.
-
-## Engine-Drives-Views (Plan B)
-
-Query IR stored in Redux per viewId replaces selector-based report data paths for engine-driven reports.
-
-```
-Redux state.queryIR[viewId] → QueryResult.fromIR selector → memoized engine execution → tree nodes
-                                    ↑
-                            fallbackIR from metadata (referentially stable)
-```
-
-**IR-as-Redux-state:** `state.queryIR` is a plain object keyed by viewId. `SetQueryIR` action stores a Query per view.
-Components can dispatch new Query IR to change what a view displays without re-mounting.
-
-**QueryResult.fromIR selector:** Memoized with `memoizeReduxStatePerKey` — 7 entity state keys as global invalidation
-keys, `queryIR` as per-key state. Accepts `(state, viewId, fallbackIR)` — reads IR from Redux, falls back to provided
-IR, executes via engine, extracts `tree.nodes`. The fallbackIR parameter must be referentially stable (module-level
-constant) since rest-arg stringify is the only cache discriminator when `state.queryIR[viewId]` is undefined.
-
-**Component-level IR resolution:** `QueryResultPage` branches on `metadata.defaultQueryIR` presence. When set, uses
-`QueryResult.fromIR`; otherwise falls back to the existing selector path. Engine-driven reports (`engine_spending`,
-`engine_positions`) use this path. Existing reports (`spending`, `positions`) remain on their original selector paths.
-
-**Report routing:** `TabGroup.ReportPage` checks `ENGINE_METADATA[reportType]` — engine report types get
-`QueryResultPage` with engine metadata, others route to their existing page components.
-
-## DataSummary Selector
-
-`_dataSummary` in `selectors.js` — memoized with `memoizeReduxState(['categories', 'accounts', 'transactions'])`.
-Extracts category names, account name/type pairs, unique accountTypes, unique payees.
-
 ## Key Files
 
-| File                                           | Purpose                                   |
-|------------------------------------------------|-------------------------------------------|
-| `src/query-language/query-validator.js`        | Semantic validation with fuzzy matching   |
-| `src/query-language/resolve-expression.js`     | Safe expression evaluator (replaces eval) |
-| `src/query-language/run-query.js` | IR → business module calls → IRResult     |
-| `src/query-language/query-pipeline.js`         | validate → execute pipeline               |
-| `src/store/selectors.js`                       | `_dataSummary` selector                   |
-| `src/financial-computations/metric-registry.js`| MetricDefinition LookupTable (7 metrics) |
-| `src/financial-computations/compute-positions.js`| Lot aggregation + price → Position      |
-| `type-definitions/ir-computation.type.js`      | IRComputation TaggedSum                   |
-| `type-definitions/ir-result.type.js`           | IRResult TaggedSum                        |
-| `type-definitions/query.type.js`               | Query Tagged type                         |
-| `src/query-language/build-filter-predicate.js` | IRFilter tree → compiled predicate        |
-| `src/pages/QueryResultPage.jsx`                | Engine/selector dual-path report page     |
-| `src/pages/report-metadata.js`                 | Report metadata + seed Query IR constants |
+| File                                           | Purpose                                        |
+|------------------------------------------------|------------------------------------------------|
+| `src/query-language/run-financial-query.js`    | FinancialQuery IR → QueryResult (6 variants)   |
+| `src/query-language/to-financial-query-description.js` | IR → human-readable description        |
+| `src/query-language/build-filter-predicate.js` | IRFilter tree → compiled predicate             |
+| `src/query-language/resolve-expression.js`     | Expression evaluator (replaces eval)           |
+| `src/query-language/merge-chip-filters.js`     | Variant-agnostic chip state → IR merge         |
+| `src/store/selectors.js`                       | Memoized query execution per viewId            |
+| `src/pages/report-metadata.js`                 | Seed queries + page/filter metadata            |
+| `src/pages/PivotResultPage.jsx`               | Pivot table with dynamic columns               |
+| `src/pages/TimeSeriesResultPage.jsx`           | D3 chart + snapshot table                      |
+| `src/pages/RunningBalanceResultPage.jsx`       | Register-style running balance                 |
+| `src/pages/FilteredEntitiesResultPage.jsx`     | Filtered entity list (accounts)                |
+| `src/pages/QueryResultPage.jsx`               | Tree-based report page                         |
+| `src/components/TimeSeriesChart.jsx`           | D3 scales + React SVG line chart               |
+| `src/components/FilterChipRow.jsx`             | Shared filter chip row for all page types      |
+| `src/financial-computations/metric-registry.js`| MetricDefinition LookupTable (7 metrics)       |
+| `src/financial-computations/compute-positions.js`| Lot aggregation + price → Position           |
+| `type-definitions/ir/financial-query.type.js`  | FinancialQuery TaggedSum                       |
+| `type-definitions/ir/ir-grouping.type.js`      | IRGrouping Tagged type                         |
+| `type-definitions/ir/computed-row.type.js`     | ComputedRow Tagged type                        |
+| `type-definitions/ir/pivot-expression.type.js` | PivotExpression TaggedSum                      |
 
 ## Design Decisions
 
-- **Claude constructs IR directly** — no DSL parser; Claude produces Tagged IR values from natural language, pipeline
-  accepts Query IR
-- **Executor calls business modules, not selectors** — avoids viewId dependency; caller (Plan B) decides memoization
-  strategy
-- **Category prefix matching replicated in validator** — "Food" valid when "Food:Dining" exists, matching execution
-  semantics
-- **IR prefix convention** — all query engine types use `IR` prefix (IRSource, IRFilter, etc.) except the root `Query`
-  type and non-IR data types (DataSummary, AccountSummary)
-- **IR filter tree replaces flat list** — single optional root node (`And([...])` for multiple conditions) instead of
-  `[IRFilter]` array; enables compound boolean predicates (And/Or/Not) that flat lists cannot express
-- **Query IR as single source of truth** — `state.queryIR[viewId]` is the authoritative query for a view; components
-  provide fallback IR via metadata but Redux state takes precedence
+- **Claude constructs IR directly** — no DSL parser; Claude produces Tagged IR values from natural language
+- **Domain-specific query types** — FinancialQuery variants carry only domain-relevant fields, dispatched via `.match()`
+- **Executor calls business modules, not selectors** — avoids viewId dependency; memoization at selector level
 - **Enrich-then-filter** — engine enriches all entities before filtering so predicates can reference computed fields
-  (categoryName, accountName) that don't exist on raw domain entities
-- **Engine reports additive, not replacing** — new `engine_spending`/`engine_positions` report types added alongside
-  existing `spending`/`positions`; existing selector-based reports remain unchanged until parity is fully verified
+- **Query IR as single source of truth** — `state.queryIR[viewId]` is authoritative; chip filters merge at selector level
+- **Page-per-type dispatch** — each QueryResult variant gets its own page component via `metadata.page` reference
+- **Variant-agnostic chip merge** — `constructor.from({ ...ir, ...patch })` avoids per-variant reconstruction
+- **D3 for math, React for rendering** — `d3-scale` for scales, React for SVG elements, no chart library wrapper
