@@ -210,6 +210,27 @@ tap.test('TransactionQuery/Identity: filter chip matches payee', async t => {
     await wait(200)
 })
 
+tap.test('TransactionQuery/Identity: filter producing zero rows does not crash', async t => {
+    session.clickByRef('Spending (Engine)')
+    await wait(500)
+
+    // Filter for a nonexistent payee to produce zero matching rows
+    session.browser('click', ['text="Filter" >> nth=0'])
+    await wait(200)
+    session.browser('find', ['placeholder', 'Type to filter...', 'fill', 'ZZZZZ_NO_MATCH_ZZZZZ'])
+    await wait(400)
+
+    const snapshot = session.browser('snapshot')
+    t.notOk(snapshot.includes('Something went wrong'), 'no crash with zero results')
+    t.notOk(snapshot.includes('NaN'), 'no NaN values in empty result')
+
+    // Clear filter
+    session.browser('find', ['placeholder', 'Type to filter...', 'fill', ''])
+    await wait(300)
+    session.browser('press', ['Escape'])
+    await wait(200)
+})
+
 // ═════════════════════════════════════════════════════════════════════════════
 // TransactionQuery → Identity with filters (Seed queries)
 // Variant: TransactionQuery with various IRFilter combinations

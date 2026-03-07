@@ -58,11 +58,11 @@ With page-per-type infrastructure and the engine in place, these are just new se
 
 ### Integration test gaps
 
-- **Date chip** not tested on PivotResultPage, TimeSeriesResultPage, or RunningBalanceResultPage — all three wire it in
-  metadata but no integration test exercises it
-- **AsOfDate chip** on Positions (Engine) — wired in metadata, never tested
+- **Exhaustive chip × variant matrix** — each variant has at least one chip test, but not every chip on every variant.
+  Missing combinations include: Category chip on Pivot, GroupBy chip on Pivot, Date chip on AccountQuery (not wired),
+  Category chip on RunningBalance (not wired), GroupBy on positions, etc.
 - **Combined multi-chip filters** — no test applies multiple chip types simultaneously (e.g., date + account + category)
-- **Empty results** — no test verifies behavior when a filter produces zero matching transactions
+- ~~**Empty results**~~ — DONE: `filter producing zero rows does not crash` test on TransactionQuery/Identity
 
 ### Failing tests
 
