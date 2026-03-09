@@ -2,6 +2,12 @@
 // ABOUTME: Centralizes Intl formatters to avoid duplicate object creation
 
 const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+const compactCurrencyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+})
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 
 /*
@@ -10,6 +16,13 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
  * @sig formatCurrency :: Number -> String
  */
 const formatCurrency = value => currencyFormatter.format(value)
+
+/*
+ * Format a value as compact US currency (e.g., "$1.2M", "$450K")
+ *
+ * @sig formatCompactCurrency :: Number -> String
+ */
+const formatCompactCurrency = value => compactCurrencyFormatter.format(value)
 
 /*
  * Format a date string using medium date style (e.g., "Dec 24, 2025")
@@ -150,6 +163,7 @@ const toHighlightSegments = (text, query, fromIndex = 0) => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const Formatters = {
+    formatCompactCurrency,
     formatCurrency,
     formatDate,
     formatDateRange,

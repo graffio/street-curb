@@ -105,7 +105,6 @@ export const typeMappings = {
 
     // derived — computed types for display and type safety
     [`${sources.quickenDerived}/enriched-account.type.js`]    : [targets.quickenWebApp],
-    [`${sources.quickenDerived}/account-summary.type.js`]     : [targets.quickenWebApp],
     [`${sources.quickenDerived}/account-section.type.js`]     : [targets.quickenWebApp],
     [`${sources.quickenDerived}/position-aggregate.type.js`]  : [targets.quickenWebApp],
     [`${sources.quickenDerived}/position-tree-node.type.js`]  : [targets.quickenWebApp],
@@ -114,7 +113,6 @@ export const typeMappings = {
     [`${sources.quickenDerived}/register-row.type.js`]        : [targets.quickenWebApp],
     [`${sources.quickenDerived}/query-result.type.js`]        : [targets.quickenWebApp],
     [`${sources.quickenDerived}/query-result-tree.type.js`]   : [targets.quickenWebApp],
-    [`${sources.quickenDerived}/data-summary.type.js`]        : [targets.quickenWebApp],
 
     // ui-state — view/layout/filter configuration
     [`${sources.quickenUiState}/view.type.js`]                : [targets.quickenWebApp],
@@ -129,14 +127,13 @@ export const typeMappings = {
     [`${sources.quickenUiState}/view-ui-state.type.js`]       : [targets.quickenWebApp],
 
     // query-language IR types (internal to query-language)
-    [`${sources.quickenWebAppIR}/ir-domain.type.js`]          : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/ir-date-range.type.js`]      : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/ir-filter.type.js`]          : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/ir-expression.type.js`]      : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-computation.type.js`]     : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-source.type.js`]          : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-output.type.js`]          : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/query.type.js`]              : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/financial-query.type.js`]    : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-grouping.type.js`]        : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/pivot-expression.type.js`]   : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/computed-row.type.js`]       : [targets.queryLanguage],
 
     // cross-cutting (Action must come after entity types it references)
     [`${sources.quickenWebApp}/action.type.js`]               : [targets.quickenWebApp],

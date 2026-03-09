@@ -1,5 +1,5 @@
 // ABOUTME: TaggedSum type for query execution results
-// ABOUTME: Five variants matching IRComputation — computation shape is orthogonal to data shape (QueryResultTree)
+// ABOUTME: Six variants — Identity, Scalar, FilteredEntities, TimeSeries, Pivot, RunningBalance
 
 import { FieldTypes } from '../field-types.js'
 
@@ -15,9 +15,10 @@ export const QueryResult = {
     kind: 'taggedSum',
     variants: {
         Identity:         { tree: 'QueryResultTree', source: FieldTypes.sourceName },
-        Comparison:       { left: 'QueryResultTree', right: 'QueryResultTree', source: FieldTypes.sourceName },
         Scalar:           { value: 'Number', expression: 'Object' },
-        FilteredEntities: { entities: '[Account]', source: FieldTypes.sourceName },
+        FilteredEntities: { entities: '[Object]', source: FieldTypes.sourceName },
         TimeSeries:       { snapshots: '[Object]', source: FieldTypes.sourceName },
+        Pivot:            { columns: '[String]', rows: '[String]', cells: 'Object', computed: 'Object', rowTotals: 'Object' },
+        RunningBalance:   { entries: '[Object]' },
     },
 }

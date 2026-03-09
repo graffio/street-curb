@@ -33,15 +33,14 @@ const T = {
         // prettier-ignore
         return node.match({
             Equals     : ({ field, value })     => entity => entity[field] === value,
-            OlderThan  : ({ field, days })      => entity => entity[field] > days,
             GreaterThan: ({ field, value })     => entity => entity[field] > value,
             LessThan   : ({ field, value })     => entity => entity[field] < value,
             Between    : ({ field, low, high }) => entity => entity[field] >= low && entity[field] <= high,
-            In         : ({ field, values })    => entity => new Set(values).has(entity[field]),
-            Matches    : ({ field, pattern })   => entity => T.toRegex(pattern).test(entity[field]),
-            And        : ({ filters })          => entity => T.toChildPredicates(filters, depth).every(f => f(entity)),
-            Or         : ({ filters })          => entity => T.toChildPredicates(filters, depth).some(f => f(entity)),
-            Not        : ({ filter })           => entity => !T.toCompiledPredicate(filter, depth + 1)(entity),
+            In         : ({ field, values })    => { const s = new Set(values); return entity => s.has(entity[field]) },
+            Matches    : ({ field, pattern })   => { const re = T.toRegex(pattern); return entity => re.test(entity[field]) },
+            And        : ({ filters })          => { const ps = T.toChildPredicates(filters, depth); return entity => ps.every(f => f(entity)) },
+            Or         : ({ filters })          => { const ps = T.toChildPredicates(filters, depth); return entity => ps.some(f => f(entity)) },
+            Not        : ({ filter })           => { const p = T.toCompiledPredicate(filter, depth + 1); return entity => !p(entity) },
         })
     },
 }

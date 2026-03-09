@@ -242,7 +242,7 @@ View.POSITIONS_DIMENSION_LAYOUTS = {
 View.DEFAULT_PAGE_TITLE = { title: 'Dashboard', subtitle: '' }
 
 View.toReportTitle = (reportType, groupBy) => {
-    if (reportType === 'positions' || reportType === 'engine_positions')
+    if (reportType === 'positions')
         return View.POSITIONS_DIMENSION_LAYOUTS[groupBy || 'account'] || View.POSITIONS_DIMENSION_LAYOUTS.account
     return View.CATEGORY_DIMENSION_LAYOUTS[groupBy || 'category'] || View.CATEGORY_DIMENSION_LAYOUTS.category
 }

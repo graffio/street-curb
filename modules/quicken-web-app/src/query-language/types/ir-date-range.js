@@ -17,8 +17,6 @@
  *  Range
  *      start: "String",
  *      end  : "String"
- *  Named
- *      name: FieldTypes.namedPeriod
  *
  */
 
@@ -36,7 +34,7 @@ const IRDateRange = { toString: () => 'IRDateRange' }
 // Add hidden properties
 Object.defineProperty(IRDateRange, '@@typeName', { value: 'IRDateRange', enumerable: false })
 Object.defineProperty(IRDateRange, '@@tagNames', {
-    value: ['Year', 'Quarter', 'Month', 'Relative', 'Range', 'Named'],
+    value: ['Year', 'Quarter', 'Month', 'Relative', 'Range'],
     enumerable: false,
 })
 
@@ -66,7 +64,6 @@ const toString = {
     month   : function () { return `IRDateRange.Month(${R._toString(this.month)}, ${R._toString(this.year)})` },
     relative: function () { return `IRDateRange.Relative(${R._toString(this.unit)}, ${R._toString(this.count)})` },
     range   : function () { return `IRDateRange.Range(${R._toString(this.start)}, ${R._toString(this.end)})` },
-    named   : function () { return `IRDateRange.Named(${R._toString(this.name)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -81,7 +78,6 @@ const toJSON = {
     month   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     relative: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     range   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    named   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -178,22 +174,6 @@ const RangeConstructor = function Range(start, end) {
 
 IRDateRange.Range = RangeConstructor
 
-/*
- * Construct a IRDateRange.Named instance
- * @sig Named :: (String) -> IRDateRange.Named
- */
-const NamedConstructor = function Named(name) {
-    const constructorName = 'IRDateRange.Named(name)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateRegex(constructorName, FieldTypes.namedPeriod, 'name', false, name)
-
-    const result = Object.create(NamedPrototype)
-    result.name = name
-    return result
-}
-
-IRDateRange.Named = NamedConstructor
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
@@ -239,14 +219,6 @@ const RangePrototype = Object.create(IRDateRangePrototype, {
     constructor: { value: RangeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const NamedPrototype = Object.create(IRDateRangePrototype, {
-    '@@tagName': { value: 'Named', enumerable: false },
-    '@@typeName': { value: 'IRDateRange', enumerable: false },
-    toString: { value: toString.named, enumerable: false },
-    toJSON: { value: toJSON.named, enumerable: false },
-    constructor: { value: NamedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
@@ -255,7 +227,6 @@ QuarterConstructor.prototype = QuarterPrototype
 MonthConstructor.prototype = MonthPrototype
 RelativeConstructor.prototype = RelativePrototype
 RangeConstructor.prototype = RangePrototype
-NamedConstructor.prototype = NamedPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
@@ -264,7 +235,6 @@ QuarterConstructor.is = val => val && val.constructor === QuarterConstructor
 MonthConstructor.is = val => val && val.constructor === MonthConstructor
 RelativeConstructor.is = val => val && val.constructor === RelativeConstructor
 RangeConstructor.is = val => val && val.constructor === RangeConstructor
-NamedConstructor.is = val => val && val.constructor === NamedConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
@@ -273,7 +243,6 @@ QuarterConstructor.toString = () => 'IRDateRange.Quarter'
 MonthConstructor.toString = () => 'IRDateRange.Month'
 RelativeConstructor.toString = () => 'IRDateRange.Relative'
 RangeConstructor.toString = () => 'IRDateRange.Range'
-NamedConstructor.toString = () => 'IRDateRange.Named'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
@@ -282,7 +251,6 @@ QuarterConstructor._from = _input => IRDateRange.Quarter(_input.quarter, _input.
 MonthConstructor._from = _input => IRDateRange.Month(_input.month, _input.year)
 RelativeConstructor._from = _input => IRDateRange.Relative(_input.unit, _input.count)
 RangeConstructor._from = _input => IRDateRange.Range(_input.start, _input.end)
-NamedConstructor._from = _input => IRDateRange.Named(_input.name)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -291,7 +259,6 @@ QuarterConstructor.from = QuarterConstructor._from
 MonthConstructor.from = MonthConstructor._from
 RelativeConstructor.from = RelativeConstructor._from
 RangeConstructor.from = RangeConstructor._from
-NamedConstructor.from = NamedConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
 
@@ -300,7 +267,7 @@ NamedConstructor.from = NamedConstructor._from
  * @sig is :: Any -> Boolean
  */
 IRDateRange.is = v => {
-    const { Year, Quarter, Month, Relative, Range, Named } = IRDateRange
+    const { Year, Quarter, Month, Relative, Range } = IRDateRange
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return (
@@ -308,8 +275,7 @@ IRDateRange.is = v => {
         constructor === Quarter ||
         constructor === Month ||
         constructor === Relative ||
-        constructor === Range ||
-        constructor === Named
+        constructor === Range
     )
 }
 

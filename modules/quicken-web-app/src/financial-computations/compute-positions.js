@@ -93,7 +93,8 @@ const T = {
         const priceOnDate = A.findPriceAsOf(priceIndex, securityId, date)
         const previousDayPrice = A.findPriceAsOf(priceIndex, securityId, T.toPreviousDay(date))
 
-        const { goal, name, symbol, type } = security
+        const { goal, name, symbol, type: rawType } = security
+        const type = rawType ?? 'Unknown'
         const quotePrice = priceOnDate?.price ?? 0
         const priceDt = priceOnDate?.date
         const isStale = priceDt ? Price.isStale(priceDt, date) : true

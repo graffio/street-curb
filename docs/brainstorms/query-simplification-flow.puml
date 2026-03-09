@@ -1,0 +1,44 @@
+@startuml "Data Flow"
+
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+actor Claude
+component "UI Chips" as Chips
+
+package "Selector Layer" {
+    component "merge-chip-filters" as Merge
+}
+
+component "runFinancialQuery" as RFQ
+
+package "TransactionQuery" {
+    component "CategoryTreeNode tree\n---\neach node: {total, count, columns?}\ndrillable always\n\n1D: Food -$3,200\n      Groceries -$2,000\n\n2D: Food  '23 -$3.2k  '24 -$3.8k\n      Groceries  ...  ..." as TxnTree
+}
+
+package "PositionQuery" {
+    component "PositionTreeNode tree\n---\nBrokerage\n  AAPL  $12,400  +8.2%\n  VTSAX $45,000  +12.1%" as PTree
+}
+
+package "SnapshotQuery" {
+    component "CategoryTreeNode tree\ncolumns = date points (cumulative)\n---\nWithout grouping:\n  single total per date point\n\nWith grouping:\n  Food: Jan -$800  Feb -$1.6k\n  Housing: Jan -$1.5k  Feb -$3k" as Snap
+}
+
+package "One Page" {
+    component "TreePage\n---\nRenders any tree with N value columns.\nExpand/collapse always.\nOptional chart when columns are dates." as TreePage
+}
+
+Claude --> Merge : FinancialQuery IR
+Chips --> Merge : filter patches
+
+Merge --> RFQ : merged IR + Redux state
+
+RFQ --> TxnTree
+RFQ --> PTree
+RFQ --> Snap
+
+TxnTree --> TreePage
+PTree --> TreePage
+Snap --> TreePage : "chart opt-in\nwhen columns\nare dates"
+
+@enduml

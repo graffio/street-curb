@@ -2,7 +2,6 @@
 // This file exports all generated types for this module
 
 export { AccountSection } from './account-section.js'
-export { AccountSummary } from './account-summary.js'
 export { Account } from './account.js'
 export { Action } from './action.js'
 export { CategoryAggregate } from './category-aggregate.js'
@@ -10,7 +9,6 @@ export { CategoryTreeNode } from './category-tree-node.js'
 export { Category } from './category.js'
 export { ColumnDefinition } from './column-definition.js'
 export { ColumnDescriptor } from './column-descriptor.js'
-export { DataSummary } from './data-summary.js'
 export { EnrichedAccount } from './enriched-account.js'
 export { FieldTypes } from './field-types.js'
 export { LotAllocation } from './lot-allocation.js'

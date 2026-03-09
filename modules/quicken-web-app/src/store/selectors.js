@@ -2,14 +2,12 @@
 // ABOUTME: Thin state accessors and memoized derived selectors
 import {
     applySort,
-    compactMap,
     containsIgnoreCase,
     LookupTable,
     memoizeOnce,
     memoizeReduxState,
     memoizeReduxStatePerKey,
     truncateWithCount,
-    uniq,
     wrapIndex,
 } from '@graffio/functional'
 import { computeBenchmarkReturn } from '../financial-computations/compute-benchmark-return.js'
@@ -17,16 +15,7 @@ import { computeDividendIncome } from '../financial-computations/compute-dividen
 import { computeIrr } from '../financial-computations/compute-irr.js'
 import { computePositions } from '../financial-computations/compute-positions.js'
 import { computeRealizedGains } from '../financial-computations/compute-realized-gains.js'
-import {
-    AccountSummary,
-    Category,
-    DataSummary,
-    EnrichedAccount,
-    TableLayout,
-    Transaction,
-    TransactionFilter,
-    View,
-} from '../types/index.js'
+import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter, View } from '../types/index.js'
 import { CategoryTree } from '../utils/category-tree.js'
 
 // COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
@@ -42,9 +31,9 @@ import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
-import { toQueryDescription } from '../query-language/to-query-description.js'
-import { runQuery } from '../query-language/run-query.js'
-import { IRFilter, IRSource, Query } from '../query-language/types/index.js'
+import { toFinancialQueryDescription } from '../query-language/to-financial-query-description.js'
+import { runFinancialQuery } from '../query-language/run-financial-query.js'
+import { MergeChipFilters } from '../query-language/merge-chip-filters.js'
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
@@ -450,106 +439,37 @@ const _organizedAccounts = state => {
 const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAccounts) }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// DataSummary — query validation context
-// ---------------------------------------------------------------------------------------------------------------------
-
-const _dataSummary = state => {
-    const { accounts, categories, transactions } = state
-    const categoryNames = Category.collectAllNames(categories)
-    const accountPairs = Array.from(accounts).map(({ name, type }) => AccountSummary(name, type))
-    const accountTypes = uniq(accountPairs.map(a => a.type))
-    const payees = uniq(compactMap(t => t.payee, Array.from(transactions)))
-    return DataSummary(categoryNames, accountPairs, accountTypes, payees)
-}
-
-const dataSummary = memoizeReduxState(['categories', 'accounts', 'transactions'], _dataSummary)
-
-// ---------------------------------------------------------------------------------------------------------------------
 // QueryResult — engine-driven query execution per viewId
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
 const ENGINE_STATE_KEYS = ['accounts', 'categories', 'transactions', 'securities', 'lots', 'lotAllocations', 'prices', 'transactionFilters']
 
-// Merge chip filter selections from transactionFilters into the Query IR before execution.
-// Category chip: Or([Equals('category', X), ...]) — each Equals gets prefix-match via engine's toResolvedFilter.
-// Account chip: In('account', [names]) — engine aliases 'account' to accountName on enriched entities.
-// GroupBy chip: overrides IRSource.groupBy.
-// @sig _mergeChipFilters :: (Query, TransactionFilter?, LookupTable) -> Query
-// Combine base filter with chip-added filters into a single IRFilter node
-// @sig _combineFilters :: (IRFilter?, [IRFilter]) -> IRFilter?
-const _combineFilters = (baseFilter, chipFilters) => {
-    if (chipFilters.length === 0) return baseFilter
-    if (!baseFilter) return chipFilters.length === 1 ? chipFilters[0] : IRFilter.And(chipFilters)
-    return IRFilter.And([baseFilter, ...chipFilters])
-}
-
-// Build chip IRFilter nodes from category and account selections
-// @sig _buildChipFilters :: (TransactionFilter, LookupTable) -> [IRFilter]
-const _buildChipFilters = ({ selectedCategories, selectedAccounts }, accts) => {
-    const chipFilters = []
-    if (selectedCategories.length > 0) {
-        const fs = selectedCategories.map(c => IRFilter.Equals('category', c))
-        chipFilters.push(fs.length === 1 ? fs[0] : IRFilter.Or(fs))
-    }
-    const names = selectedAccounts.length > 0 ? compactMap(id => accts.get(id)?.name, selectedAccounts) : []
-    if (names.length > 0) chipFilters.push(IRFilter.In('account', names))
-    return chipFilters
-}
-
-const _mergeChipFilters = (ir, chipState, accts) => {
-    if (!chipState) return ir
-    const { name: irName, label, sources, computation, output } = ir
-    const { groupBy: chipGroupBy } = chipState
-    const source = sources.get('_default')
-    if (!source) return ir
-    const { name, domain, filter: baseFilter, dateRange, groupBy } = source
-
-    const chipFilters = _buildChipFilters(chipState, accts)
-    if (chipFilters.length === 0 && !chipGroupBy) return ir
-
-    const newSource = IRSource(
-        name,
-        domain,
-        _combineFilters(baseFilter, chipFilters),
-        dateRange,
-        chipGroupBy || groupBy,
-    )
-    const newSources = LookupTable([newSource], IRSource, 'name')
-    return Query(irName, label, newSources, computation, output)
-}
-
 // fallbackIR must be referentially stable (e.g. a module-level constant) — rest-arg stringify is the only
 // cache discriminator when state.queryIR[viewId] is undefined
 const _queryResult = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return undefined
-    const mergedIR = _mergeChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
-    const result = runQuery(mergedIR, state)
+    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+
+    const result = runFinancialQuery(mergedIR, state)
     return result.match({
         Identity: ({ tree }) => tree.nodes,
-        Comparison: () => {
-            throw new Error('Unsupported QueryResult variant: Comparison')
-        },
-        Scalar: () => {
-            throw new Error('Unsupported QueryResult variant: Scalar')
-        },
-        FilteredEntities: () => {
-            throw new Error('Unsupported QueryResult variant: FilteredEntities')
-        },
-        TimeSeries: () => {
-            throw new Error('Unsupported QueryResult variant: TimeSeries')
-        },
+        Scalar: r => r,
+        FilteredEntities: r => r,
+        Pivot: r => r,
+        TimeSeries: r => r,
+        RunningBalance: r => r,
     })
 }
 
-// Describe the merged Query IR as human-readable text — cheap, no heavy memoization needed
-// @sig _queryDescription :: (State, String, Query?) -> String
+// Describe the merged IR as human-readable text — cheap, no heavy memoization needed
+// @sig _queryDescription :: (State, String, FinancialQuery?) -> String
 const _queryDescription = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return ''
-    const mergedIR = _mergeChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
-    return toQueryDescription(mergedIR)
+    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    return toFinancialQueryDescription(mergedIR)
 }
 
 // prettier-ignore
@@ -572,7 +492,7 @@ const _positionsAsOf = (state, viewId) => {
         accounts,
         securities,
         transactions,
-        asOfDate,
+        asOfDate: asOfDate ?? new Date().toISOString().slice(0, 10),
         selectedAccountIds: selectedAccounts,
         filterQuery,
     })
@@ -611,7 +531,7 @@ const _enrichedPosition = (state, accountId, securityId) => {
         transactions,
         securities,
         prices,
-        asOfDate,
+        asOfDate: asOfDate ?? new Date().toISOString().slice(0, 10),
         benchmarkSecurityId: benchmark?.id,
     }
 
@@ -750,7 +670,6 @@ export {
 
     // Base state
     accounts,
-    dataSummary,
     activeViewId,
     atMaxGroups,
     activeViewPageTitle,
