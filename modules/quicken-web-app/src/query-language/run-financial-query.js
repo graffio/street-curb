@@ -1,11 +1,11 @@
 // ABOUTME: Executes a FinancialQuery IR against Redux state via 3-way .match() dispatch
-// ABOUTME: Each variant carries only domain-relevant fields
+// ABOUTME: Returns plain objects — {nodes, source}, {columns, rows, cells, ...}, or {snapshots, source}
 
 import { filter, find, iterate, map, reduce, sort } from '@graffio/functional'
 import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
 import { computePositions } from '../financial-computations/compute-positions.js'
 import { MetricRegistry } from '../financial-computations/metric-registry.js'
-import { EnrichedAccount, PositionTreeNode, QueryResult, QueryResultTree, Transaction } from '../types/index.js'
+import { EnrichedAccount, PositionTreeNode, Transaction } from '../types/index.js'
 import { CategoryTree } from '../utils/category-tree.js'
 import { buildFilterPredicate } from './build-filter-predicate.js'
 import { IRFilter } from './types/ir-filter.js'
@@ -203,7 +203,7 @@ const A = {
     },
 
     // Build a pivot result with rows x columns grid, row totals, and computed rows
-    // @sig collectPivotResult :: (IRFilter?, IRDateRange?, IRGrouping, [ComputedRow]?, State) -> QueryResult
+    // @sig collectPivotResult :: (..., State) -> { columns, rows, cells, computed, rowTotals }
     collectPivotResult: (queryFilter, dateDescriptor, grouping, computed, state) => {
         const filtered = A.collectFilteredTransactions(queryFilter, dateDescriptor, state)
         const { rows: rowDim, columns: colDim, only } = grouping
@@ -226,7 +226,7 @@ const A = {
             ? reduce((acc, cr) => A.collectComputedByName(acc, cr, columns, computedResults), {}, computed)
             : {}
 
-        return QueryResult.Pivot(columns, rows, grid, computedByName, rowTotals)
+        return { columns, rows, cells: grid, computed: computedByName, rowTotals }
     },
 
     // Apply a binary arithmetic operator to two pivot expression results
@@ -356,25 +356,24 @@ const A = {
     }),
 
     // Execute a TransactionQuery — pivot or category tree depending on grouping
-    // @sig collectTransactionQueryResult :: (Object, State) -> QueryResult
+    // @sig collectTransactionQueryResult :: (Object, State) -> { nodes, source, ... }
     collectTransactionQueryResult: ({ filter: queryFilter, dateRange, grouping, computed }, state) => {
-        if (grouping && grouping.columns) return A.collectPivotResult(queryFilter, dateRange, grouping, computed, state)
+        if (grouping.columns) return A.collectPivotResult(queryFilter, dateRange, grouping, computed, state)
         const nodes = A.collectTransactionTree(queryFilter, dateRange, grouping, state)
-        return QueryResult.Identity(QueryResultTree.Category(nodes), grouping ? grouping.rows : 'category')
+        return { nodes, source: grouping.rows }
     },
 
     // Execute a PositionQuery — optionally sort and limit the results
-    // @sig collectPositionQueryResult :: (Object, State) -> QueryResult
+    // @sig collectPositionQueryResult :: (Object, State) -> { nodes, source }
     collectPositionQueryResult: (
         { filter: queryFilter, dateRange, grouping, metrics, orderByField, orderByDirection, limit },
         state,
     ) => {
         const nodes = A.collectPositionsResult(queryFilter, dateRange, grouping, metrics, state)
-        const tree = QueryResultTree.Positions(nodes)
-        if (!orderByField) return QueryResult.Identity(tree, grouping ? grouping.rows : 'account')
+        if (!orderByField) return { nodes, source: grouping ? grouping.rows : 'account' }
         const sorted = A.collectSortedNodes(nodes, orderByField, orderByDirection || 'asc')
         const limited = limit !== undefined ? sorted.slice(0, limit) : sorted
-        return QueryResult.Identity(QueryResultTree.Positions(limited), grouping ? grouping.rows : 'account')
+        return { nodes: limited, source: grouping ? grouping.rows : 'account' }
     },
 
     // Build a Set of account IDs for investment/retirement accounts
@@ -385,7 +384,7 @@ const A = {
         ),
 
     // Generate time-series snapshots at interval points within a date range
-    // @sig collectSnapshotQueryResult :: (Object, State) -> QueryResult
+    // @sig collectSnapshotQueryResult :: (Object, State) -> { snapshots, source }
     collectSnapshotQueryResult: ({ domain, filter: queryFilter, dateRange, interval }, state) => {
         const { accounts } = state
         const resolved = T.toDateRange(dateRange)
@@ -405,10 +404,10 @@ const A = {
                     A.collectBalanceSnapshot(date, filtered, investmentAccountIds, investmentAccountIdsInScope, state),
                 datePoints,
             )
-            return QueryResult.TimeSeries(snapshots, 'balances')
+            return { snapshots, source: 'balances' }
         }
         const snapshots = map(date => A.collectPositionSnapshot(state, date), datePoints)
-        return QueryResult.TimeSeries(snapshots, 'positions')
+        return { snapshots, source: 'positions' }
     },
 }
 
@@ -438,7 +437,7 @@ const MAX_DEPTH = 10
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Dispatch a FinancialQuery to the appropriate execution path via .match()
-// @sig runFinancialQuery :: (FinancialQuery, State, Number?) -> QueryResult
+// @sig runFinancialQuery :: (FinancialQuery, State, Number?) -> Object
 const runFinancialQuery = (query, state, depth = 0) => {
     if (depth > MAX_DEPTH) throw new Error(`FinancialQuery depth exceeded maximum of ${MAX_DEPTH}`)
 

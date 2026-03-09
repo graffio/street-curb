@@ -3,16 +3,7 @@
 
 import { test } from 'tap'
 import { LookupTable, reduce } from '@graffio/functional'
-import {
-    Account,
-    Category,
-    Lot,
-    LotAllocation,
-    Price,
-    QueryResult,
-    Security,
-    Transaction,
-} from '../../src/types/index.js'
+import { Account, Category, Lot, LotAllocation, Price, Security, Transaction } from '../../src/types/index.js'
 import {
     ComputedRow,
     FinancialQuery,
@@ -96,7 +87,7 @@ const { And, Between, Equals, GreaterThan, In, Matches, Not, Or } = IRFilter
 
 const runSeed = query => {
     const result = runFinancialQuery(query, STATE)
-    if (QueryResult.Identity.is(result)) return result.tree.nodes
+    if (result.nodes) return result.nodes
     return result
 }
 
@@ -269,7 +260,7 @@ test('net_worth — SnapshotQuery monthly balance snapshots', t => {
         t.test('When executed against fixture data', t => {
             const result = runFinancialQuery(SEEDS.net_worth, STATE)
 
-            t.ok(QueryResult.TimeSeries.is(result), 'Then result is TimeSeries')
+            t.ok(Array.isArray(result.snapshots), 'Then result has snapshots (time series shape)')
             t.ok(result.snapshots.length >= 3, 'Then at least 3 monthly snapshots')
             t.type(result.snapshots[0].total, 'number', 'Then each snapshot has a numeric total')
             t.end()
@@ -324,7 +315,7 @@ test('category_by_year — pivot with computed row', t => {
         t.test('When executed against fixture data', t => {
             const result = runFinancialQuery(SEEDS.category_by_year, STATE)
 
-            t.ok(QueryResult.Pivot.is(result), 'Then result is Pivot')
+            t.ok(result.columns !== undefined, 'Then result has columns (pivot shape)')
             t.ok(result.columns.length > 0, 'Then columns exist')
             t.ok(result.rows.length > 0, 'Then rows exist')
             t.ok(result.computed['Housing % of Income'] !== undefined, 'Then computed row exists')

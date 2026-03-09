@@ -17,8 +17,6 @@ import {
     PivotExpression,
 } from '../query-language/types/index.js'
 import * as S from '../store/selectors.js'
-import { PivotResultPage } from './PivotResultPage.jsx'
-import { TimeSeriesResultPage } from './TimeSeriesResultPage.jsx'
 
 const { AccountFilterColumn } = AccountFilterChip
 const { AsOfDateColumn } = AsOfDateChip
@@ -117,9 +115,9 @@ const SEED_QUERY_METADATA = {
     amount_range:         { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.amount_range },
     dining_multi_account: { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.dining_multi_account },
     payee_pattern:        { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.payee_pattern },
-    net_worth:            { page: TimeSeriesResultPage, defaultQueryIR: SEED_QUERIES.net_worth, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
-    category_by_year:     { page: PivotResultPage, defaultQueryIR: SEED_QUERIES.category_by_year, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
-    spending_over_time:   { page: TimeSeriesResultPage, defaultQueryIR: SEED_QUERIES.spending_over_time, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
+    net_worth:            { chart: true, defaultQueryIR: SEED_QUERIES.net_worth, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
+    category_by_year:     { defaultQueryIR: SEED_QUERIES.category_by_year, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
+    spending_over_time:   { chart: true, defaultQueryIR: SEED_QUERIES.spending_over_time, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

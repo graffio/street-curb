@@ -206,14 +206,9 @@ const ENGINE_METADATA = {
 }
 
 // Self-selecting report page — renders correct report type based on reportType
-// Page-per-type dispatch: metadata.page (component ref) overrides default QueryResultPage
 // @sig ReportPage :: { viewId: String, reportType: String } -> ReactElement
 const ReportPage = ({ viewId, reportType }) => {
     const engineMetadata = ENGINE_METADATA[reportType]
-    if (engineMetadata?.page) {
-        const Page = engineMetadata.page
-        return <Page viewId={viewId} metadata={engineMetadata} />
-    }
     if (engineMetadata) return <QueryResultPage viewId={viewId} metadata={engineMetadata} />
     return reportType === 'positions' ? (
         <InvestmentReportPage viewId={viewId} />

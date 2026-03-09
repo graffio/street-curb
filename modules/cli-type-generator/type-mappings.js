@@ -111,8 +111,6 @@ export const typeMappings = {
     [`${sources.quickenDerived}/category-aggregate.type.js`]  : [targets.quickenWebApp],
     [`${sources.quickenDerived}/category-tree-node.type.js`]  : [targets.quickenWebApp],
     [`${sources.quickenDerived}/register-row.type.js`]        : [targets.quickenWebApp],
-    [`${sources.quickenDerived}/query-result.type.js`]        : [targets.quickenWebApp],
-    [`${sources.quickenDerived}/query-result-tree.type.js`]   : [targets.quickenWebApp],
 
     // ui-state — view/layout/filter configuration
     [`${sources.quickenUiState}/view.type.js`]                : [targets.quickenWebApp],

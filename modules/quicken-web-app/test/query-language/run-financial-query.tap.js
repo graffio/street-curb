@@ -1,16 +1,6 @@
 import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'
-import {
-    Account,
-    Category,
-    Lot,
-    LotAllocation,
-    Price,
-    QueryResult,
-    QueryResultTree,
-    Security,
-    Transaction,
-} from '../../src/types/index.js'
+import { Account, Category, Lot, LotAllocation, Price, Security, Transaction } from '../../src/types/index.js'
 import {
     ComputedRow,
     FinancialQuery,
@@ -107,9 +97,9 @@ test('TransactionQuery — category grouping with filter', t => {
                 IRGrouping('category'),
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
-            t.ok(QueryResultTree.Category.is(result.tree), 'Then result contains a category tree')
-            t.ok(result.tree.nodes.length > 0, 'Then tree is not empty')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(result.nodes.length > 0, 'Then tree is not empty')
+            t.equal(result.source, 'category', 'Then source is category')
             t.end()
         })
         t.end()
@@ -143,7 +133,7 @@ test('TransactionQuery — pivot with computed rows', t => {
                 computed,
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Pivot.is(result), 'Then result is QueryResult.Pivot')
+            t.ok(result.columns !== undefined, 'Then result has columns (pivot shape)')
             t.ok(Array.isArray(result.columns), 'Then result has columns array')
             t.ok(Array.isArray(result.rows), 'Then result has rows array')
             t.ok(result.cells !== undefined, 'Then result has cells grid')
@@ -165,8 +155,8 @@ test('PositionQuery — positions tree', t => {
         t.test('When executing against state with an investment account', t => {
             const query = FinancialQuery.PositionQuery('positions', 'All positions', undefined, IRDateRange.Year(2025))
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
-            t.ok(QueryResultTree.Positions.is(result.tree), 'Then result contains a positions tree')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.equal(result.source, 'account', 'Then source is account')
             t.end()
         })
         t.end()
@@ -191,7 +181,7 @@ test('SnapshotQuery — monthly balance snapshots', t => {
                 'monthly',
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.TimeSeries.is(result), 'Then result is QueryResult.TimeSeries')
+            t.ok(Array.isArray(result.snapshots), 'Then result has snapshots (time series shape)')
             t.ok(Array.isArray(result.snapshots), 'Then result has snapshots array')
             t.ok(result.snapshots.length >= 3, 'Then there are at least 3 monthly snapshots')
             t.ok(result.snapshots[0].date !== undefined, 'Then each snapshot has a date')
