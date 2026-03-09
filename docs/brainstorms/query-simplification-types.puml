@@ -1,0 +1,102 @@
+@startuml "Proposed Type Relationships"
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+hide circle
+
+package "FinancialQuery (TaggedSum: 3 variants)" {
+    class TransactionQuery {
+        name : String
+        filter? : IRFilter
+        dateRange? : IRDateRange
+        grouping : IRGrouping
+        computed? : [ComputedRow]
+    }
+    class PositionQuery {
+        name : String
+        filter? : IRFilter
+        dateRange? : IRDateRange
+        grouping? : IRGrouping
+        metrics? : [String]
+        orderByField? : String
+        limit? : Number
+    }
+    class SnapshotQuery {
+        name : String
+        domain : balances | positions
+        filter? : IRFilter
+        grouping? : IRGrouping
+        dateRange : IRDateRange
+        interval : daily | monthly | ...
+    }
+}
+
+package "Shared IR Types" {
+    class IRGrouping {
+        rows : dimension
+        columns? : dimension
+        only? : [String]
+    }
+    class IRFilter <<TaggedSum>> {
+        Equals | In | GreaterThan
+        LessThan | Between | Matches
+        And | Or | Not
+    }
+    class IRDateRange <<TaggedSum>> {
+        Year | Quarter | Month
+        Relative | Range
+    }
+    class ComputedRow {
+        name : String
+        expression : PivotExpression
+    }
+    class PivotExpression <<TaggedSum>> {
+        RowRef(name)
+        Literal(value)
+        Binary(op, left, right)
+    }
+}
+
+package "Output: Unified Tree Nodes" {
+    class CategoryTreeNode <<TaggedSum>> {
+        Group(id, children, aggregate)
+        Transaction(id, children, transaction)
+    }
+    class CategoryAggregate {
+        total : Number
+        count : Number
+        columns? : {[col]: Number}
+    }
+    class PositionTreeNode <<TaggedSum>> {
+        Group(id, children, aggregate)
+        Position(id, children, position, metrics?)
+    }
+
+    note as N1
+        All query types produce tree nodes.
+        columns? on aggregate enables:
+        - 1 value column (1D grouping)
+        - N value columns (2D grouping or snapshot)
+        Same tree, same page, optional chart.
+    end note
+}
+
+TransactionQuery --> IRGrouping : "always required\n1D = tree, 2D = tree + columns"
+TransactionQuery --> IRFilter
+TransactionQuery --> IRDateRange
+TransactionQuery --> ComputedRow
+PositionQuery --> IRGrouping
+PositionQuery --> IRFilter
+PositionQuery --> IRDateRange
+SnapshotQuery --> IRGrouping : "optional: enables\nper-category breakdown"
+SnapshotQuery --> IRFilter
+SnapshotQuery --> IRDateRange
+ComputedRow --> PivotExpression
+
+CategoryTreeNode --> CategoryAggregate : "Group nodes carry"
+CategoryTreeNode --> CategoryTreeNode : "children"
+PositionTreeNode --> PositionTreeNode : "children"
+
+TransactionQuery ..> CategoryTreeNode : "produces"
+PositionQuery ..> PositionTreeNode : "produces"
+SnapshotQuery ..> CategoryTreeNode : "produces\n(cumulative values\nat date points)"
+@enduml
