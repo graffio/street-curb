@@ -136,16 +136,24 @@ const SEEDS = {
         undefined,
         IRGrouping('category'),
     ),
-    bank_accounts: FinancialQuery.AccountQuery('bank_accounts', 'Bank accounts', Equals('accountType', 'Bank')),
     net_worth: FinancialQuery.SnapshotQuery(
         'net_worth',
         'Net worth over time',
         'balances',
         undefined,
+        undefined,
         IRDateRange.Range('2025-01-01', '2025-03-31'),
         'monthly',
     ),
-    running_balance: FinancialQuery.RunningBalanceQuery('running_balance', 'Running balance'),
+    spending_over_time: FinancialQuery.SnapshotQuery(
+        'spending_over_time',
+        'Spending over time',
+        'balances',
+        undefined,
+        IRGrouping('category'),
+        IRDateRange.Range('2025-01-01', '2025-03-31'),
+        'monthly',
+    ),
     category_by_year: FinancialQuery.TransactionQuery(
         'category_by_year',
         'Spending by category per year',
@@ -253,34 +261,7 @@ test('amount_range — mid-range spending in Food or Shopping', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (f) bank_accounts — AccountQuery filtering by Bank type
-// ═════════════════════════════════════════════════
-
-test('bank_accounts — AccountQuery filtering by Bank type', t => {
-    t.test('Given the bank_accounts seed query', t => {
-        t.test('When executed against fixture data', t => {
-            const result = runFinancialQuery(SEEDS.bank_accounts, STATE)
-
-            t.ok(QueryResult.FilteredEntities.is(result), 'Then result is FilteredEntities')
-            t.equal(result.entities.length, 2, 'Then two Bank accounts are returned')
-            t.end()
-        })
-        t.test('Then enriched accounts have balance fields', t => {
-            const result = runFinancialQuery(SEEDS.bank_accounts, STATE)
-            const entity = result.entities[0]
-
-            t.type(entity.balance, 'number', 'Then entity has a numeric balance')
-            t.ok(entity.account !== undefined, 'Then entity has a nested account object')
-            t.ok(entity.account.name !== undefined, 'Then nested account has a name')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (g) net_worth — SnapshotQuery with monthly intervals
+// (f) net_worth — SnapshotQuery with monthly intervals
 // ═════════════════════════════════════════════════
 
 test('net_worth — SnapshotQuery monthly balance snapshots', t => {
@@ -320,34 +301,13 @@ test('net_worth — SnapshotQuery monthly balance snapshots', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (h) running_balance — RunningBalanceQuery cumulative
+// (g) spending_over_time — SnapshotQuery with grouping
 // ═════════════════════════════════════════════════
 
-test('running_balance — RunningBalanceQuery cumulative', t => {
-    t.test('Given the running_balance seed query', t => {
+test('spending_over_time — SnapshotQuery with category grouping', t => {
+    t.test('Given the spending_over_time seed query', t => {
         t.test('When executed against fixture data', t => {
-            const result = runFinancialQuery(SEEDS.running_balance, STATE)
-
-            t.ok(QueryResult.RunningBalance.is(result), 'Then result is RunningBalance')
-            t.ok(result.entries.length > 0, 'Then entries is not empty')
-            t.type(result.entries[0].balance, 'number', 'Then each entry has a cumulative balance')
-            t.end()
-        })
-        t.test('Then entries are sorted by date', t => {
-            const result = runFinancialQuery(SEEDS.running_balance, STATE)
-            const dates = result.entries.map(e => e.date)
-            const sorted = [...dates].sort()
-
-            t.same(dates, sorted, 'Then entries are in chronological order')
-            t.end()
-        })
-        t.test('Then running balance is cumulative', t => {
-            const result = runFinancialQuery(SEEDS.running_balance, STATE)
-            const first = result.entries[0]
-            const last = result.entries[result.entries.length - 1]
-
-            t.equal(first.balance, first.amount, 'Then first entry balance equals its amount')
-            t.not(first.balance, last.balance, 'Then last balance differs from first')
+            t.doesNotThrow(() => runFinancialQuery(SEEDS.spending_over_time, STATE), 'Then it does not throw')
             t.end()
         })
         t.end()
@@ -356,7 +316,7 @@ test('running_balance — RunningBalanceQuery cumulative', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (i) category_by_year — Pivot with ComputedRow
+// (h) category_by_year — Pivot with ComputedRow
 // ═════════════════════════════════════════════════
 
 test('category_by_year — pivot with computed row', t => {

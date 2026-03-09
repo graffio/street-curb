@@ -34,22 +34,14 @@ const emptyChipState = {
 
 const txQuery = FinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('category'))
 const posQuery = FinancialQuery.PositionQuery('test', undefined, undefined, undefined, IRGrouping('account'))
-const acctQuery = FinancialQuery.AccountQuery('test', undefined, undefined)
 const snapQuery = FinancialQuery.SnapshotQuery(
     'test',
     undefined,
     'balances',
     undefined,
+    undefined,
     IRDateRange.Year(2025),
     'monthly',
-)
-const runBalQuery = FinancialQuery.RunningBalanceQuery('test', undefined, undefined, undefined)
-const exprQuery = FinancialQuery.ExpressionQuery(
-    'test',
-    undefined,
-    FinancialQuery.TransactionQuery('left', undefined, undefined, undefined, undefined),
-    FinancialQuery.TransactionQuery('right', undefined, undefined, undefined, undefined),
-    { '@@typeName': 'IRExpression', '@@tagName': 'Literal', value: 42 },
 )
 
 // ═════════════════════════════════════════════════
@@ -169,11 +161,11 @@ test('buildChipPatch — builds patch object from chip state', t => {
         t.equal(patch.grouping.rows, 'payee', 'Then grouping rows is overridden')
         t.end()
     })
-    t.test('Given groupBy chip without existing grouping', t => {
-        const noGrouping = FinancialQuery.TransactionQuery('test', undefined, undefined, undefined, undefined)
-        const state = { ...emptyChipState, groupBy: 'payee' }
-        const patch = buildChipPatch(noGrouping, state, ACCOUNTS)
-        t.notOk(patch.grouping, 'Then patch has no grouping (no base to override)')
+    t.test('Given groupBy chip overriding existing category grouping', t => {
+        const state = { ...emptyChipState, groupBy: 'account' }
+        const patch = buildChipPatch(txQuery, state, ACCOUNTS)
+        t.ok(patch.grouping, 'Then patch has grouping')
+        t.equal(patch.grouping.rows, 'account', 'Then grouping rows is overridden to account')
         t.end()
     })
     t.test('Given dateRange chip', t => {
@@ -277,14 +269,6 @@ test('applyChipFilters — PositionQuery preserves all fields', t => {
     t.end()
 })
 
-test('applyChipFilters — AccountQuery merges filter', t => {
-    const state = { ...emptyChipState, selectedCategories: ['Food'] }
-    const result = applyChipFilters(acctQuery, state, ACCOUNTS)
-    t.equal(result['@@tagName'], 'AccountQuery', 'Then result is an AccountQuery')
-    t.ok(result.filter, 'Then filter is set')
-    t.end()
-})
-
 test('applyChipFilters — SnapshotQuery merges filter and dateRange', t => {
     const state = {
         ...emptyChipState,
@@ -297,23 +281,6 @@ test('applyChipFilters — SnapshotQuery merges filter and dateRange', t => {
     t.equal(result.dateRange.start, '2024-01-01', 'Then dateRange is overridden')
     t.equal(result.domain, 'balances', 'Then domain preserved')
     t.equal(result.interval, 'monthly', 'Then interval preserved')
-    t.end()
-})
-
-test('applyChipFilters — RunningBalanceQuery merges filter and dateRange', t => {
-    const state = { ...emptyChipState, dateRange: { start: new Date('2025-03-01'), end: new Date('2025-03-31') } }
-    const result = applyChipFilters(runBalQuery, state, ACCOUNTS)
-    t.equal(result['@@tagName'], 'RunningBalanceQuery', 'Then result is a RunningBalanceQuery')
-    t.equal(result.dateRange.start, '2025-03-01', 'Then dateRange is set')
-    t.end()
-})
-
-test('applyChipFilters — ExpressionQuery ignores all chips', t => {
-    const state = { ...emptyChipState, selectedCategories: ['Food'], selectedAccounts: ['acc_000000000001'] }
-    const result = applyChipFilters(exprQuery, state, ACCOUNTS)
-    t.equal(result['@@tagName'], 'ExpressionQuery', 'Then result is an ExpressionQuery')
-    t.equal(result.name, 'test', 'Then name preserved')
-    t.notOk(result.filter, 'Then no filter field added')
     t.end()
 })
 

@@ -15,7 +15,6 @@ import {
     ComputedRow,
     FinancialQuery,
     IRDateRange,
-    IRExpression,
     IRFilter,
     IRGrouping,
     PivotExpression,
@@ -176,73 +175,7 @@ test('PositionQuery — positions tree', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (d) AccountQuery — filter by type
-// ═════════════════════════════════════════════════
-
-test('AccountQuery — filter by account type', t => {
-    t.test('Given an AccountQuery filtering by Bank type', t => {
-        t.test('When executing against state', t => {
-            const query = FinancialQuery.AccountQuery(
-                'bank_accounts',
-                'Bank accounts',
-                IRFilter.Equals('accountType', 'Bank'),
-            )
-            const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.FilteredEntities.is(result), 'Then result is QueryResult.FilteredEntities')
-            t.equal(result.entities.length, 1, 'Then one Bank account is returned')
-            t.equal(result.entities[0].account.name, 'Chase Checking', 'Then it is Chase Checking')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (e) ExpressionQuery — recursive sub-query dispatch
-// ═════════════════════════════════════════════════
-
-test('ExpressionQuery — food as percentage of income', t => {
-    t.test('Given an ExpressionQuery with food and income sub-queries', t => {
-        t.test('When executing the ratio expression', t => {
-            const food = FinancialQuery.TransactionQuery(
-                'food',
-                undefined,
-                IRFilter.Equals('category', 'Food'),
-                IRDateRange.Quarter(1, 2025),
-                IRGrouping('category'),
-            )
-            const income = FinancialQuery.TransactionQuery(
-                'income',
-                undefined,
-                IRFilter.Equals('category', 'Income'),
-                IRDateRange.Quarter(1, 2025),
-                IRGrouping('category'),
-            )
-            const expression = IRExpression.Binary(
-                '*',
-                IRExpression.Binary(
-                    '/',
-                    IRExpression.Call('abs', [IRExpression.Reference('left', 'total')]),
-                    IRExpression.Call('abs', [IRExpression.Reference('right', 'total')]),
-                ),
-                IRExpression.Literal(100),
-            )
-            const query = FinancialQuery.ExpressionQuery('food_ratio', 'Food % of income', food, income, expression)
-            const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Scalar.is(result), 'Then result is QueryResult.Scalar')
-            t.type(result.value, 'number', 'Then value is a number')
-            t.ok(result.value > 0, 'Then the ratio is positive')
-            t.ok(result.value < 100, 'Then the ratio is less than 100%')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (f) SnapshotQuery — balance snapshots over time
+// (d) SnapshotQuery — balance snapshots over time
 // ═════════════════════════════════════════════════
 
 test('SnapshotQuery — monthly balance snapshots', t => {
@@ -252,6 +185,7 @@ test('SnapshotQuery — monthly balance snapshots', t => {
                 'net_worth',
                 'Net worth over time',
                 'balances',
+                undefined,
                 undefined,
                 IRDateRange.Range('2025-01-01', '2025-03-31'),
                 'monthly',
@@ -270,64 +204,7 @@ test('SnapshotQuery — monthly balance snapshots', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (g) RunningBalanceQuery — per-transaction cumulative
-// ═════════════════════════════════════════════════
-
-test('RunningBalanceQuery — cumulative balance', t => {
-    t.test('Given a RunningBalanceQuery for Q1 2025', t => {
-        t.test('When executing against state', t => {
-            const query = FinancialQuery.RunningBalanceQuery(
-                'running',
-                'Running balance',
-                undefined,
-                IRDateRange.Quarter(1, 2025),
-            )
-            const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.RunningBalance.is(result), 'Then result is QueryResult.RunningBalance')
-            t.ok(Array.isArray(result.entries), 'Then result has entries array')
-            t.ok(result.entries.length > 0, 'Then entries is not empty')
-            const first = result.entries[0]
-            t.ok(first.date !== undefined, 'Then each entry has a date')
-            t.type(first.amount, 'number', 'Then each entry has an amount')
-            t.type(first.balance, 'number', 'Then each entry has a cumulative balance')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (h) ExpressionQuery — depth limit
-// ═════════════════════════════════════════════════
-
-test('ExpressionQuery — depth limit prevents unbounded nesting', t => {
-    t.test('Given a deeply nested ExpressionQuery beyond MAX_DEPTH', t => {
-        t.test('When attempting to execute', t => {
-            const leaf = FinancialQuery.TransactionQuery(
-                'leaf',
-                undefined,
-                undefined,
-                undefined,
-                IRGrouping('category'),
-            )
-            const trivialExpr = IRExpression.Literal(1)
-
-            // Build nesting: wrap in ExpressionQuery 12 times (exceeds MAX_DEPTH of 10)
-            let nested = leaf
-            for (let i = 0; i < 12; i++)
-                nested = FinancialQuery.ExpressionQuery(`depth_${i}`, undefined, nested, leaf, trivialExpr)
-
-            t.throws(() => runFinancialQuery(nested, STATE), 'Then execution throws a depth error')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (i) JSON.stringify stability — memoization depends on this
+// (e) JSON.stringify stability — memoization depends on this
 // ═════════════════════════════════════════════════
 
 test('FinancialQuery — JSON.stringify produces stable deterministic output', t => {

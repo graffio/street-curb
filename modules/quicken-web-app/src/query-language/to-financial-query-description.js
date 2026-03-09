@@ -1,5 +1,5 @@
 // ABOUTME: Generate human-readable descriptions from FinancialQuery IR
-// ABOUTME: Pure transformer — dispatches via .match() on all 6 variants
+// ABOUTME: Pure transformer — dispatches via .match() on all 3 variants
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -49,10 +49,8 @@ const toFinancialQueryDescription = query =>
     query.match({
         TransactionQuery: ({ filter, grouping }) => `transactions${T.toFilterPart(filter)}${T.toGroupPart(grouping)}`,
         PositionQuery: ({ filter, grouping }) => `positions${T.toFilterPart(filter)}${T.toGroupPart(grouping)}`,
-        AccountQuery: ({ filter }) => `accounts${T.toFilterPart(filter)}`,
-        ExpressionQuery: ({ description }) => description || 'expression',
-        SnapshotQuery: ({ domain, interval }) => `${domain} snapshots (${interval})`,
-        RunningBalanceQuery: ({ filter }) => `running balance${T.toFilterPart(filter)}`,
+        SnapshotQuery: ({ domain, interval, grouping }) =>
+            `${domain} snapshots (${interval})${T.toGroupPart(grouping)}`,
     })
 
 export { toFinancialQueryDescription }

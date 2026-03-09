@@ -88,7 +88,7 @@ const buildChipPatch = (ir, { asOfDate, dateRange, groupBy, ...rest }, accts) =>
 }
 
 // Merge chip filter state into a FinancialQuery IR — variant-agnostic via constructor.from()
-// Variants without filter/dateRange/grouping fields (e.g. ExpressionQuery) silently ignore patch keys
+// TaggedSum _from destructures only known fields, so extra patch keys are silently ignored
 // @sig applyChipFilters :: (FinancialQuery, Object?, LookupTable) -> FinancialQuery
 const applyChipFilters = (ir, chipState, accts) => {
     if (!chipState) return ir

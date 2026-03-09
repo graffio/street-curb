@@ -129,7 +129,6 @@ export const typeMappings = {
     // query-language IR types (internal to query-language)
     [`${sources.quickenWebAppIR}/ir-date-range.type.js`]      : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/ir-filter.type.js`]          : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-expression.type.js`]      : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/financial-query.type.js`]    : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/ir-grouping.type.js`]        : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/pivot-expression.type.js`]   : [targets.queryLanguage],

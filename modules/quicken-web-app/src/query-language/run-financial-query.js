@@ -1,5 +1,5 @@
-// ABOUTME: Executes a FinancialQuery IR against Redux state via 6-way .match() dispatch
-// ABOUTME: Replaces runQuery — each variant carries only domain-relevant fields
+// ABOUTME: Executes a FinancialQuery IR against Redux state via 3-way .match() dispatch
+// ABOUTME: Each variant carries only domain-relevant fields
 
 import { filter, find, iterate, map, reduce, sort } from '@graffio/functional'
 import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
@@ -8,7 +8,6 @@ import { MetricRegistry } from '../financial-computations/metric-registry.js'
 import { EnrichedAccount, PositionTreeNode, QueryResult, QueryResultTree, Transaction } from '../types/index.js'
 import { CategoryTree } from '../utils/category-tree.js'
 import { buildFilterPredicate } from './build-filter-predicate.js'
-import { resolveExpression } from './resolve-expression.js'
 import { IRFilter } from './types/ir-filter.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -97,8 +96,6 @@ const T = {
 
     toFilterableTransaction: t => ({ ...t, category: t.categoryName, account: t.accountName }),
 
-    toFilterableAccount: a => ({ ...a, accountType: a.type, account: a.name }),
-
     toFilterablePosition: p => {
         const { accountName, securityName, securityType } = p
         return { ...p, account: accountName, payee: securityName, category: securityType }
@@ -142,14 +139,6 @@ const T = {
         if (dimension === 'security') return securityName || 'Unknown'
         if (dimension === 'payee') return payee || 'Unknown Payee'
         return 'Unknown'
-    },
-
-    // Build a running balance entry from a transaction and prior balance
-    // @sig toRunningBalanceEntry :: (Object, Number) -> { entry: Object, balance: Number }
-    toRunningBalanceEntry: (t, balance) => {
-        const { id, date, amount, payee } = t
-        const newBalance = balance + amount
-        return { entry: { id, date, amount, payee, balance: newBalance }, balance: newBalance }
     },
 }
 
@@ -366,34 +355,6 @@ const A = {
         positions: computePositions({ ...state, asOfDate: date, selectedAccountIds: [], filterQuery: undefined }),
     }),
 
-    // Fold transactions into running balance entries with cumulative totals
-    // @sig collectRunningBalanceEntries :: [Object] -> [Object]
-    collectRunningBalanceEntries: filtered =>
-        reduce(
-            (acc, t) => {
-                const { entry, balance } = T.toRunningBalanceEntry(t, acc.balance)
-                return { balance, entries: [...acc.entries, entry] }
-            },
-            { balance: 0, entries: [] },
-            filtered,
-        ).entries,
-
-    // Extract total from a QueryResult for use in ExpressionQuery binding
-    // @sig collectResultTotal :: QueryResult -> Number
-    collectResultTotal: result =>
-        result.match({
-            Identity: ({ tree }) =>
-                tree.match({
-                    Category: ({ nodes }) => reduce((sum, n) => sum + n.aggregate.total, 0, nodes),
-                    Positions: ({ nodes }) => reduce((sum, n) => sum + n.aggregate.marketValue, 0, nodes),
-                }),
-            Scalar: ({ value }) => value,
-            Pivot: ({ rowTotals }) => reduce((sum, [, v]) => sum + v, 0, Object.entries(rowTotals)),
-            FilteredEntities: () => 0,
-            TimeSeries: () => 0,
-            RunningBalance: () => 0,
-        }),
-
     // Execute a TransactionQuery — pivot or category tree depending on grouping
     // @sig collectTransactionQueryResult :: (Object, State) -> QueryResult
     collectTransactionQueryResult: ({ filter: queryFilter, dateRange, grouping, computed }, state) => {
@@ -414,32 +375,6 @@ const A = {
         const sorted = A.collectSortedNodes(nodes, orderByField, orderByDirection || 'asc')
         const limited = limit !== undefined ? sorted.slice(0, limit) : sorted
         return QueryResult.Identity(QueryResultTree.Positions(limited), grouping ? grouping.rows : 'account')
-    },
-
-    // Execute an AccountQuery — filter accounts by predicate, return enriched with balances
-    // @sig collectAccountQueryResult :: (Object, State) -> QueryResult
-    collectAccountQueryResult: ({ filter: queryFilter }, state) => {
-        const { accounts, transactions } = state
-        const allAccounts = Array.from(accounts)
-        const filtered = queryFilter
-            ? filter(a => buildFilterPredicate(queryFilter)(T.toFilterableAccount(a)), allAccounts)
-            : allAccounts
-        const asOfDate = T.toIsoDate(new Date())
-        const positions = computePositions({ ...state, asOfDate, selectedAccountIds: [], filterQuery: undefined })
-        const enriched = EnrichedAccount.enrichAll(filtered, positions, Array.from(transactions))
-        return QueryResult.FilteredEntities(enriched, 'accounts')
-    },
-
-    // Execute an ExpressionQuery — recursively resolve left/right sub-queries
-    // @sig collectExpressionQueryResult :: (Object, State, Function) -> QueryResult
-    collectExpressionQueryResult: ({ left, right, expression }, state, recurse) => {
-        const leftResult = recurse(left, state)
-        const rightResult = recurse(right, state)
-        const bound = {
-            left: { total: A.collectResultTotal(leftResult) },
-            right: { total: A.collectResultTotal(rightResult) },
-        }
-        return QueryResult.Scalar(resolveExpression(expression, bound), expression)
     },
 
     // Build a Set of account IDs for investment/retirement accounts
@@ -475,15 +410,6 @@ const A = {
         const snapshots = map(date => A.collectPositionSnapshot(state, date), datePoints)
         return QueryResult.TimeSeries(snapshots, 'positions')
     },
-
-    // Filter, sort, and accumulate per-transaction running balance
-    // @sig collectRunningBalanceResult :: (Object, State) -> QueryResult
-    collectRunningBalanceResult: ({ filter: queryFilter, dateRange }, state) => {
-        const filtered = A.collectFilteredTransactions(queryFilter, dateRange, state)
-        const sorted = [...filtered].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
-        const entries = A.collectRunningBalanceEntries(sorted)
-        return QueryResult.RunningBalance(entries)
-    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -514,16 +440,12 @@ const MAX_DEPTH = 10
 // Dispatch a FinancialQuery to the appropriate execution path via .match()
 // @sig runFinancialQuery :: (FinancialQuery, State, Number?) -> QueryResult
 const runFinancialQuery = (query, state, depth = 0) => {
-    const recurse = (q, s) => runFinancialQuery(q, s, depth + 1)
     if (depth > MAX_DEPTH) throw new Error(`FinancialQuery depth exceeded maximum of ${MAX_DEPTH}`)
 
     return query.match({
         TransactionQuery: fields => A.collectTransactionQueryResult(fields, state),
         PositionQuery: fields => A.collectPositionQueryResult(fields, state),
-        AccountQuery: fields => A.collectAccountQueryResult(fields, state),
-        ExpressionQuery: fields => A.collectExpressionQueryResult(fields, state, recurse),
         SnapshotQuery: fields => A.collectSnapshotQueryResult(fields, state),
-        RunningBalanceQuery: fields => A.collectRunningBalanceResult(fields, state),
     })
 }
 

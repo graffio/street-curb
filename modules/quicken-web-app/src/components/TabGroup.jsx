@@ -200,10 +200,9 @@ const ENGINE_METADATA = {
     engine_amount_range:      ReportMetadata.SEED_QUERY_METADATA.amount_range,
     engine_dining:            ReportMetadata.SEED_QUERY_METADATA.dining_multi_account,
     engine_payee:             ReportMetadata.SEED_QUERY_METADATA.payee_pattern,
-    engine_net_worth:         ReportMetadata.SEED_QUERY_METADATA.net_worth,
-    engine_category_by_year:  ReportMetadata.SEED_QUERY_METADATA.category_by_year,
-    engine_running_balance:   ReportMetadata.SEED_QUERY_METADATA.running_balance,
-    engine_bank_accounts:     ReportMetadata.SEED_QUERY_METADATA.bank_accounts,
+    engine_net_worth:             ReportMetadata.SEED_QUERY_METADATA.net_worth,
+    engine_category_by_year:      ReportMetadata.SEED_QUERY_METADATA.category_by_year,
+    engine_spending_over_time:    ReportMetadata.SEED_QUERY_METADATA.spending_over_time,
 }
 
 // Self-selecting report page — renders correct report type based on reportType
