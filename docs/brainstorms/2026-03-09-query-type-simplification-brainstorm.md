@@ -126,3 +126,42 @@ See PlantUML diagrams in this directory:
 | Store / selectors | 1 |
 | Tests | 7 |
 | **Total** | **~33** |
+
+## Spike Findings (1)
+
+**Goal:** Validate that CategoryTreeNode trees can carry per-column values and replace flat Pivot grids.
+
+**Result:** Validated. The approach works cleanly with minimal changes.
+
+### What was built
+1. **CategoryAggregate** gained optional `columns: Object?` field — `{total, count, columns: {'2024': -175, '2025': -250}}`
+2. **`build2DTransactionTree(rowDim, colDim, transactions)`** in category-tree.js builds hierarchical trees with per-column aggregation
+3. **`makeColumnAggregator(getColumnKey)`** factory produces an aggregation function that tracks per-column values and rolls up from children — same pattern as `collectTransactionTotals` but with column bucketing
+4. **Engine wiring:** `collectTransactionQueryResult` routes `grouping.columns` to `build2DTransactionTree` instead of `collectPivotResult`
+
+### What works
+- Tree hierarchy preserved — `Food` parent has `Food:Groceries` and `Food:Restaurants` children
+- Per-column values at every node — leaf and parent both carry `columns`
+- Parent rollup correct — `Food.columns['2024']` = sum of children's 2024 values
+- `<Others>` synthetic grouping still works for mixed direct+child transactions
+- Existing 1D tree tests unaffected (585 passing)
+- Column key extractors: `year`, `quarter`, `month` — reuses existing `toMonthKey`
+
+### What breaks (expected)
+- **11 pivot tests fail** — they assert `QueryResult.Pivot` shape (columns array, rows array, cells grid, rowTotals, computed)
+- **ComputedRow evaluation** — `evaluatePivotExpression` works against flat grid `cells[row][col]`, not against tree node aggregates. Deferred per brainstorm.
+
+### Key design observations
+- **Zero new types needed.** `CategoryAggregate` + optional field was sufficient — no new "2DAggregate" or "PivotNode" type.
+- **`aggregateTree` is the right seam.** The `@graffio/functional` `aggregateTree` function accepts any aggregation fn, so swapping in `makeColumnAggregator` was a one-line change to the tree pipeline.
+- **Column dimension is flat.** `columnKeyExtractors` don't need `getParent` — columns are always flat (years, quarters, months). This is a fundamental asymmetry: rows can be hierarchical, columns never are.
+- **`toGroupNode` required no changes.** It calls `toCategoryAggregate(aggregate)` which just passes through — adding `agg.columns` to the CategoryAggregate constructor was the only touch point.
+- **`collectPivotResult` becomes dead code** after this change. It can be deleted along with `QueryResult.Pivot` and `PivotResultPage`.
+
+### Open questions answered
+1. **Q: How do subcategory aggregates roll up per-column?** A: Same as `total` — `makeColumnAggregator` sums children's column values key-by-key. Confirmed in tests.
+2. **Q: Should `collectPivotResult` be kept as fallback?** A: No. The 2D tree is strictly more capable (hierarchical + drillable). Delete it in Step 3 of the real implementation.
+
+### Risks for real implementation
+- **ComputedRow needs rethinking.** Current `PivotExpression.RowRef('Food')` references flat row names. In a tree, "Food" is a node with children — `RowRef` needs to target `node.aggregate.columns[col]` instead of `grid['Food'][col]`. This is a design problem, not a code problem.
+- **PivotResultPage renders flat grid.** Replacing it with a tree-aware table is the real UI work — not covered by this spike.
