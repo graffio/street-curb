@@ -181,11 +181,10 @@ tap.test('TransactionQuery/Identity: group by payee shows real payee names', asy
     const afterGroupBy = session.browser('snapshot')
     t.notOk(afterGroupBy.includes('Something went wrong'), 'no crash after group by Payee')
 
-    // Check that at least one fixture payee is visible as a group header
+    // Verify specific fixture payees appear as group headers
     const expected = loadExpected()
     const payees = [...new Set(expected.spotChecks.filter(s => s.payee).map(s => s.payee))]
-    const anyVisible = payees.some(p => afterGroupBy.includes(p))
-    t.ok(anyVisible, `at least one fixture payee visible (checked: ${payees.join(', ')})`)
+    payees.forEach(payee => t.ok(afterGroupBy.includes(payee), `payee "${payee}" visible as group header`))
 })
 
 tap.test('TransactionQuery/Identity: filter chip matches payee', async t => {
@@ -299,11 +298,21 @@ tap.test('TransactionQuery/Pivot: category rows with correct totals and computed
         t.ok(snapshot.includes(formatDollars(total)), `${category} total $${formatDollars(total)} visible`)
     })
 
-    // Computed row label and percentage cell (per-column values; Total column shows "—")
+    // Computed row: "Food % of Income" should show percentage values per year column
     t.ok(snapshot.includes('Food % of Income'), 'computed row "Food % of Income" visible')
 
-    // Verify a percentage value appears somewhere (per-year column, not the Total column which is blank)
-    t.ok(snapshot.match(/\d+\.\d+%/), 'at least one computed percentage value visible')
+    // Per-year computed percentages appear as N.NN% values (Total column shows "—")
+    // Extract all percentage values from the snapshot to verify they are non-trivial
+    const pctMatches = snapshot.match(/\d+\.\d{2}%/g)
+    t.ok(
+        pctMatches && pctMatches.length >= 2,
+        `at least 2 computed percentage values visible (found ${pctMatches?.length || 0})`,
+    )
+
+    // Sanity check: percentages should be reasonable (Food is ~10% of Income)
+    const pctValues = (pctMatches || []).map(s => parseFloat(s))
+    const allReasonable = pctValues.every(v => v > 0 && v < 100)
+    t.ok(allReasonable, `all percentage values are between 0% and 100%: ${pctValues.join(', ')}`)
 })
 
 tap.test('TransactionQuery/Pivot: category filter scopes pivot', async t => {
@@ -596,14 +605,13 @@ tap.test('SnapshotQuery/TimeSeries: monthly snapshots with month rows and values
     t.ok(snapshot.includes('Date'), 'Date column header present')
     t.ok(snapshot.includes('Total'), 'Total column header present')
 
-    // Verify monthly rows are present (engine computes values independently from fixture)
-    t.ok(snapshot.includes('Jan'), 'Jan row present')
-    t.ok(snapshot.includes('Mar'), 'Mar row present')
-    t.ok(snapshot.includes('Jun'), 'Jun row present')
-    t.ok(snapshot.includes('Dec'), 'Dec row present')
-
-    // Verify dollar values appear (at least one currency-formatted number)
-    t.ok(snapshot.match(/\$[\d,]+\.\d{2}/), 'at least one dollar value visible')
+    // Verify monthly snapshot totals from fixture
+    const expected = loadExpected()
+    expected.netWorthSnapshots.forEach(({ date, total }) => {
+        const monthAbbr = new Date(date + 'T00:00:00').toLocaleString('en-US', { month: 'short' })
+        t.ok(snapshot.includes(monthAbbr), `${monthAbbr} row present`)
+        t.ok(snapshot.includes(formatDollars(total)), `${monthAbbr} shows total $${formatDollars(total)}`)
+    })
 })
 
 tap.test('SnapshotQuery/TimeSeries: account filter changes totals', async t => {
