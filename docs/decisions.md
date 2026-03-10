@@ -940,6 +940,24 @@ Future architecture decisions are data-driven and support sustainable business g
 **Decision:** Engine returns plain objects directly. All grouping produces CategoryTreeNode trees: 1D trees have {total, count}, 2D trees add {columns: {key: value}} per node with parent rollup. Snapshots produce trees with cumulative date-point columns. One QueryResultPage detects shape by property presence. Deleted QueryResult, QueryResultTree, PivotResultPage, TimeSeriesResultPage, RunningBalanceResultPage, FilteredEntitiesResultPage.
 **Why:** The query type already determines result shape — the intermediate result type was ceremony. Trees are strictly more capable than flat grids (hierarchical + drillable). Property-presence detection is simpler than type dispatch for 3 shapes.
 
+### Generator-emitted fromJSON for Tagged and TaggedSum types (2026-03-10)
+
+**Context:** Consumers constructed IR queries by importing 6 IR types directly. Persisting queries as JSON required hand-written fromJSON in each type definition file.
+**Decision:** `cli-type-generator` emits `fromJSON` static methods automatically. `parseTaggedValue(plain, variantMap)` runtime helper reads `@@tagName` to dispatch. Tagged types revive required fields unconditionally; TaggedSum types guard all fields (variants differ). No global type registry — each generated file imports referenced types directly.
+**Why:** Enables consumers to work with plain JSON instead of IR type imports. Foundation for Claude-generated query persistence. Eliminates hand-written deserialization maintenance.
+
+### AccountQuery variant re-added for sidebar account list (2026-03-10)
+
+**Context:** AccountQuery was deleted in the 2026-03-09 cleanup as "a thin demo." But `_organizedAccounts` selector still imported `computePositions` directly, leaking engine internals through the barrel.
+**Decision:** Re-add AccountQuery as an IRFinancialQuery variant. Engine handles position computation and account enrichment internally, returns `[EnrichedAccount]`. `_organizedAccounts` delegates to `runFinancialQuery(AccountQuery(...))`.
+**Why:** Encapsulates position computation inside the engine. `computePositions` stays in the barrel only for `_positionsAsOf` (separate concern, pending future cleanup).
+
+### MetricDefinition.compute as string reference, not function (2026-03-10)
+
+**Context:** MetricDefinition held a function in its `compute` field (`'Any'` type). Functions can't survive JSON round-trips, blocking query persistence for Claude-generated queries that include metrics.
+**Decision:** Change `compute` to `'String'` — a name that indexes into `COMPUTE_FNS` map in metric-registry.js. `MetricRegistry.resolveMetricFn(name)` performs the lookup at execution time.
+**Why:** MetricDefinition is now fully serializable. The string-to-function indirection is resolved at the last possible moment (engine execution), keeping the IR clean for persistence.
+
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 
 **Context:** 30+ type-definition files in a flat directory, hard to find by purpose. Generator copies FieldTypes import paths verbatim, complicating subdirectory moves.
