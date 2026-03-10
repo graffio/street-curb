@@ -11,13 +11,7 @@ import {
     wrapIndex,
 } from '@graffio/functional'
 import {
-    CategoryTree,
-    computeBenchmarkReturn,
-    computeDividendIncome,
-    computeIrr,
     computePositions,
-    computeRealizedGains,
-    buildPositionsTree,
     toFinancialQueryDescription,
     runFinancialQuery,
     applyChipFilters,
@@ -498,60 +492,7 @@ const positionsAsOf = memoizeReduxStatePerKey(
     _positionsAsOf,
 )
 
-const _positionsTree = (state, viewId) => {
-    const groupBy = filter(state, viewId).groupBy || 'account'
-    return buildPositionsTree(groupBy, positionsAsOf(state, viewId))
-}
-
-const positionsTree = memoizeReduxStatePerKey(
-    ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
-    'transactionFilters',
-    _positionsTree,
-)
-
-const benchmarkSecurity = memoizeReduxState(['securities'], state => state.securities.find(s => s.symbol === 'SPY'))
-
-const _enrichedPosition = (state, accountId, securityId) => {
-    const { lots, lotAllocations, prices, securities, transactions } = state
-    const positions = positionsAsOf(state, ACCOUNT_LIST_VIEW_ID)
-    const position = positions.find(p => p.accountId === accountId && p.securityId === securityId)
-    if (!position) return undefined
-
-    const benchmark = benchmarkSecurity(state)
-    const { asOfDate } = filter(state, ACCOUNT_LIST_VIEW_ID)
-    const context = {
-        lots,
-        lotAllocations,
-        transactions,
-        securities,
-        prices,
-        asOfDate: asOfDate ?? new Date().toISOString().slice(0, 10),
-        benchmarkSecurityId: benchmark?.id,
-    }
-
-    const realizedGains = computeRealizedGains(position, context)
-    const dividendIncome = computeDividendIncome(position, context)
-    const { unrealizedGainLoss, costBasis } = position
-    const totalReturnDollars = unrealizedGainLoss + realizedGains.totalRealizedGain + dividendIncome
-    const totalReturnPercent = costBasis !== 0 ? totalReturnDollars / costBasis : 0
-
-    return {
-        ...position,
-        realizedGains,
-        dividendIncome,
-        irr: computeIrr(position, context),
-        benchmarkReturnPct: computeBenchmarkReturn(position, context),
-        totalReturn: { totalReturnDollars, totalReturnPercent },
-    }
-}
-
-const enrichedPosition = memoizeReduxStatePerKey(
-    ['lots', 'lotAllocations', 'prices', 'securities', 'transactions'],
-    'transactionFilters',
-    _enrichedPosition,
-)
-
-const Positions = { asOf: positionsAsOf, tree: positionsTree, enriched: enrichedPosition }
+const Positions = { asOf: positionsAsOf }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Transactions - memoized selectors
@@ -571,11 +512,6 @@ const _searchMatches = (state, viewId, accountId) =>
     )
 
 const _enriched = (state, viewId) => Transaction.enrichAll(T.filtered(state, viewId), state.categories, state.accounts)
-
-const _transactionTree = (state, viewId) => {
-    const groupBy = filter(state, viewId).groupBy || 'category'
-    return CategoryTree.buildTransactionTree(groupBy, T.enriched(state, viewId))
-}
 
 const _forAccount = (state, _viewId, accountId) => state.transactions.filter(Transaction.isInAccount(accountId))
 
@@ -613,7 +549,6 @@ const T = {
 
 // prettier-ignore
 const T2 = {
-    tree                : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'], 'transactionFilters', _transactionTree),
     sortedForDisplay    : memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForInvestment)),
     sortedForBankDisplay: memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForAccount)),
 }

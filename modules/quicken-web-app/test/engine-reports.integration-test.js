@@ -28,12 +28,12 @@ tap.setTimeout(180000)
 const formatDollars = n => Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 // ═════════════════════════════════════════════════════════════════════════════
-// TransactionQuery → Identity (Spending Engine)
+// TransactionQuery → Identity (Spending by Category)
 // Variant: TransactionQuery with IRGrouping('category')
 // ═════════════════════════════════════════════════════════════════════════════
 
 tap.test('TransactionQuery/Identity: category names and totals match fixture', async t => {
-    session.clickByRef('Spending (Engine)')
+    session.clickByRef('Spending by Category')
     await wait(500)
 
     const expected = loadExpected()
@@ -125,7 +125,7 @@ tap.test('TransactionQuery/Identity: date filter shows date-filtered totals', as
 })
 
 tap.test('TransactionQuery/Identity: category filter scopes to Food only', async t => {
-    session.clickByRef('Spending (Engine)')
+    session.clickByRef('Spending by Category')
     await wait(500)
 
     session.clickByText('Categories:')
@@ -170,7 +170,7 @@ tap.test('TransactionQuery/Identity: group by account shows account names', asyn
 })
 
 tap.test('TransactionQuery/Identity: group by payee shows real payee names', async t => {
-    session.clickByRef('Spending (Engine)')
+    session.clickByRef('Spending by Category')
     await wait(500)
 
     session.clickByText('Group by:')
@@ -188,7 +188,7 @@ tap.test('TransactionQuery/Identity: group by payee shows real payee names', asy
 })
 
 tap.test('TransactionQuery/Identity: filter chip matches payee', async t => {
-    session.clickByRef('Spending (Engine)')
+    session.clickByRef('Spending by Category')
     await wait(500)
 
     const beforeSearch = session.browser('snapshot')
@@ -210,7 +210,7 @@ tap.test('TransactionQuery/Identity: filter chip matches payee', async t => {
 })
 
 tap.test('TransactionQuery/Identity: filter producing zero rows does not crash', async t => {
-    session.clickByRef('Spending (Engine)')
+    session.clickByRef('Spending by Category')
     await wait(500)
 
     // Filter for a nonexistent payee to produce zero matching rows
@@ -414,12 +414,12 @@ tap.test('TransactionQuery/Pivot: filter chip matches category name', async t =>
 })
 
 // ═════════════════════════════════════════════════════════════════════════════
-// PositionQuery → Identity (Positions Engine)
+// PositionQuery → Identity (Investment Positions)
 // Variant: PositionQuery with IRGrouping('account')
 // ═════════════════════════════════════════════════════════════════════════════
 
 tap.test('PositionQuery/Identity: account names and market values match fixture', async t => {
-    session.clickByRef('Positions (Engine)')
+    session.clickByRef('Investment Positions')
     await wait(500)
 
     const expected = loadExpected()
@@ -463,7 +463,7 @@ tap.test('PositionQuery/Identity: account filter shows correct market value', as
     const expected = loadExpected()
 
     // Re-navigate to reset GroupBy back to Account
-    session.clickByRef('Positions (Engine)')
+    session.clickByRef('Investment Positions')
     await wait(500)
 
     session.clickByText('Accounts:')
@@ -489,7 +489,7 @@ tap.test('PositionQuery/Identity: account filter shows correct market value', as
 })
 
 tap.test('PositionQuery/Identity: filter chip matches security name', async t => {
-    session.clickByRef('Positions (Engine)')
+    session.clickByRef('Investment Positions')
     await wait(500)
 
     const beforeSearch = session.browser('snapshot')
@@ -515,7 +515,7 @@ tap.test('PositionQuery/Identity: filter chip matches security name', async t =>
 
 tap.test('PositionQuery/Identity: as-of date filter shows historical positions', async t => {
     const expected = loadExpected()
-    session.clickByRef('Positions (Engine)')
+    session.clickByRef('Investment Positions')
     await wait(1000)
 
     const beforeFilter = session.browser('snapshot')

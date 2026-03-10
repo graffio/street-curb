@@ -7,9 +7,7 @@ import { Box, Button, ContextMenu, Flex, Kbd, Text } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import { CategoryReportPage } from '../pages/CategoryReportPage.jsx'
 import { InvestmentRegisterPage } from '../pages/InvestmentRegisterPage.jsx'
-import { InvestmentReportPage } from '../pages/InvestmentReportPage.jsx'
 import { QueryResultPage } from '../pages/QueryResultPage.jsx'
 import { ReportMetadata } from '../pages/report-metadata.js'
 import { TransactionRegisterPage } from '../pages/TransactionRegisterPage.jsx'
@@ -192,30 +190,24 @@ const TabBar = ({ groupId }) => {
 }
 
 // prettier-ignore
-const ENGINE_METADATA = {
-    engine_spending:          ReportMetadata.ENGINE_TRANSACTION_TREE_METADATA,
-    engine_positions:         ReportMetadata.ENGINE_POSITION_TREE_METADATA,
-    engine_large_txn:         ReportMetadata.SEED_QUERY_METADATA.large_transactions,
-    engine_no_transfers:      ReportMetadata.SEED_QUERY_METADATA.exclude_transfers,
-    engine_amount_range:      ReportMetadata.SEED_QUERY_METADATA.amount_range,
-    engine_dining:            ReportMetadata.SEED_QUERY_METADATA.dining_multi_account,
-    engine_payee:             ReportMetadata.SEED_QUERY_METADATA.payee_pattern,
-    engine_net_worth:             ReportMetadata.SEED_QUERY_METADATA.net_worth,
-    engine_category_by_year:      ReportMetadata.SEED_QUERY_METADATA.category_by_year,
-    engine_spending_over_time:    ReportMetadata.SEED_QUERY_METADATA.spending_over_time,
+const REPORT_METADATA = {
+    spending:              ReportMetadata.TRANSACTION_TREE_METADATA,
+    positions:             ReportMetadata.POSITION_TREE_METADATA,
+    large_transactions:    ReportMetadata.SEED_QUERY_METADATA.large_transactions,
+    exclude_transfers:     ReportMetadata.SEED_QUERY_METADATA.exclude_transfers,
+    amount_range:          ReportMetadata.SEED_QUERY_METADATA.amount_range,
+    dining_multi_account:  ReportMetadata.SEED_QUERY_METADATA.dining_multi_account,
+    payee_pattern:         ReportMetadata.SEED_QUERY_METADATA.payee_pattern,
+    net_worth:             ReportMetadata.SEED_QUERY_METADATA.net_worth,
+    category_by_year:      ReportMetadata.SEED_QUERY_METADATA.category_by_year,
+    spending_over_time:    ReportMetadata.SEED_QUERY_METADATA.spending_over_time,
 }
 
 // Self-selecting report page — renders correct report type based on reportType
 // @sig ReportPage :: { viewId: String, reportType: String } -> ReactElement
-const ReportPage = ({ viewId, reportType }) => {
-    const engineMetadata = ENGINE_METADATA[reportType]
-    if (engineMetadata) return <QueryResultPage viewId={viewId} metadata={engineMetadata} />
-    return reportType === 'positions' ? (
-        <InvestmentReportPage viewId={viewId} />
-    ) : (
-        <CategoryReportPage viewId={viewId} />
-    )
-}
+const ReportPage = ({ viewId, reportType }) => (
+    <QueryResultPage viewId={viewId} metadata={REPORT_METADATA[reportType] ?? REPORT_METADATA.spending} />
+)
 
 // Renders the appropriate page component for the active view — self-selects group from state
 // @sig ViewContent :: { groupId: String } -> ReactElement

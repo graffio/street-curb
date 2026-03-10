@@ -16,7 +16,6 @@ import {
     IRGrouping,
     IRPivotExpression,
 } from '@graffio/query-language'
-import * as S from '../store/selectors.js'
 
 const { AccountFilterColumn } = AccountFilterChip
 const { AsOfDateColumn } = AsOfDateChip
@@ -31,47 +30,12 @@ const { SearchFilterColumn } = SearchFilterChip
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
+const TREE_DEFAULTS = { getChildRows: row => row.children, getRowCanExpand: row => row.original.children.length > 0 }
+
 const TRANSACTION_TREE_METADATA = {
-    selector: S.Transactions.tree,
+    ...TREE_DEFAULTS,
     columns: CategoryReportColumns,
     hiddenColumnsByGroup: { account: { account: false }, payee: { payee: false } },
-    filters: [
-        { component: DateFilterColumn },
-        { component: CategoryFilterColumn },
-        { component: AccountFilterColumn },
-        { component: GroupByFilterColumn },
-        { component: SearchFilterColumn },
-    ],
-    getChildRows: row => row.children,
-    getRowCanExpand: row => row.original.children.length > 0,
-}
-
-const POSITION_TREE_METADATA = {
-    selector: S.Positions.tree,
-    countSelector: S.Positions.asOf,
-    itemLabel: 'positions',
-    columns: InvestmentReportColumns,
-    filters: [
-        { component: AsOfDateColumn },
-        { component: AccountFilterColumn },
-        { component: GroupByFilterColumn, props: { items: investmentGroupByItems } },
-        { component: SearchFilterColumn },
-    ],
-    getChildRows: row => row.children,
-    getRowCanExpand: row => row.original.children.length > 0,
-}
-
-const ENGINE_TRANSACTION_FILTERS = [
-    { component: DateFilterColumn },
-    { component: CategoryFilterColumn },
-    { component: AccountFilterColumn },
-    { component: GroupByFilterColumn },
-    { component: SearchFilterColumn },
-]
-
-const ENGINE_TRANSACTION_TREE_METADATA = {
-    ...TRANSACTION_TREE_METADATA,
-    selector: undefined,
     defaultQueryIR: FinancialQuery.TransactionQuery(
         'transactions',
         undefined,
@@ -79,13 +43,19 @@ const ENGINE_TRANSACTION_TREE_METADATA = {
         undefined,
         IRGrouping('category'),
     ),
-    filters: ENGINE_TRANSACTION_FILTERS,
+    filters: [
+        { component: DateFilterColumn },
+        { component: CategoryFilterColumn },
+        { component: AccountFilterColumn },
+        { component: GroupByFilterColumn },
+        { component: SearchFilterColumn },
+    ],
 }
 
-const ENGINE_POSITION_TREE_METADATA = {
-    ...POSITION_TREE_METADATA,
-    selector: undefined,
-    countSelector: undefined,
+const POSITION_TREE_METADATA = {
+    ...TREE_DEFAULTS,
+    columns: InvestmentReportColumns,
+    itemLabel: 'positions',
     defaultQueryIR: FinancialQuery.PositionQuery('positions', undefined, undefined, undefined, IRGrouping('account')),
     filters: [
         { component: AsOfDateColumn },
@@ -107,14 +77,14 @@ const SEED_QUERIES = {
     spending_over_time:   FinancialQuery.SnapshotQuery('spending_over_time', 'Spending by category over time', 'balances', undefined, IRGrouping('category'), IRDateRange.Year(2025), 'monthly'),
 }
 
-// Seed query metadata — pre-filtered engine reports demonstrating compound IR filters
+// Seed query metadata — pre-filtered reports demonstrating compound IR filters
 // prettier-ignore
 const SEED_QUERY_METADATA = {
-    large_transactions:   { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.large_transactions },
-    exclude_transfers:    { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.exclude_transfers },
-    amount_range:         { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.amount_range },
-    dining_multi_account: { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.dining_multi_account },
-    payee_pattern:        { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.payee_pattern },
+    large_transactions:   { ...TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.large_transactions },
+    exclude_transfers:    { ...TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.exclude_transfers },
+    amount_range:         { ...TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.amount_range },
+    dining_multi_account: { ...TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.dining_multi_account },
+    payee_pattern:        { ...TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.payee_pattern },
     net_worth:            { chart: true, defaultQueryIR: SEED_QUERIES.net_worth, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
     category_by_year:     { defaultQueryIR: SEED_QUERIES.category_by_year, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
     spending_over_time:   { chart: true, defaultQueryIR: SEED_QUERIES.spending_over_time, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
@@ -129,7 +99,6 @@ const SEED_QUERY_METADATA = {
 // prettier-ignore
 const ReportMetadata = {
     TRANSACTION_TREE_METADATA, POSITION_TREE_METADATA,
-    ENGINE_TRANSACTION_TREE_METADATA, ENGINE_POSITION_TREE_METADATA,
     SEED_QUERIES, SEED_QUERY_METADATA,
 }
 
