@@ -190,10 +190,10 @@ test('SnapshotQuery — monthly balance snapshots (legacy shape check)', t => {
             const query = FinancialQuery.SnapshotQuery(
                 'net_worth',
                 'Net worth over time',
-                'balances',
-                undefined,
                 undefined,
                 IRDateRange.Range('2025-01-01', '2025-03-31'),
+                undefined,
+                'balances',
                 'monthly',
             )
             const result = runFinancialQuery(query, STATE)
@@ -218,10 +218,10 @@ test('SnapshotQuery — ungrouped tree output', t => {
             const query = FinancialQuery.SnapshotQuery(
                 'net_worth',
                 'Net worth over time',
-                'balances',
-                undefined,
                 undefined,
                 IRDateRange.Range('2025-01-01', '2025-03-31'),
+                undefined,
+                'balances',
                 'monthly',
             )
             const result = runFinancialQuery(query, STATE)
@@ -245,10 +245,10 @@ test('SnapshotQuery — grouped tree output', t => {
             const query = FinancialQuery.SnapshotQuery(
                 'spending_by_cat',
                 'Spending by category over time',
-                'balances',
                 undefined,
-                IRGrouping('category'),
                 IRDateRange.Range('2025-01-01', '2025-03-31'),
+                IRGrouping('category'),
+                'balances',
                 'monthly',
             )
             const result = runFinancialQuery(query, STATE)

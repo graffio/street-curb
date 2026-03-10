@@ -34,10 +34,10 @@ const posQuery = FinancialQuery.PositionQuery('test', undefined, undefined, unde
 const snapQuery = FinancialQuery.SnapshotQuery(
     'test',
     undefined,
-    'balances',
-    undefined,
     undefined,
     IRDateRange.Year(2025),
+    undefined,
+    'balances',
     'monthly',
 )
 

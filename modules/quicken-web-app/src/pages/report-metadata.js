@@ -93,8 +93,8 @@ const ReportMetadata = {
     diningMultiAccount:  { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.diningMultiAccount },
     payeePattern:        { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.payeePattern },
     categoryByYear:      {                               baseQueryIR: BASE_QUERIES.categoryByYear,    filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
-    netWorth:            { chart: true,                  baseQueryIR: BASE_QUERIES.netWorth,           filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
-    spendingOverTime:    { chart: true,                  baseQueryIR: BASE_QUERIES.spendingOverTime,   filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
+    netWorth:            { chart: true,                  baseQueryIR: BASE_QUERIES.netWorth,          filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
+    spendingOverTime:    { chart: true,                  baseQueryIR: BASE_QUERIES.spendingOverTime,  filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

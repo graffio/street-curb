@@ -97,10 +97,10 @@ test('SnapshotQuery — balances monthly', t => {
     const ir = FinancialQuery.SnapshotQuery(
         'test',
         undefined,
-        'balances',
-        undefined,
         undefined,
         IRDateRange.Year(2025),
+        undefined,
+        'balances',
         'monthly',
     )
     t.equal(toFinancialQueryDescription(ir), 'balances snapshots (monthly)', 'Then includes domain and interval')
@@ -111,10 +111,10 @@ test('SnapshotQuery — positions quarterly', t => {
     const ir = FinancialQuery.SnapshotQuery(
         'test',
         undefined,
-        'positions',
-        undefined,
         undefined,
         IRDateRange.Year(2025),
+        undefined,
+        'positions',
         'quarterly',
     )
     t.equal(toFinancialQueryDescription(ir), 'positions snapshots (quarterly)', 'Then includes domain and interval')

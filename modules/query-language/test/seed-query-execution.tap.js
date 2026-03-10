@@ -136,19 +136,19 @@ const SEEDS = {
     net_worth: FinancialQuery.SnapshotQuery(
         'net_worth',
         'Net worth over time',
-        'balances',
-        undefined,
         undefined,
         IRDateRange.Range('2025-01-01', '2025-03-31'),
+        undefined,
+        'balances',
         'monthly',
     ),
     spending_over_time: FinancialQuery.SnapshotQuery(
         'spending_over_time',
         'Spending over time',
-        'balances',
         undefined,
-        IRGrouping('category'),
         IRDateRange.Range('2025-01-01', '2025-03-31'),
+        IRGrouping('category'),
+        'balances',
         'monthly',
     ),
     category_by_year: FinancialQuery.TransactionQuery(

@@ -23,10 +23,10 @@
  *  SnapshotQuery
  *      name       : "String",
  *      description: "String?",
- *      domain     : FieldTypes.snapshotDomain,
  *      filter     : "IRFilter?",
- *      grouping   : "IRGrouping?",
  *      dateRange  : "IRDateRange",
+ *      grouping   : "IRGrouping?",
+ *      domain     : FieldTypes.snapshotDomain,
  *      interval   : FieldTypes.timeSeriesInterval
  *
  */
@@ -79,7 +79,7 @@ FinancialQuery.prototype = FinancialQueryPrototype
 const toString = {
     transactionQuery: function () { return `FinancialQuery.TransactionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.computed)})` },
     positionQuery   : function () { return `FinancialQuery.PositionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.metrics)}, ${R._toString(this.orderByField)}, ${R._toString(this.orderByDirection)}, ${R._toString(this.limit)})` },
-    snapshotQuery   : function () { return `FinancialQuery.SnapshotQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.domain)}, ${R._toString(this.filter)}, ${R._toString(this.grouping)}, ${R._toString(this.dateRange)}, ${R._toString(this.interval)})` },
+    snapshotQuery   : function () { return `FinancialQuery.SnapshotQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.domain)}, ${R._toString(this.interval)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -178,35 +178,35 @@ FinancialQuery.PositionQuery = PositionQueryConstructor
 
 /*
  * Construct a FinancialQuery.SnapshotQuery instance
- * @sig SnapshotQuery :: (String, String?, String, IRFilter?, IRGrouping?, IRDateRange, String) -> FinancialQuery.SnapshotQuery
+ * @sig SnapshotQuery :: (String, String?, IRFilter?, IRDateRange, IRGrouping?, String, String) -> FinancialQuery.SnapshotQuery
  */
 const SnapshotQueryConstructor = function SnapshotQuery(
     name,
     description,
-    domain,
     filter,
-    grouping,
     dateRange,
+    grouping,
+    domain,
     interval,
 ) {
     const constructorName =
-        'FinancialQuery.SnapshotQuery(name, description, domain, filter, grouping, dateRange, interval)'
+        'FinancialQuery.SnapshotQuery(name, description, filter, dateRange, grouping, domain, interval)'
 
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
-    R.validateRegex(constructorName, FieldTypes.snapshotDomain, 'domain', false, domain)
     R.validateTag(constructorName, 'IRFilter', 'filter', true, filter)
-    R.validateTag(constructorName, 'IRGrouping', 'grouping', true, grouping)
     R.validateTag(constructorName, 'IRDateRange', 'dateRange', false, dateRange)
+    R.validateTag(constructorName, 'IRGrouping', 'grouping', true, grouping)
+    R.validateRegex(constructorName, FieldTypes.snapshotDomain, 'domain', false, domain)
     R.validateRegex(constructorName, FieldTypes.timeSeriesInterval, 'interval', false, interval)
 
     const result = Object.create(SnapshotQueryPrototype)
     result.name = name
     if (description !== undefined) result.description = description
-    result.domain = domain
     if (filter !== undefined) result.filter = filter
-    if (grouping !== undefined) result.grouping = grouping
     result.dateRange = dateRange
+    if (grouping !== undefined) result.grouping = grouping
+    result.domain = domain
     result.interval = interval
     return result
 }
@@ -282,8 +282,8 @@ PositionQueryConstructor._from = _input => {
     )
 }
 SnapshotQueryConstructor._from = _input => {
-    const { name, description, domain, filter, grouping, dateRange, interval } = _input
-    return FinancialQuery.SnapshotQuery(name, description, domain, filter, grouping, dateRange, interval)
+    const { name, description, filter, dateRange, grouping, domain, interval } = _input
+    return FinancialQuery.SnapshotQuery(name, description, filter, dateRange, grouping, domain, interval)
 }
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
