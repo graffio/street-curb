@@ -128,7 +128,7 @@ export const typeMappings = {
     [`${sources.quickenUiState}/transaction-filter.type.js`]  : [targets.quickenWebApp],
     [`${sources.quickenUiState}/view-ui-state.type.js`]       : [targets.quickenWebApp],
 
-    [`${sources.queryLanguage}/ir-date-range.type.js`]         : [targets.queryLanguage],
+    [`${sources.queryLanguage}/ir-date-range.type.js`]        : [targets.queryLanguage],
     [`${sources.queryLanguage}/ir-filter.type.js`]            : [targets.queryLanguage],
     [`${sources.queryLanguage}/ir-financial-query.type.js`]   : [targets.queryLanguage],
     [`${sources.queryLanguage}/ir-grouping.type.js`]          : [targets.queryLanguage],

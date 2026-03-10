@@ -1,5 +1,5 @@
 // ABOUTME: Tests for position enrichment — realized gains, dividends, IRR, benchmark, total return
-// ABOUTME: Run with: yarn tap:file test/financial-computations/position-enrichment.tap.js
+// ABOUTME: Run with: yarn tap:file test/position-enrichment.tap.js
 
 import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'

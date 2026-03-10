@@ -1,5 +1,5 @@
 // ABOUTME: Tests for merge-chip-filters — variant-agnostic chip state → IR merge
-// ABOUTME: Run with: yarn tap test/query-language/merge-chip-filters.tap.js
+// ABOUTME: Run with: yarn tap test/merge-chip-filters.tap.js
 
 import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'

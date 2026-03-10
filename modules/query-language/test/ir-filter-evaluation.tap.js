@@ -1,5 +1,5 @@
 // ABOUTME: Tests for ir-filter-evaluator — pre-compiled boolean filter tree evaluation
-// ABOUTME: Run with: yarn tap:file test/query-language/ir-filter-evaluation.tap.js
+// ABOUTME: Run with: yarn tap:file test/ir-filter-evaluation.tap.js
 
 import { test } from 'tap'
 import { IRFilter } from '../src/types/ir-filter.js'

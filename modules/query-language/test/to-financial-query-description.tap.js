@@ -1,5 +1,5 @@
 // ABOUTME: Tests for to-financial-query-description — human-readable IR descriptions
-// ABOUTME: Run with: yarn tap test/query-language/to-financial-query-description.tap.js
+// ABOUTME: Run with: yarn tap test/to-financial-query-description.tap.js
 
 import { test } from 'tap'
 import { FinancialQuery, IRDateRange, IRFilter, IRGrouping } from '../src/types/index.js'

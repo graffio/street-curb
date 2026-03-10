@@ -1,5 +1,5 @@
 // ABOUTME: Tests for MetricDefinition registry — LookupTable of named metric computations
-// ABOUTME: Run with: yarn tap:file test/financial-computations/metric-registry.tap.js
+// ABOUTME: Run with: yarn tap:file test/metric-registry.tap.js
 
 import { test } from 'tap'
 import { MetricRegistry } from '../src/financial-computations/metric-registry.js'
