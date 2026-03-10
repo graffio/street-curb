@@ -1,4 +1,4 @@
-// ABOUTME: Executes a FinancialQuery IR against Redux state via 3-way .match() dispatch
+// ABOUTME: Executes an IRFinancialQuery IR against Redux state via 3-way .match() dispatch
 // ABOUTME: Returns {nodes, source, columns?, computed?} for all query types; {snapshots} only for positions domain
 
 import { filter, find, iterate, map, reduce, sort } from '@graffio/functional'
@@ -441,10 +441,10 @@ const MAX_DEPTH = 10
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Dispatch a FinancialQuery to the appropriate execution path via .match()
-// @sig runFinancialQuery :: (FinancialQuery, State, Number?) -> Object
+// Dispatch an IRFinancialQuery to the appropriate execution path via .match()
+// @sig runFinancialQuery :: (IRFinancialQuery, State, Number?) -> Object
 const runFinancialQuery = (query, state, depth = 0) => {
-    if (depth > MAX_DEPTH) throw new Error(`FinancialQuery depth exceeded maximum of ${MAX_DEPTH}`)
+    if (depth > MAX_DEPTH) throw new Error(`IRFinancialQuery depth exceeded maximum of ${MAX_DEPTH}`)
 
     return query.match({
         TransactionQuery: fields => A.collectTransactionQueryResult(fields, state),

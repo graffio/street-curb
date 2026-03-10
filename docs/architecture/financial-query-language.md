@@ -1,19 +1,19 @@
 ---
-summary: "Query engine architecture — FinancialQuery IR with 3 query variants producing tree nodes directly, unified page component, 2D column grouping, D3 charting, position enrichment, metric registry"
-keywords: [ "query", "IR", "execution", "financial", "position", "metric", "tree", "snapshot", "FinancialQuery", "CategoryTreeNode" ]
+summary: "Query engine architecture — IRFinancialQuery IR with 3 query variants producing tree nodes directly, unified page component, 2D column grouping, D3 charting, position enrichment, metric registry"
+keywords: [ "query", "IR", "execution", "financial", "position", "metric", "tree", "snapshot", "IRFinancialQuery", "CategoryTreeNode" ]
 module: quicken-web-app
 last_updated: "2026-03-09"
 ---
 
 # Financial Query Engine
 
-Query engine that takes FinancialQuery IR, executes against Redux state, and returns tree nodes directly to a single
+Query engine that takes IRFinancialQuery IR, executes against Redux state, and returns tree nodes directly to a single
 unified page component. Claude constructs IR Tagged values from natural language — no DSL parser.
 
 ## Architecture
 
 ```
-Claude → FinancialQuery IR → Execution Engine → {nodes, source, columns?, computed?} → QueryResultPage
+Claude → IRFinancialQuery IR → Execution Engine → {nodes, source, columns?, computed?} → QueryResultPage
                                     ↑
                                Redux state
 ```
@@ -25,7 +25,7 @@ Claude → FinancialQuery IR → Execution Engine → {nodes, source, columns?, 
 | Filter compiler  | `build-filter-predicate.js`         | `(IRFilter)` → `entity => Boolean`     |
 | Tree builder     | `category-tree.js`                  | transactions → CategoryTreeNode tree   |
 
-## FinancialQuery IR
+## IRFinancialQuery IR
 
 Domain-specific TaggedSum — each variant carries only its domain-relevant fields.
 
@@ -71,7 +71,7 @@ empty And/Or rejected, depth > 20 rejected, invalid regex throws with clear mess
 
 ## Execution Engine
 
-`run-financial-query.js` dispatches via `FinancialQuery.match()` to domain-specific collectors:
+`run-financial-query.js` dispatches via `IRFinancialQuery.match()` to domain-specific collectors:
 
 - **TransactionQuery**: enrich → filter → group. Without `columns` → 1D tree. With `columns` → 2D tree via
   `buildColumnGroupedTree` (hierarchical, drillable). IRComputedRow expressions extracted from top-level node aggregates
@@ -99,7 +99,7 @@ Shared helpers: `toResolvedFilter` (category prefix expansion — `Equals('categ
 `constructor.from({ ...ir, ...patch })`. Unused patch keys silently ignored through `_from` destructuring.
 
 ```
-Redux state.queryIR[viewId] → applyChipFilters → runFinancialQuery → result object
+Redux state.queryIR[viewId] → applyChipFilters → runIRFinancialQuery → result object
                                       ↑
                               transactionFilters[viewId] (chip state)
 ```
@@ -155,7 +155,7 @@ Decomposed into single-function modules in `financial-computations/`:
 
 | File                                                   | Purpose                                         |
 |--------------------------------------------------------|-------------------------------------------------|
-| `src/query-language/run-financial-query.js`            | FinancialQuery IR → result object (3 variants)  |
+| `src/query-language/run-financial-query.js`            | IRFinancialQuery IR → result object (3 variants)  |
 | `src/query-language/to-financial-query-description.js` | IR → human-readable description                 |
 | `src/query-language/build-filter-predicate.js`         | IRFilter tree → compiled predicate              |
 | `src/query-language/merge-chip-filters.js`             | Variant-agnostic chip state → IR merge          |
@@ -167,7 +167,7 @@ Decomposed into single-function modules in `financial-computations/`:
 | `src/components/FilterChipRow.jsx`                     | Shared filter chip row                          |
 | `src/financial-computations/metric-registry.js`        | MetricDefinition LookupTable (7 metrics)        |
 | `src/financial-computations/compute-positions.js`      | Lot aggregation + price → Position              |
-| `type-definitions/ir/financial-query.type.js`          | FinancialQuery TaggedSum (3 variants)            |
+| `type-definitions/ir/financial-query.type.js`          | IRFinancialQuery TaggedSum (3 variants)            |
 | `type-definitions/ir/ir-grouping.type.js`              | IRGrouping Tagged type                          |
 | `type-definitions/ir/ir-computed-row.type.js`          | IRComputedRow Tagged type                       |
 | `type-definitions/ir/ir-pivot-expression.type.js`      | IRPivotExpression TaggedSum                     |

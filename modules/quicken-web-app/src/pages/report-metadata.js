@@ -2,7 +2,7 @@
 // ABOUTME: Each constant bundles columns, filters, tree config, and chip row overrides
 
 import {
-    FinancialQuery,
+    IRFinancialQuery,
     IRComputedRow,
     IRDateRange,
     IRFilter,
@@ -70,16 +70,16 @@ const categoryByYearComputation = [
 
 // prettier-ignore
 const BASE_QUERIES = {
-    spending:           FinancialQuery.TransactionQuery.from({ name: 'spending',          grouping: IRGrouping('category') }),
-    positions:          FinancialQuery.PositionQuery.from(   { name: 'positions',         grouping: IRGrouping('account') }),
-    largeTransactions:  FinancialQuery.TransactionQuery.from({ name: 'largeTransactions', grouping: IRGrouping('category'), filter: IRFilter.LessThan('amount', -500) }),
-    excludeTransfers:   FinancialQuery.TransactionQuery.from({ name: 'excludeTransfers',  grouping: IRGrouping('category'), filter: IRFilter.Not(IRFilter.Equals('category', 'Transfer')) }),
-    amountRange:        FinancialQuery.TransactionQuery.from({ name: 'amountRange',       grouping: IRGrouping('category'), filter: IRFilter.Between('amount', -1000, -100) }),
-    diningMultiAccount: FinancialQuery.TransactionQuery.from({ name: 'diningMultiAccount',grouping: IRGrouping('category'), filter: IRFilter.And([IRFilter.Equals('category', 'Food'), IRFilter.In('account', ['Primary Checking', 'Chase Sapphire'])]) }),
-    payeePattern:       FinancialQuery.TransactionQuery.from({ name: 'payeePattern',      grouping: IRGrouping('category'), filter: IRFilter.Matches('payee', '^Pac') }),
-    categoryByYear:     FinancialQuery.TransactionQuery.from({ name: 'categoryByYear',    grouping: IRGrouping('category', 'year'), description: 'Spending by category per year', computed: categoryByYearComputation }),
-    netWorth:           FinancialQuery.SnapshotQuery.from(   { name: 'netWorth',          domain: 'balances', dateRange: IRDateRange.Year(2025), interval: 'monthly', description: 'Net worth over time' }),
-    spendingOverTime:   FinancialQuery.SnapshotQuery.from(   { name: 'spendingOverTime',  domain: 'balances', dateRange: IRDateRange.Year(2025), interval: 'monthly', description: 'Spending by category over time', grouping: IRGrouping('category') }),
+    spending:           IRFinancialQuery.TransactionQuery.from({ name: 'spending',          grouping: IRGrouping('category') }),
+    positions:          IRFinancialQuery.PositionQuery.from(   { name: 'positions',         grouping: IRGrouping('account') }),
+    largeTransactions:  IRFinancialQuery.TransactionQuery.from({ name: 'largeTransactions', grouping: IRGrouping('category'), filter: IRFilter.LessThan('amount', -500) }),
+    excludeTransfers:   IRFinancialQuery.TransactionQuery.from({ name: 'excludeTransfers',  grouping: IRGrouping('category'), filter: IRFilter.Not(IRFilter.Equals('category', 'Transfer')) }),
+    amountRange:        IRFinancialQuery.TransactionQuery.from({ name: 'amountRange',       grouping: IRGrouping('category'), filter: IRFilter.Between('amount', -1000, -100) }),
+    diningMultiAccount: IRFinancialQuery.TransactionQuery.from({ name: 'diningMultiAccount',grouping: IRGrouping('category'), filter: IRFilter.And([IRFilter.Equals('category', 'Food'), IRFilter.In('account', ['Primary Checking', 'Chase Sapphire'])]) }),
+    payeePattern:       IRFinancialQuery.TransactionQuery.from({ name: 'payeePattern',      grouping: IRGrouping('category'), filter: IRFilter.Matches('payee', '^Pac') }),
+    categoryByYear:     IRFinancialQuery.TransactionQuery.from({ name: 'categoryByYear',    grouping: IRGrouping('category', 'year'), description: 'Spending by category per year', computed: categoryByYearComputation }),
+    netWorth:           IRFinancialQuery.SnapshotQuery.from(   { name: 'netWorth',          domain: 'balances', dateRange: IRDateRange.Year(2025), interval: 'monthly', description: 'Net worth over time' }),
+    spendingOverTime:   IRFinancialQuery.SnapshotQuery.from(   { name: 'spendingOverTime',  domain: 'balances', dateRange: IRDateRange.Year(2025), interval: 'monthly', description: 'Spending by category over time', grouping: IRGrouping('category') }),
 }
 
 // Report metadata — each key is a reportType that maps to a full QueryResultPage configuration

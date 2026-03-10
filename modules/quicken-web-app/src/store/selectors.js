@@ -452,7 +452,7 @@ const _queryResult = (state, viewId, fallbackIR) => {
 }
 
 // Describe the merged IR as human-readable text — cheap, no heavy memoization needed
-// @sig _queryDescription :: (State, String, FinancialQuery?) -> String
+// @sig _queryDescription :: (State, String, IRFinancialQuery?) -> String
 const _queryDescription = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return ''

@@ -1,4 +1,4 @@
-// ABOUTME: Generate human-readable descriptions from FinancialQuery IR
+// ABOUTME: Generate human-readable descriptions from IRFinancialQuery IR
 // ABOUTME: Pure transformer — dispatches via .match() on all 3 variants
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -43,8 +43,8 @@ const T = {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Generate a human-readable description of a FinancialQuery IR
-// @sig toFinancialQueryDescription :: FinancialQuery -> String
+// Generate a human-readable description of a IRFinancialQuery IR
+// @sig toFinancialQueryDescription :: IRFinancialQuery -> String
 const toFinancialQueryDescription = query =>
     query.match({
         TransactionQuery: ({ filter, grouping }) => `transactions${T.toFilterPart(filter)}${T.toGroupPart(grouping)}`,

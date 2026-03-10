@@ -1,4 +1,4 @@
-// ABOUTME: Merges UI chip filter state into a FinancialQuery IR before execution
+// ABOUTME: Merges UI chip filter state into an IRFinancialQuery IR before execution
 // ABOUTME: Variant-agnostic — builds chip filters, combines with base, reconstructs via constructor.from()
 
 import { compactMap } from '@graffio/functional'
@@ -95,9 +95,9 @@ const F = {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Merge chip filter state into a FinancialQuery IR — variant-agnostic via constructor.from()
+// Merge chip filter state into an IRFinancialQuery IR — variant-agnostic via constructor.from()
 // TaggedSum _from destructures only known fields, so extra patch keys are silently ignored
-// @sig applyChipFilters :: (FinancialQuery, Object?, LookupTable) -> FinancialQuery
+// @sig applyChipFilters :: (IRFinancialQuery, Object?, LookupTable) -> IRFinancialQuery
 const applyChipFilters = (ir, chipState, accts) => {
     if (!chipState) return ir
     const patch = F.buildChipPatch(ir, chipState, accts)

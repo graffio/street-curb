@@ -3,7 +3,7 @@
 
 import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'
-import { Account, FinancialQuery, IRDateRange, IRFilter, IRGrouping } from '../src/types/index.js'
+import { Account, IRFinancialQuery, IRDateRange, IRFilter, IRGrouping } from '../src/types/index.js'
 import { applyChipFilters } from '../src/apply-chip-filters.js'
 
 // ═════════════════════════════════════════════════
@@ -29,9 +29,9 @@ const emptyChipState = {
     asOfDate: undefined,
 }
 
-const txQuery = FinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('category'))
-const posQuery = FinancialQuery.PositionQuery('test', undefined, undefined, undefined, IRGrouping('account'))
-const snapQuery = FinancialQuery.SnapshotQuery(
+const txQuery = IRFinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('category'))
+const posQuery = IRFinancialQuery.PositionQuery('test', undefined, undefined, undefined, IRGrouping('account'))
+const snapQuery = IRFinancialQuery.SnapshotQuery(
     'test',
     undefined,
     undefined,
@@ -113,7 +113,7 @@ test('applyChipFilters — search query escapes regex special chars', t => {
 // ═════════════════════════════════════════════════
 
 test('applyChipFilters — chip filter merges with existing base filter via And', t => {
-    const ir = FinancialQuery.TransactionQuery(
+    const ir = IRFinancialQuery.TransactionQuery(
         'tx',
         undefined,
         IRFilter.Equals('category', 'Food'),
@@ -188,7 +188,7 @@ test('applyChipFilters — asOfDate takes priority over dateRange', t => {
 // ═════════════════════════════════════════════════
 
 test('applyChipFilters — TransactionQuery preserves all fields', t => {
-    const ir = FinancialQuery.TransactionQuery(
+    const ir = IRFinancialQuery.TransactionQuery(
         'tx',
         'desc',
         IRFilter.Equals('category', 'Food'),
@@ -208,7 +208,7 @@ test('applyChipFilters — TransactionQuery preserves all fields', t => {
 })
 
 test('applyChipFilters — PositionQuery preserves all fields', t => {
-    const ir = FinancialQuery.PositionQuery(
+    const ir = IRFinancialQuery.PositionQuery(
         'pos',
         'desc',
         undefined,

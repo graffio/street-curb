@@ -8,7 +8,7 @@ import {
     Price,
     Security,
     Transaction,
-    FinancialQuery,
+    IRFinancialQuery,
     IRComputedRow,
     IRDateRange,
     IRFilter,
@@ -95,7 +95,7 @@ const STATE = {
 test('TransactionQuery — category grouping with filter', t => {
     t.test('Given a TransactionQuery filtering by Food category', t => {
         t.test('When executing against state', t => {
-            const query = FinancialQuery.TransactionQuery(
+            const query = IRFinancialQuery.TransactionQuery(
                 'food_spending',
                 'Food spending',
                 IRFilter.Equals('category', 'Food'),
@@ -134,7 +134,7 @@ test('TransactionQuery — pivot with computed rows', t => {
                     ),
                 ),
             ]
-            const query = FinancialQuery.TransactionQuery(
+            const query = IRFinancialQuery.TransactionQuery(
                 'pivot_test',
                 'Category by quarter',
                 undefined,
@@ -169,7 +169,12 @@ test('TransactionQuery — pivot with computed rows', t => {
 test('PositionQuery — positions tree', t => {
     t.test('Given a PositionQuery', t => {
         t.test('When executing against state with an investment account', t => {
-            const query = FinancialQuery.PositionQuery('positions', 'All positions', undefined, IRDateRange.Year(2025))
+            const query = IRFinancialQuery.PositionQuery(
+                'positions',
+                'All positions',
+                undefined,
+                IRDateRange.Year(2025),
+            )
             const result = runFinancialQuery(query, STATE)
             t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
             t.equal(result.source, 'account', 'Then source is account')
@@ -187,7 +192,7 @@ test('PositionQuery — positions tree', t => {
 test('SnapshotQuery — monthly balance snapshots (legacy shape check)', t => {
     t.test('Given a SnapshotQuery for balances at monthly intervals', t => {
         t.test('When executing over Q1 2025', t => {
-            const query = FinancialQuery.SnapshotQuery(
+            const query = IRFinancialQuery.SnapshotQuery(
                 'net_worth',
                 'Net worth over time',
                 undefined,
@@ -215,7 +220,7 @@ test('SnapshotQuery — monthly balance snapshots (legacy shape check)', t => {
 test('SnapshotQuery — ungrouped tree output', t => {
     t.test('Given a SnapshotQuery without grouping', t => {
         t.test('When executing over Q1 2025', t => {
-            const query = FinancialQuery.SnapshotQuery(
+            const query = IRFinancialQuery.SnapshotQuery(
                 'net_worth',
                 'Net worth over time',
                 undefined,
@@ -242,7 +247,7 @@ test('SnapshotQuery — ungrouped tree output', t => {
 test('SnapshotQuery — grouped tree output', t => {
     t.test('Given a SnapshotQuery with category grouping', t => {
         t.test('When executing over Q1 2025', t => {
-            const query = FinancialQuery.SnapshotQuery(
+            const query = IRFinancialQuery.SnapshotQuery(
                 'spending_by_cat',
                 'Spending by category over time',
                 undefined,
@@ -283,11 +288,11 @@ test('SnapshotQuery — grouped tree output', t => {
 // (e) JSON.stringify stability — memoization depends on this
 // ═════════════════════════════════════════════════
 
-test('FinancialQuery — JSON.stringify produces stable deterministic output', t => {
+test('IRFinancialQuery — JSON.stringify produces stable deterministic output', t => {
     t.test('Given two identical TransactionQuery constructions', t => {
         t.test('When serializing both with JSON.stringify', t => {
-            const a = FinancialQuery.TransactionQuery('q', undefined, undefined, undefined, IRGrouping('category'))
-            const b = FinancialQuery.TransactionQuery('q', undefined, undefined, undefined, IRGrouping('category'))
+            const a = IRFinancialQuery.TransactionQuery('q', undefined, undefined, undefined, IRGrouping('category'))
+            const b = IRFinancialQuery.TransactionQuery('q', undefined, undefined, undefined, IRGrouping('category'))
             t.equal(JSON.stringify(a), JSON.stringify(b), 'Then serialized strings are identical')
             t.end()
         })

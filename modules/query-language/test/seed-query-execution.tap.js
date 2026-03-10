@@ -11,7 +11,7 @@ import {
     Price,
     Security,
     Transaction,
-    FinancialQuery,
+    IRFinancialQuery,
     IRComputedRow,
     IRDateRange,
     IRFilter,
@@ -86,7 +86,7 @@ const STATE = {
 }
 
 // ═════════════════════════════════════════════════
-// Seed queries — FinancialQuery variants
+// Seed queries — IRFinancialQuery variants
 // ═════════════════════════════════════════════════
 
 const { And, Between, Equals, GreaterThan, In, Matches, Not, Or } = IRFilter
@@ -98,42 +98,42 @@ const runSeed = query => {
 }
 
 const SEEDS = {
-    large_transactions: FinancialQuery.TransactionQuery(
+    large_transactions: IRFinancialQuery.TransactionQuery(
         'large_transactions',
         undefined,
         GreaterThan('amount', 500),
         undefined,
         IRGrouping('category'),
     ),
-    dining_multi_account: FinancialQuery.TransactionQuery(
+    dining_multi_account: IRFinancialQuery.TransactionQuery(
         'dining_multi_account',
         undefined,
         And([Equals('category', 'Food:Dining'), In('account', ['Checking', 'Savings'])]),
         undefined,
         IRGrouping('category'),
     ),
-    exclude_transfers: FinancialQuery.TransactionQuery(
+    exclude_transfers: IRFinancialQuery.TransactionQuery(
         'exclude_transfers',
         undefined,
         Not(Equals('category', 'Transfer')),
         undefined,
         IRGrouping('category'),
     ),
-    payee_pattern: FinancialQuery.TransactionQuery(
+    payee_pattern: IRFinancialQuery.TransactionQuery(
         'payee_pattern',
         undefined,
         Matches('payee', '^WAL'),
         undefined,
         IRGrouping('category'),
     ),
-    amount_range: FinancialQuery.TransactionQuery(
+    amount_range: IRFinancialQuery.TransactionQuery(
         'amount_range',
         undefined,
         And([Between('amount', 100, 1000), Or([Equals('category', 'Food'), Equals('category', 'Shopping')])]),
         undefined,
         IRGrouping('category'),
     ),
-    net_worth: FinancialQuery.SnapshotQuery(
+    net_worth: IRFinancialQuery.SnapshotQuery(
         'net_worth',
         'Net worth over time',
         undefined,
@@ -142,7 +142,7 @@ const SEEDS = {
         'balances',
         'monthly',
     ),
-    spending_over_time: FinancialQuery.SnapshotQuery(
+    spending_over_time: IRFinancialQuery.SnapshotQuery(
         'spending_over_time',
         'Spending over time',
         undefined,
@@ -151,7 +151,7 @@ const SEEDS = {
         'balances',
         'monthly',
     ),
-    category_by_year: FinancialQuery.TransactionQuery(
+    category_by_year: IRFinancialQuery.TransactionQuery(
         'category_by_year',
         'Spending by category per year',
         undefined,

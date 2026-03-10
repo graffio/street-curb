@@ -2,7 +2,7 @@
 // ABOUTME: Run with: yarn tap test/to-financial-query-description.tap.js
 
 import { test } from 'tap'
-import { FinancialQuery, IRDateRange, IRFilter, IRGrouping } from '../src/types/index.js'
+import { IRFinancialQuery, IRDateRange, IRFilter, IRGrouping } from '../src/types/index.js'
 import { toFinancialQueryDescription } from '../src/to-financial-query-description.js'
 
 // ═════════════════════════════════════════════════
@@ -10,13 +10,13 @@ import { toFinancialQueryDescription } from '../src/to-financial-query-descripti
 // ═════════════════════════════════════════════════
 
 test('TransactionQuery — with default grouping', t => {
-    const ir = FinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('category'))
     t.equal(toFinancialQueryDescription(ir), 'transactions, grouped by category', 'Then description includes grouping')
     t.end()
 })
 
 test('TransactionQuery — with filter', t => {
-    const ir = FinancialQuery.TransactionQuery(
+    const ir = IRFinancialQuery.TransactionQuery(
         'test',
         undefined,
         IRFilter.Equals('category', 'Food'),
@@ -32,13 +32,19 @@ test('TransactionQuery — with filter', t => {
 })
 
 test('TransactionQuery — with grouping', t => {
-    const ir = FinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('payee'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('payee'))
     t.equal(toFinancialQueryDescription(ir), 'transactions, grouped by payee', 'Then includes grouping')
     t.end()
 })
 
 test('TransactionQuery — with pivot grouping', t => {
-    const ir = FinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('category', 'year'))
+    const ir = IRFinancialQuery.TransactionQuery(
+        'test',
+        undefined,
+        undefined,
+        undefined,
+        IRGrouping('category', 'year'),
+    )
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions, grouped by category by year',
@@ -48,7 +54,7 @@ test('TransactionQuery — with pivot grouping', t => {
 })
 
 test('TransactionQuery — with filter and grouping', t => {
-    const ir = FinancialQuery.TransactionQuery(
+    const ir = IRFinancialQuery.TransactionQuery(
         'test',
         undefined,
         IRFilter.LessThan('amount', -500),
@@ -68,13 +74,13 @@ test('TransactionQuery — with filter and grouping', t => {
 // ═════════════════════════════════════════════════
 
 test('PositionQuery — bare', t => {
-    const ir = FinancialQuery.PositionQuery('test', undefined, undefined, undefined, undefined)
+    const ir = IRFinancialQuery.PositionQuery('test', undefined, undefined, undefined, undefined)
     t.equal(toFinancialQueryDescription(ir), 'positions', 'Then description is "positions"')
     t.end()
 })
 
 test('PositionQuery — with filter and grouping', t => {
-    const ir = FinancialQuery.PositionQuery(
+    const ir = IRFinancialQuery.PositionQuery(
         'test',
         undefined,
         IRFilter.In('account', ['Brokerage']),
@@ -94,7 +100,7 @@ test('PositionQuery — with filter and grouping', t => {
 // ═════════════════════════════════════════════════
 
 test('SnapshotQuery — balances monthly', t => {
-    const ir = FinancialQuery.SnapshotQuery(
+    const ir = IRFinancialQuery.SnapshotQuery(
         'test',
         undefined,
         undefined,
@@ -108,7 +114,7 @@ test('SnapshotQuery — balances monthly', t => {
 })
 
 test('SnapshotQuery — positions quarterly', t => {
-    const ir = FinancialQuery.SnapshotQuery(
+    const ir = IRFinancialQuery.SnapshotQuery(
         'test',
         undefined,
         undefined,
@@ -127,7 +133,7 @@ test('SnapshotQuery — positions quarterly', t => {
 
 test('And filter description', t => {
     const filter = IRFilter.And([IRFilter.Equals('category', 'Food'), IRFilter.LessThan('amount', -100)])
-    const ir = FinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions where category = Food and amount < -100, grouped by category',
@@ -138,7 +144,7 @@ test('And filter description', t => {
 
 test('Or filter description', t => {
     const filter = IRFilter.Or([IRFilter.Equals('category', 'Food'), IRFilter.Equals('category', 'Housing')])
-    const ir = FinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions where (category = Food or category = Housing), grouped by category',
@@ -149,7 +155,7 @@ test('Or filter description', t => {
 
 test('Not filter description', t => {
     const filter = IRFilter.Not(IRFilter.Equals('category', 'Transfer'))
-    const ir = FinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions where not category = Transfer, grouped by category',
@@ -160,7 +166,7 @@ test('Not filter description', t => {
 
 test('Between filter description', t => {
     const filter = IRFilter.Between('amount', -1000, -100)
-    const ir = FinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions where amount -1000–-100, grouped by category',
@@ -171,7 +177,7 @@ test('Between filter description', t => {
 
 test('Matches filter description', t => {
     const filter = IRFilter.Matches('payee', '^Pac')
-    const ir = FinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions where payee ~ /^Pac/, grouped by category',
@@ -182,7 +188,7 @@ test('Matches filter description', t => {
 
 test('GreaterThan filter description', t => {
     const filter = IRFilter.GreaterThan('amount', 1000)
-    const ir = FinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions where amount > 1000, grouped by category',
@@ -193,7 +199,7 @@ test('GreaterThan filter description', t => {
 
 test('In filter description', t => {
     const filter = IRFilter.In('account', ['Checking', 'Savings'])
-    const ir = FinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
     t.equal(
         toFinancialQueryDescription(ir),
         'transactions where account in (Checking, Savings), grouped by category',

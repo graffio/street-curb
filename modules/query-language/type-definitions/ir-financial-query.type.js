@@ -10,8 +10,8 @@ import { FieldTypes } from '../field-types.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-export const FinancialQuery = {
-    name: 'FinancialQuery',
+export const IRFinancialQuery = {
+    name: 'IRFinancialQuery',
     kind: 'taggedSum',
     variants: {
         TransactionQuery:{ name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange?', grouping: 'IRGrouping', computed: '[IRComputedRow]?' },

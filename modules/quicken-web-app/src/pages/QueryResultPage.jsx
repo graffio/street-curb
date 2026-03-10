@@ -1,4 +1,4 @@
-// ABOUTME: Unified report page that renders all FinancialQuery result shapes
+// ABOUTME: Unified report page that renders all IRFinancialQuery result shapes
 // ABOUTME: Tree views, pivot tables, and time series charts — driven by metadata constants
 
 import { isNil } from '@graffio/functional'

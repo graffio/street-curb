@@ -1,4 +1,4 @@
-// ABOUTME: Integration tests for all FinancialQuery result pages with fixture-based numerical assertions
+// ABOUTME: Integration tests for all IRFinancialQuery result pages with fixture-based numerical assertions
 // ABOUTME: Run with: yarn tap:file test/engine-reports.integration-test.js (-g 'pattern' for single test)
 
 import tap from 'tap'

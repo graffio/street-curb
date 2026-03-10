@@ -16,7 +16,7 @@ export { applyChipFilters } from './src/apply-chip-filters.js'
 export { computePositions } from './src/financial-computations/compute-positions.js'
 
 // IR types (public — consumers construct queries with these)
-export { FinancialQuery } from './src/types/ir-financial-query.js'
+export { IRFinancialQuery } from './src/types/ir-financial-query.js'
 export { IRFilter } from './src/types/ir-filter.js'
 export { IRGrouping } from './src/types/ir-grouping.js'
 export { IRDateRange } from './src/types/ir-date-range.js'
