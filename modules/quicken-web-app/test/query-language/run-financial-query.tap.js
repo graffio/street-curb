@@ -133,10 +133,16 @@ test('TransactionQuery — pivot with computed rows', t => {
                 computed,
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(result.columns !== undefined, 'Then result has columns (pivot shape)')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes (2D tree)')
             t.ok(Array.isArray(result.columns), 'Then result has columns array')
-            t.ok(Array.isArray(result.rows), 'Then result has rows array')
-            t.ok(result.cells !== undefined, 'Then result has cells grid')
+            t.equal(result.source, 'category', 'Then source is category')
+
+            // Tree nodes have per-column values in aggregate.columns
+            const food = result.nodes.find(n => n.id === 'Food')
+            t.ok(food, 'Then Food group exists in tree')
+            t.ok(food.aggregate.columns, 'Then Food has per-column values')
+
+            // ComputedRow evaluation produces per-column ratios
             t.ok(result.computed !== undefined, 'Then result has computed rows')
             t.ok(result.computed['Housing % of Income'] !== undefined, 'Then housing ratio computed row exists')
             t.end()
@@ -168,7 +174,7 @@ test('PositionQuery — positions tree', t => {
 // (d) SnapshotQuery — balance snapshots over time
 // ═════════════════════════════════════════════════
 
-test('SnapshotQuery — monthly balance snapshots', t => {
+test('SnapshotQuery — monthly balance snapshots (legacy shape check)', t => {
     t.test('Given a SnapshotQuery for balances at monthly intervals', t => {
         t.test('When executing over Q1 2025', t => {
             const query = FinancialQuery.SnapshotQuery(
@@ -181,11 +187,81 @@ test('SnapshotQuery — monthly balance snapshots', t => {
                 'monthly',
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(Array.isArray(result.snapshots), 'Then result has snapshots (time series shape)')
-            t.ok(Array.isArray(result.snapshots), 'Then result has snapshots array')
-            t.ok(result.snapshots.length >= 3, 'Then there are at least 3 monthly snapshots')
-            t.ok(result.snapshots[0].date !== undefined, 'Then each snapshot has a date')
-            t.type(result.snapshots[0].total, 'number', 'Then each snapshot has a numeric total')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(Array.isArray(result.columns), 'Then result has columns array')
+            t.ok(result.columns.length >= 3, 'Then at least 3 monthly column keys')
+            t.equal(result.source, 'balances', 'Then source is balances')
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
+// ═════════════════════════════════════════════════
+// (d2) SnapshotQuery — tree output (ungrouped and grouped)
+// ═════════════════════════════════════════════════
+
+test('SnapshotQuery — ungrouped tree output', t => {
+    t.test('Given a SnapshotQuery without grouping', t => {
+        t.test('When executing over Q1 2025', t => {
+            const query = FinancialQuery.SnapshotQuery(
+                'net_worth',
+                'Net worth over time',
+                'balances',
+                undefined,
+                undefined,
+                IRDateRange.Range('2025-01-01', '2025-03-31'),
+                'monthly',
+            )
+            const result = runFinancialQuery(query, STATE)
+
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(Array.isArray(result.columns), 'Then result has columns array')
+            t.ok(result.columns.length >= 3, 'Then at least 3 monthly column keys')
+            t.equal(result.nodes.length, 1, 'Then single summary node')
+            t.ok(result.nodes[0].aggregate.columns, 'Then node has per-date-point columns')
+            t.type(result.nodes[0].aggregate.columns[result.columns[0]], 'number', 'Then column value is numeric')
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
+test('SnapshotQuery — grouped tree output', t => {
+    t.test('Given a SnapshotQuery with category grouping', t => {
+        t.test('When executing over Q1 2025', t => {
+            const query = FinancialQuery.SnapshotQuery(
+                'spending_by_cat',
+                'Spending by category over time',
+                'balances',
+                undefined,
+                IRGrouping('category'),
+                IRDateRange.Range('2025-01-01', '2025-03-31'),
+                'monthly',
+            )
+            const result = runFinancialQuery(query, STATE)
+
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(Array.isArray(result.columns), 'Then result has columns array')
+            t.ok(result.nodes.length > 1, 'Then multiple category nodes')
+
+            const food = result.nodes.find(n => n.id === 'Food')
+            t.ok(food, 'Then Food parent node exists')
+            t.ok(food.aggregate.columns, 'Then Food has per-date-point columns')
+
+            const dining = food.children.find(n => n.id === 'Food:Dining')
+            t.ok(dining, 'Then Food:Dining is a child of Food')
+            t.ok(dining.aggregate.columns, 'Then Food:Dining has per-date-point columns')
+
+            const housing = result.nodes.find(n => n.id === 'Housing')
+            t.ok(housing, 'Then Housing parent node exists')
+            t.ok(housing.aggregate.columns, 'Then Housing has per-date-point columns')
+
+            const rent = housing.children.find(n => n.id === 'Housing:Rent')
+            t.ok(rent, 'Then Housing:Rent is a child of Housing')
+            t.ok(rent.aggregate.columns, 'Then Housing:Rent has per-date-point columns')
             t.end()
         })
         t.end()

@@ -4,8 +4,9 @@
 /** {@link module:CategoryAggregate} */
 /*  CategoryAggregate generated from: modules/quicken-web-app/type-definitions/derived/category-aggregate.type.js
  *
- *  total: "Number",
- *  count: "Number"
+ *  total  : "Number",
+ *  count  : "Number",
+ *  columns: "Object?"
  *
  */
 
@@ -19,17 +20,19 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 /*
  * Construct a CategoryAggregate instance
- * @sig CategoryAggregate :: (Number, Number) -> CategoryAggregate
+ * @sig CategoryAggregate :: (Number, Number, Object?) -> CategoryAggregate
  */
-const CategoryAggregate = function CategoryAggregate(total, count) {
-    const constructorName = 'CategoryAggregate(total, count)'
-    R.validateArgumentLength(constructorName, 2, arguments)
+const CategoryAggregate = function CategoryAggregate(total, count, columns) {
+    const constructorName = 'CategoryAggregate(total, count, columns)'
+
     R.validateNumber(constructorName, 'total', false, total)
     R.validateNumber(constructorName, 'count', false, count)
+    R.validateObject(constructorName, 'columns', true, columns)
 
     const result = Object.create(prototype)
     result.total = total
     result.count = count
+    if (columns !== undefined) result.columns = columns
     return result
 }
 
@@ -44,7 +47,7 @@ const CategoryAggregate = function CategoryAggregate(total, count) {
  * @sig categoryaggregateToString :: () -> String
  */
 const categoryaggregateToString = function () {
-    return `CategoryAggregate(${R._toString(this.total)}, ${R._toString(this.count)})`
+    return `CategoryAggregate(${R._toString(this.total)}, ${R._toString(this.count)}, ${R._toString(this.columns)})`
 }
 
 /*
@@ -77,7 +80,10 @@ CategoryAggregate.prototype = prototype
 CategoryAggregate.toString = () => 'CategoryAggregate'
 CategoryAggregate.is = v => v && v['@@typeName'] === 'CategoryAggregate'
 
-CategoryAggregate._from = _input => CategoryAggregate(_input.total, _input.count)
+CategoryAggregate._from = _input => {
+    const { total, count, columns } = _input
+    return CategoryAggregate(total, count, columns)
+}
 CategoryAggregate.from = CategoryAggregate._from
 
 // -------------------------------------------------------------------------------------------------------------

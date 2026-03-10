@@ -113,6 +113,88 @@ t.test('Category tree building', t => {
     t.end()
 })
 
+// ═════════════════════════════════════════════════
+// buildColumnGroupedTree — 2D tree with per-column values
+// ═════════════════════════════════════════════════
+
+t.test('buildColumnGroupedTree', t => {
+    const transactions = [
+        { id: 'txn1', categoryName: 'Food:Groceries', amount: -100, date: '2025-01-15' },
+        { id: 'txn2', categoryName: 'Food:Groceries', amount: -50, date: '2025-01-20' },
+        { id: 'txn3', categoryName: 'Food:Restaurants', amount: -75, date: '2025-04-10' },
+        { id: 'txn4', categoryName: 'Housing:Rent', amount: -1500, date: '2025-01-01' },
+        { id: 'txn5', categoryName: 'Housing:Rent', amount: -1500, date: '2025-07-01' },
+        { id: 'txn6', categoryName: 'Food:Groceries', amount: -80, date: '2025-07-05' },
+    ]
+
+    t.test('Given category × year grouping', t => {
+        t.test('When building 2D tree', t => {
+            const tree = CategoryTree.buildColumnGroupedTree('category', 'year', transactions)
+
+            t.ok(Array.isArray(tree), 'Then returns an array of nodes')
+            t.ok(tree.length >= 2, 'Then at least 2 root groups (Food, Housing)')
+
+            const food = tree.find(n => n.id === 'Food')
+            t.ok(food, 'Then Food group exists')
+            t.ok(food.aggregate.columns, 'Then Food has per-column values')
+            t.ok(food.aggregate.columns['2025'] !== undefined, 'Then Food has 2025 column')
+            t.equal(food.aggregate.total, -305, 'Then Food total is sum of all Food transactions')
+            t.equal(food.aggregate.count, 4, 'Then Food count is 4')
+            t.end()
+        })
+        t.end()
+    })
+
+    t.test('Given category × quarter grouping', t => {
+        t.test('When building 2D tree', t => {
+            const tree = CategoryTree.buildColumnGroupedTree('category', 'quarter', transactions)
+
+            const food = tree.find(n => n.id === 'Food')
+            t.ok(food.aggregate.columns, 'Then Food has per-column values')
+
+            // Q1: Groceries -100 + -50 = -150, Q2: Restaurants -75, Q3: Groceries -80
+            t.equal(food.aggregate.columns['2025-Q1'], -150, 'Then Food Q1 total is -150')
+            t.equal(food.aggregate.columns['2025-Q2'], -75, 'Then Food Q2 total is -75')
+            t.equal(food.aggregate.columns['2025-Q3'], -80, 'Then Food Q3 total is -80')
+            t.end()
+        })
+        t.end()
+    })
+
+    t.test('Given category × month grouping', t => {
+        t.test('When building 2D tree', t => {
+            const tree = CategoryTree.buildColumnGroupedTree('category', 'month', transactions)
+
+            const food = tree.find(n => n.id === 'Food')
+            t.ok(food.aggregate.columns, 'Then Food has per-column values')
+            t.equal(food.aggregate.columns['2025-01'], -150, 'Then Food Jan total is -150')
+            t.equal(food.aggregate.columns['2025-04'], -75, 'Then Food Apr total is -75')
+            t.equal(food.aggregate.columns['2025-07'], -80, 'Then Food Jul total is -80')
+            t.end()
+        })
+        t.end()
+    })
+
+    t.test('Given parent columns roll up from children', t => {
+        t.test('When building category × quarter tree', t => {
+            const tree = CategoryTree.buildColumnGroupedTree('category', 'quarter', transactions)
+
+            const food = tree.find(n => n.id === 'Food')
+            const groceries = food.children.find(c => c.id === 'Food:Groceries')
+            t.ok(groceries, 'Then Groceries child exists')
+            t.equal(groceries.aggregate.columns['2025-Q1'], -150, 'Then Groceries Q1 is -150')
+            t.equal(groceries.aggregate.columns['2025-Q3'], -80, 'Then Groceries Q3 is -80')
+            t.notOk(groceries.aggregate.columns['2025-Q2'], 'Then Groceries has no Q2')
+
+            // Parent rollup: Food Q1 = Groceries Q1 (-150)
+            t.equal(food.aggregate.columns['2025-Q1'], -150, 'Then Food Q1 rolls up from Groceries')
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
 t.test('buildTransactionTree utility', t => {
     t.test('Given transactions with categories', t => {
         const transactions = [

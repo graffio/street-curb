@@ -21,11 +21,12 @@ import { Formatters } from '../utils/formatters.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
-    // Build a value column def for one pivot column bucket
-    // @sig toValueColumn :: (String, Object, Object) -> ColumnDef
-    toValueColumn: (col, cells, computed) => ({
+    // Build a value column def for one 2D tree column key
+    // @sig toTreeValueColumn :: (String, Object?) -> ColumnDef
+    toTreeValueColumn: (col, computed) => ({
         id: `col_${col}`,
-        accessorFn: ({ isComputed, rowLabel }) => (isComputed ? computed[rowLabel]?.[col] : cells[rowLabel]?.[col]),
+        accessorFn: ({ isComputed, rowLabel, aggregate }) =>
+            isComputed ? computed?.[rowLabel]?.[col] : aggregate.columns?.[col],
         header: col,
         size: 120,
         cell: ({ getValue, row }) =>
@@ -33,33 +34,41 @@ const F = {
         textAlign: 'right',
     }),
 
-    // Build TanStack column defs from pivot result shape
-    // @sig toPivotColumns :: ({ columns, cells, computed, rowTotals }) -> [ColumnDef]
-    toPivotColumns: ({ columns, cells, computed, rowTotals }) => {
-        const rowLabelCol = { id: 'rowLabel', accessorKey: 'rowLabel', header: '', size: 200, cell: PivotRowLabelCell }
-        const valueCols = columns.map(col => F.toValueColumn(col, cells, computed))
+    // Build TanStack column defs for a 2D tree (row label + value columns + total)
+    // @sig toTreePivotColumns :: ([String], Object?) -> [ColumnDef]
+    toTreePivotColumns: (columns, computed) => {
+        const labelCol = {
+            id: 'rowLabel',
+            accessorFn: ({ isComputed, rowLabel, id }) => (isComputed ? rowLabel : id),
+            header: '',
+            size: 200,
+            cell: PivotRowLabelCell,
+        }
+        const valueCols = columns.map(col => F.toTreeValueColumn(col, computed))
         const totalCol = {
             id: 'total',
-            accessorFn: ({ isComputed, rowLabel }) => (isComputed ? undefined : rowTotals[rowLabel]),
+            accessorFn: ({ isComputed, aggregate }) => (isComputed ? undefined : aggregate.total),
             header: 'Total',
             size: 120,
             cell: PivotCurrencyCell,
             textAlign: 'right',
         }
-        return [rowLabelCol, ...valueCols, totalCol]
+        return [labelCol, ...valueCols, totalCol]
     },
 
-    // Build flat data array from rows + computed row names
-    // @sig toPivotData :: ([String], Object) -> [{ rowLabel, isComputed }]
-    toPivotData: (rows, computed) => {
-        const dataRows = rows.map(r => ({ rowLabel: r, isComputed: false }))
-        const computedRows = Object.keys(computed).map(r => ({ rowLabel: r, isComputed: true }))
-        return [...dataRows, ...computedRows]
-    },
+    // Convert computed row map to flat row objects for appending to tree data
+    // @sig toComputedRows :: Object? -> [{ rowLabel, isComputed, children }]
+    toComputedRows: computed =>
+        Object.keys(computed || {}).map(name => ({ rowLabel: name, isComputed: true, children: [] })),
 
-    // Extract chart-ready data from snapshots
+    // Extract chart-ready data from snapshots (positions domain)
     // @sig toChartData :: [{ date, total }] -> [{ date, value }]
     toChartData: snapshots => snapshots.map(s => ({ date: s.date, value: s.total })),
+
+    // Extract chart-ready data from a 2D tree with date-point columns (ungrouped snapshot)
+    // @sig toChartDataFromTree :: ([String], [CategoryTreeNode]) -> [{ date, value }]
+    toChartDataFromTree: (columns, nodes) =>
+        nodes.length === 1 ? columns.map(col => ({ date: col, value: nodes[0].aggregate?.columns?.[col] ?? 0 })) : [],
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -150,7 +159,7 @@ const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
 
     if (!result) return undefined
 
-    const { cells, computed, nodes, rows, snapshots } = result
+    const { columns: resultColumns, computed, nodes, snapshots } = result
     const filteredCount = countSource ? countSource.length : undefined
     const chipRowProps = { viewId, filteredCount, totalCount: filteredCount, itemLabel: metadata.itemLabel }
 
@@ -195,14 +204,28 @@ const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
         )
     }
 
-    // Pivot result — dynamic column table
-    if (cells) {
-        const pivotColumns = F.toPivotColumns(result)
-        const pivotData = F.toPivotData(rows, computed)
+    // 2D tree result — drillable tree with dynamic value columns from aggregate.columns
+    if (nodes && resultColumns) {
+        const treeColumns = F.toTreePivotColumns(resultColumns, computed)
+        const computedRows = F.toComputedRows(computed)
+        const chartData = chart ? F.toChartDataFromTree(resultColumns, nodes) : undefined
+        const pivotTreeExtraProps = {
+            columns: treeColumns,
+            data: nodes.concat(computedRows),
+            getChildRows: row => row.children,
+            getRowCanExpand: row => row.original.children?.length > 0,
+            expanded,
+            onExpandedChange: updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater })),
+        }
         return (
             <Flex direction="column" style={{ height: '100%' }}>
                 {chipRow}
-                <DataTable {...sharedTableProps} columns={pivotColumns} data={pivotData} />
+                {chartData && chartData.length > 0 && (
+                    <Flex style={{ padding: 'var(--space-3)', borderBottom: '1px solid var(--gray-5)' }}>
+                        <TimeSeriesChart data={chartData} height={160} />
+                    </Flex>
+                )}
+                <DataTable {...sharedTableProps} {...pivotTreeExtraProps} />
             </Flex>
         )
     }

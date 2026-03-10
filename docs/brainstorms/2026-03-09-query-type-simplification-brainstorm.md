@@ -103,6 +103,7 @@ See PlantUML diagrams in this directory:
 - **Multi-series chart rendering** — TimeSeriesChart handles one line; needs N lines for grouped snapshots
 - **Chart opt-in signal** — how TreePage knows columns are dates vs categories (query type? metadata flag?)
 - **Running balance display** — could be a toggle on register reports grouped by date
+- **Floating-point accumulation in currency sums** — JS `reduce` over many `amount` floats drifts by ~1 cent vs SQL SUM. Visible when comparing engine output to fixture generator. Rounding to cents is wrong for crypto (8-18 decimals). Needs a precision-aware or integer-arithmetic approach. Affects all aggregation: `collectTransactionTotals`, `makeColumnAggregator`, `makeSnapshotAggregator`, `collectBalanceSnapshot`.
 
 ## Knowledge Destination
 

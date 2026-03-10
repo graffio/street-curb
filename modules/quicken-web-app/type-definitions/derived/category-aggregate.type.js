@@ -10,5 +10,5 @@
 export const CategoryAggregate = {
     name: 'CategoryAggregate',
     kind: 'tagged',
-    fields: { total: 'Number', count: 'Number' },
+    fields: { total: 'Number', count: 'Number', columns: 'Object?' },
 }

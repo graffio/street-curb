@@ -36,9 +36,25 @@ const T = {
         return `${year}-${month}`
     },
 
+    // Extract YYYY from transaction date
+    // @sig toYearKey :: Transaction -> String
+    toYearKey: txn => {
+        if (!txn.date) return 'Unknown'
+        return String(new Date(txn.date).getFullYear())
+    },
+
+    // Extract YYYY-QN from transaction date
+    // @sig toQuarterKey :: Transaction -> String
+    toQuarterKey: txn => {
+        if (!txn.date) return 'Unknown'
+        const d = new Date(txn.date)
+        const q = Math.ceil((d.getMonth() + 1) / 3)
+        return `${d.getFullYear()}-Q${q}`
+    },
+
     // Transforms a plain aggregate object into CategoryAggregate instance
     // @sig toCategoryAggregate :: Object -> CategoryAggregate
-    toCategoryAggregate: agg => CategoryAggregate(agg.total, agg.count),
+    toCategoryAggregate: ({ total, count, columns }) => CategoryAggregate(total, count, columns),
 
     // Transforms a transaction into CategoryTreeNode.Transaction (leaf node)
     // @sig toTransactionNode :: Transaction -> CategoryTreeNode.Transaction
@@ -66,6 +82,47 @@ const T = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const F = {
+    // Merge child column values into a mutable columns accumulator
+    // @sig mergeChildColumns :: (Object, Object) -> undefined
+    mergeChildColumns: (columns, childColumns) =>
+        Object.entries(childColumns).forEach(([col, val]) => (columns[col] = (columns[col] ?? 0) + val)),
+
+    // Produces an aggregation function that computes cumulative balances at each date point
+    // @sig makeSnapshotAggregator :: [String] -> (([Transaction], [Aggregate]) -> Aggregate)
+    makeSnapshotAggregator: datePoints => (transactions, childAggregates) => {
+        const cumulativeAt = date => transactions.reduce((sum, t) => (t.date <= date ? sum + (t.amount ?? 0) : sum), 0)
+        const columns = {}
+        datePoints.forEach(date => (columns[date] = cumulativeAt(date)))
+        childAggregates.forEach(a => a.columns && F.mergeChildColumns(columns, a.columns))
+        const total = columns[datePoints[datePoints.length - 1]] ?? 0
+        const count = transactions.length + childAggregates.reduce((sum, a) => sum + a.count, 0)
+        return { total, count, columns }
+    },
+
+    // Produces an aggregation function that tracks per-column totals alongside the standard total/count
+    // @sig makeColumnAggregator :: (Transaction -> String) -> (([Transaction], [Aggregate]) -> Aggregate)
+    makeColumnAggregator: getColumnKey => (transactions, childAggregates) => {
+        const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
+        const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
+        const ownCount = transactions.length
+        const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
+        const columns = {}
+        transactions.forEach(t => {
+            const col = getColumnKey(t)
+            columns[col] = (columns[col] ?? 0) + (t.amount ?? 0)
+        })
+        childAggregates.forEach(a => a.columns && F.mergeChildColumns(columns, a.columns))
+        return { total: ownTotal + childTotal, count: ownCount + childCount, columns }
+    },
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
 // Constants
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -77,6 +134,9 @@ const dimensionConfig = {
     payee: { getKey: txn => txn.payee || 'No Payee', getParent: () => undefined },
     month: { getKey: T.toMonthKey, getParent: T.parseMonthParent },
 }
+
+// Column key extractors — map column dimension name to transaction → column-key function
+const columnKeyExtractors = { year: T.toYearKey, quarter: T.toQuarterKey, month: T.toMonthKey }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -104,6 +164,22 @@ const buildTransactionTree = (dimension, transactions, aggregateFn = collectTran
     return aggregated.map(T.toGroupNode)
 }
 
-const CategoryTree = { buildTransactionTree, collectTransactionTotals }
+// Build 2D tree: rows grouped by rowDim, each node has per-column totals from colDim
+// @sig buildColumnGroupedTree :: (String, String, [Transaction]) -> [CategoryTreeNode]
+const buildColumnGroupedTree = (rowDim, colDim, transactions) => {
+    const getColumnKey = columnKeyExtractors[colDim]
+    if (!getColumnKey) throw new Error(`Unknown column dimension: ${colDim}`)
+    const aggregateFn = F.makeColumnAggregator(getColumnKey)
+    return buildTransactionTree(rowDim, transactions, aggregateFn)
+}
+
+// Build snapshot tree: rows grouped by dimension, each node has cumulative date-point columns
+// @sig buildSnapshotTree :: (String, [String], [Transaction]) -> [CategoryTreeNode]
+const buildSnapshotTree = (dimension, datePoints, transactions) => {
+    const aggregateFn = F.makeSnapshotAggregator(datePoints)
+    return buildTransactionTree(dimension, transactions, aggregateFn)
+}
+
+const CategoryTree = { buildTransactionTree, buildColumnGroupedTree, buildSnapshotTree, collectTransactionTotals }
 
 export { CategoryTree }
