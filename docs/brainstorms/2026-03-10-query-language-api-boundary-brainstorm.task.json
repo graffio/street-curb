@@ -1,0 +1,308 @@
+{
+    "feature": "Query Language API Boundary",
+    "goal": "Tighten @graffio/query-language boundary: rename to IRFinancialQuery, add generator-emitted fromJSON, add AccountQuery variant, fix 6 integration test failures",
+    "brainstorm": "docs/brainstorms/2026-03-10-query-language-api-boundary-brainstorm.md",
+    "templates_used": ["commit-changes.md"],
+    "integration_tests": [
+        "modules/quicken-web-app/test/bank-register-filters.integration-test.js",
+        "modules/quicken-web-app/test/category-report.integration-test.js",
+        "modules/quicken-web-app/test/investment-register-filters.integration-test.js",
+        "modules/quicken-web-app/test/positions-report.integration-test.js",
+        "modules/quicken-web-app/test/engine-reports.integration-test.js"
+    ],
+    "steps": [
+        {
+            "step": 1,
+            "action": "[CHECKPOINT] Run complexity review on modules/query-language/type-definitions/ir/ir-financial-query.type.js. Report style card violations found. Wait for approval before proceeding.",
+            "rule": "unconditional",
+            "done": true,
+            "note": "As planned. File was clean."
+        },
+        {
+            "step": 2,
+            "action": "Rename FinancialQuery → IRFinancialQuery in type definition (modules/query-language/type-definitions/ir/ir-financial-query.type.js). Change the exported name. Run `yarn types:generate-all` to regenerate. Run style validator on the type definition file.",
+            "style_card": "js-module",
+            "done": true,
+            "note": "As planned. Type defs already used IRFinancialQuery name."
+        },
+        {
+            "step": 3,
+            "action": "Update FinancialQuery → IRFinancialQuery in query-language module source files (~7 files): run-financial-query.js, to-financial-query-description.js, apply-chip-filters.js, and src/types/index.js barrel. Run style validator on changed files.",
+            "style_card": "js-module",
+            "done": true,
+            "note": "Committed in dc8dfbc9."
+        },
+        {
+            "step": 4,
+            "action": "Update FinancialQuery → IRFinancialQuery in query-language test files (~4 files): run-financial-query.tap.js, apply-chip-filters.tap.js, to-financial-query-description.tap.js, seed-query-execution.tap.js. Run style validator on changed files.",
+            "style_card": "test-file",
+            "done": true,
+            "note": "Completed as part of dc8dfbc9 rename commit."
+        },
+        {
+            "step": 5,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": true,
+            "note": "Reviewed during rename work."
+        },
+        {
+            "step": 6,
+            "action": "Update FinancialQuery → IRFinancialQuery in quicken-web-app consumers (~4 files): selectors.js, QueryResultPage.jsx, report-metadata.js, engine-reports.integration-test.js. Update barrel export in query-language/index.js. Run style validator on changed files.",
+            "style_card": "js-module",
+            "done": true,
+            "note": "Completed as part of dc8dfbc9 rename commit."
+        },
+        {
+            "step": 7,
+            "action": "Update FinancialQuery → IRFinancialQuery in documentation: docs/architecture/financial-query-language.md and any other docs referencing the old name.",
+            "done": true,
+            "note": "Completed as part of dc8dfbc9 rename commit."
+        },
+        {
+            "step": 8,
+            "action": "Run all query-language tests (`yarn --cwd modules/query-language tap`) and quicken-web-app tests (`yarn --cwd modules/quicken-web-app tap`) to verify rename is complete. All 266 + 289 tests must pass.",
+            "done": true,
+            "note": "All tests passing: query-language 336, quicken-web-app 289."
+        },
+        {
+            "step": 9,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": true,
+            "note": "Reviewed during rename work."
+        },
+        {
+            "step": 10,
+            "action": "git add all renamed files and commit: 'Rename FinancialQuery → IRFinancialQuery for naming consistency with other IR types'",
+            "done": true,
+            "note": "Committed as dc8dfbc9."
+        },
+        {
+            "step": 11,
+            "action": "[CHECKPOINT] Run complexity review on modules/cli-type-generator/runtime-for-generated-types.js. This file has COMPLEXITY comments — review whether they are still accurate. Report findings and wait for approval.",
+            "rule": "unconditional",
+            "done": true,
+            "note": "Reviewed. COMPLEXITY comments were accurate. Jeff approved proceeding."
+        },
+        {
+            "step": 12,
+            "action": "Remove or update COMPLEXITY comments in runtime-for-generated-types.js, run validator, and fix violations or request approval for new exemptions.",
+            "style_card": "js-module",
+            "done": true,
+            "note": "Left COMPLEXITY comments as-is per Jeff's approval."
+        },
+        {
+            "step": 13,
+            "action": "Add `parseTaggedValue` helper to runtime-for-generated-types.js. Takes a plain object with @@tagName and a variant-constructor map, calls the matching variant's _from to produce a Tagged instance. For nested Tagged fields, the generated fromJSON will call parseTaggedValue recursively. Run style validator.",
+            "style_card": "js-module",
+            "done": true,
+            "note": "Added parseTaggedValue. Committed as dfeda687."
+        },
+        {
+            "step": 14,
+            "action": "Write failing test for parseTaggedValue: given a toJSON'd IRFilter (e.g., IRFilter.And with nested children, mixed nesting, optional undefined fields), parsing produces an equivalent Tagged instance. File: modules/cli-type-generator/test/parse-tagged-value.tap.js.",
+            "style_card": "test-file",
+            "done": true,
+            "note": "Committed as dfeda687. Note: parseTaggedValue is unused by generator-emitted fromJSON — each type's fromJSON does its own dispatch."
+        },
+        {
+            "step": 15,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": true,
+            "note": "Reviewed. Fixed required vs optional field guarding per reviewer feedback."
+        },
+        {
+            "step": 16,
+            "action": "git add and commit: 'Add parseTaggedValue runtime helper for TaggedSum JSON deserialization'",
+            "done": true,
+            "note": "Committed as dfeda687."
+        },
+        {
+            "step": 17,
+            "action": "[CHECKPOINT] Run complexity review on modules/cli-type-generator/src/codegen/variant.js (the file that emits static methods for TaggedSum variants). Report findings and wait for approval.",
+            "rule": "unconditional",
+            "done": true,
+            "note": "Reviewed. Created separate from-json.js codegen module instead of modifying variant.js."
+        },
+        {
+            "step": 18,
+            "action": "Modify the type generator to emit a static `fromJSON` method on TaggedSum types. The generated method: (1) reads @@tagName from input, (2) looks up the variant constructor, (3) for each field that is a Tagged type, calls parseTaggedValue to recursively deserialize, (4) calls variant _from with revived fields. The generator knows the type graph from type-mappings.js — use field type info to emit field-specific reviver calls. Run style validator.",
+            "style_card": "js-module",
+            "done": true,
+            "note": "Created from-json.js codegen module. Modified tagged-type-generator.js to call it. Emits fromJSON for both Tagged and TaggedSum types."
+        },
+        {
+            "step": 19,
+            "action": "Regenerate all types with `yarn types:generate-all`. Run tests across all modules that use generated types (query-language, quicken-web-app, curb-map) to verify no codegen regressions. Write round-trip test: IRFinancialQuery variants through toJSON → fromJSON, verify deep equality. Include nested types (IRFilter.And with children, IRDateRange, IRGrouping). File: modules/query-language/test/from-json-round-trip.tap.js.",
+            "style_card": "test-file",
+            "done": true,
+            "note": "74 type files regenerated. Round-trip tests cover all IR types including nested structures. All tests pass: cli-type-generator 524, query-language 336, quicken-web-app 289."
+        },
+        {
+            "step": 20,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": true,
+            "note": "Reviewed. Fixed cross-variant field dedup (addOrVerify throws on conflicting types)."
+        },
+        {
+            "step": 21,
+            "action": "git add and commit: 'Add generator-emitted fromJSON for TaggedSum round-trip deserialization'",
+            "done": true,
+            "note": "Committed as f4e88571. Includes from-json.js codegen, from-json-codegen.tap.js, from-json-round-trip.tap.js, 74 regenerated type files."
+        },
+        {
+            "step": 22,
+            "action": "Add AccountQuery variant to ir-financial-query.type.js with fields: name (String), description (String?), filter (IRFilter?), dateRange (IRDateRange?), metrics ([String]?). Run `yarn types:generate-all`. Run style validator on type definition.",
+            "style_card": "js-module",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 23,
+            "action": "Write failing test for AccountQuery execution: given accounts with positions and prices, runFinancialQuery(IRFinancialQuery.AccountQuery({name}), state) returns [EnrichedAccount] with computed balances and day changes. Verify investment accounts have position-derived balances, bank accounts have transaction-derived balances. Add test section to modules/query-language/test/run-financial-query.tap.js.",
+            "style_card": "test-file",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 24,
+            "action": "[CHECKPOINT] Run complexity review on modules/query-language/src/run-financial-query.js. Report findings and wait for approval.",
+            "rule": "unconditional",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 25,
+            "action": "Implement collectAccountQueryResult in run-financial-query.js. Add AccountQuery arm to the .match() dispatch. The handler calls computePositions internally, runs EnrichedAccount.enrichAll, and returns [EnrichedAccount] (not tree nodes — different return shape from other variants, used by sidebar AccountList, not QueryResultPage). Run style validator.",
+            "style_card": "js-module",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 26,
+            "action": "Update all other .match() call sites to include AccountQuery arm. Grep for '.match(' across query-language source: to-financial-query-description.js (add 'accounts' description), apply-chip-filters.js (add AccountQuery reconstruction). Run style validator on each file.",
+            "style_card": "js-module",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 27,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 28,
+            "action": "git add and commit: 'Add AccountQuery variant — engine owns position computation internally'",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 29,
+            "action": "[CHECKPOINT] Run complexity review on modules/quicken-web-app/src/store/selectors.js. Report findings and wait for approval.",
+            "rule": "unconditional",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 30,
+            "action": "Update _organizedAccounts selector in selectors.js to use runFinancialQuery(IRFinancialQuery.AccountQuery(...), state) instead of directly calling computePositions. The AccountQuery IR is constructed inline in the selector from chip state (filter, asOfDate) — intentionally temporary, like seed queries in report-metadata.js. Remove computePositions import from selectors.js. Remove computePositions from query-language barrel (index.js). Run style validator on changed files.",
+            "style_card": "selector",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 31,
+            "action": "Run all tests to verify: query-language (266+), quicken-web-app (289+). Verify computePositions is no longer importable from @graffio/query-language.",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 32,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 33,
+            "action": "git add and commit: 'Wire _organizedAccounts to AccountQuery, remove computePositions from barrel'",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 34,
+            "action": "Fix 3 date filter integration tests: bank-register-filters.integration-test.js, category-report.integration-test.js, investment-register-filters.integration-test.js. Change hardcoded February 2024 dates to March 2024 to match fixture data. Run each test individually to verify.",
+            "style_card": "test-file",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 35,
+            "action": "Fix 2 historical position value integration tests: positions-report.integration-test.js and engine-reports.integration-test.js as-of-date tests. Update stale value assertions to match current fixture data. Run each test to verify.",
+            "style_card": "test-file",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 36,
+            "action": "[CHECKPOINT] Address floating-point drift in engine-reports SnapshotQuery test (Jan/Sep 1-cent drift). Options: (a) add numeric tolerance to assertion, (b) document and keep skip, (c) fix accumulation logic. Recommend approach and wait for approval.",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 37,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 38,
+            "action": "git add and commit: 'Fix 6 pre-existing integration test failures — date filter dates, position values, float tolerance'",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 39,
+            "action": "Update docs/architecture/financial-query-language.md: document IRFinancialQuery rename, AccountQuery variant, fromJSON capability, updated barrel surface (computePositions removed).",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 40,
+            "action": "Run integration tests listed in integration_tests. If new critical-path behavior was added, expand the relevant test to cover it.",
+            "rule": "unconditional",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 41,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": false,
+            "note": ""
+        },
+        {
+            "step": 42,
+            "action": "git add and commit: 'Update architecture docs for API boundary tightening'",
+            "done": false,
+            "note": ""
+        }
+    ],
+    "verification": [
+        "All query-language tests pass (266+)",
+        "All quicken-web-app tests pass (289+)",
+        "All 6 previously-failing integration tests now pass",
+        "IRFinancialQuery.fromJSON round-trips all 4 variants through toJSON → fromJSON with deep equality",
+        "report-metadata.js still constructs seed queries correctly (uses IRFinancialQuery)",
+        "_organizedAccounts selector returns enriched accounts via AccountQuery",
+        "computePositions is no longer exported from @graffio/query-language barrel",
+        "No external consumers reference FinancialQuery (only IRFinancialQuery)",
+        "Related: docs/solutions/runtime-errors/exhaustive-match-two-layer-dispatch.md — grep all .match() sites when adding AccountQuery variant"
+    ]
+}
