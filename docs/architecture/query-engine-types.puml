@@ -1,4 +1,4 @@
-@startuml "Proposed Type Relationships"
+@startuml "Query Engine Type Relationships"
 skinparam linetype ortho
 skinparam classAttributeIconSize 0
 hide circle
@@ -9,7 +9,7 @@ package "FinancialQuery (TaggedSum: 3 variants)" {
         filter? : IRFilter
         dateRange? : IRDateRange
         grouping : IRGrouping
-        computed? : [ComputedRow]
+        computed? : [IRComputedRow]
     }
     class PositionQuery {
         name : String
@@ -45,11 +45,11 @@ package "Shared IR Types" {
         Year | Quarter | Month
         Relative | Range
     }
-    class ComputedRow {
+    class IRComputedRow {
         name : String
-        expression : PivotExpression
+        expression : IRPivotExpression
     }
-    class PivotExpression <<TaggedSum>> {
+    class IRPivotExpression <<TaggedSum>> {
         RowRef(name)
         Literal(value)
         Binary(op, left, right)
@@ -83,14 +83,14 @@ package "Output: Unified Tree Nodes" {
 TransactionQuery --> IRGrouping : "always required\n1D = tree, 2D = tree + columns"
 TransactionQuery --> IRFilter
 TransactionQuery --> IRDateRange
-TransactionQuery --> ComputedRow
+TransactionQuery --> IRComputedRow
 PositionQuery --> IRGrouping
 PositionQuery --> IRFilter
 PositionQuery --> IRDateRange
 SnapshotQuery --> IRGrouping : "optional: enables\nper-category breakdown"
 SnapshotQuery --> IRFilter
 SnapshotQuery --> IRDateRange
-ComputedRow --> PivotExpression
+IRComputedRow --> IRPivotExpression
 
 CategoryTreeNode --> CategoryAggregate : "Group nodes carry"
 CategoryTreeNode --> CategoryTreeNode : "children"

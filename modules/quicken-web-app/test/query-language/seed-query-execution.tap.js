@@ -3,23 +3,14 @@
 
 import { test } from 'tap'
 import { LookupTable, reduce } from '@graffio/functional'
+import { Account, Category, Lot, LotAllocation, Price, Security, Transaction } from '../../src/types/index.js'
 import {
-    Account,
-    Category,
-    Lot,
-    LotAllocation,
-    Price,
-    QueryResult,
-    Security,
-    Transaction,
-} from '../../src/types/index.js'
-import {
-    ComputedRow,
     FinancialQuery,
+    IRComputedRow,
     IRDateRange,
     IRFilter,
     IRGrouping,
-    PivotExpression,
+    IRPivotExpression,
 } from '../../src/query-language/types/index.js'
 import { runFinancialQuery } from '../../src/query-language/run-financial-query.js'
 
@@ -96,7 +87,7 @@ const { And, Between, Equals, GreaterThan, In, Matches, Not, Or } = IRFilter
 
 const runSeed = query => {
     const result = runFinancialQuery(query, STATE)
-    if (QueryResult.Identity.is(result)) return result.tree.nodes
+    if (result.nodes) return result.nodes
     return result
 }
 
@@ -136,16 +127,24 @@ const SEEDS = {
         undefined,
         IRGrouping('category'),
     ),
-    bank_accounts: FinancialQuery.AccountQuery('bank_accounts', 'Bank accounts', Equals('accountType', 'Bank')),
     net_worth: FinancialQuery.SnapshotQuery(
         'net_worth',
         'Net worth over time',
         'balances',
         undefined,
+        undefined,
         IRDateRange.Range('2025-01-01', '2025-03-31'),
         'monthly',
     ),
-    running_balance: FinancialQuery.RunningBalanceQuery('running_balance', 'Running balance'),
+    spending_over_time: FinancialQuery.SnapshotQuery(
+        'spending_over_time',
+        'Spending over time',
+        'balances',
+        undefined,
+        IRGrouping('category'),
+        IRDateRange.Range('2025-01-01', '2025-03-31'),
+        'monthly',
+    ),
     category_by_year: FinancialQuery.TransactionQuery(
         'category_by_year',
         'Spending by category per year',
@@ -153,12 +152,12 @@ const SEEDS = {
         undefined,
         IRGrouping('category', 'year'),
         [
-            ComputedRow(
+            IRComputedRow(
                 'Housing % of Income',
-                PivotExpression.Binary(
+                IRPivotExpression.Binary(
                     '/',
-                    PivotExpression.RowRef('Housing'),
-                    PivotExpression.Binary('*', PivotExpression.RowRef('Income'), PivotExpression.Literal(-1)),
+                    IRPivotExpression.RowRef('Housing'),
+                    IRPivotExpression.Binary('*', IRPivotExpression.RowRef('Income'), IRPivotExpression.Literal(-1)),
                 ),
             ),
         ],
@@ -253,65 +252,37 @@ test('amount_range — mid-range spending in Food or Shopping', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (f) bank_accounts — AccountQuery filtering by Bank type
+// (f) net_worth — SnapshotQuery with monthly intervals
 // ═════════════════════════════════════════════════
 
-test('bank_accounts — AccountQuery filtering by Bank type', t => {
-    t.test('Given the bank_accounts seed query', t => {
-        t.test('When executed against fixture data', t => {
-            const result = runFinancialQuery(SEEDS.bank_accounts, STATE)
-
-            t.ok(QueryResult.FilteredEntities.is(result), 'Then result is FilteredEntities')
-            t.equal(result.entities.length, 2, 'Then two Bank accounts are returned')
-            t.end()
-        })
-        t.test('Then enriched accounts have balance fields', t => {
-            const result = runFinancialQuery(SEEDS.bank_accounts, STATE)
-            const entity = result.entities[0]
-
-            t.type(entity.balance, 'number', 'Then entity has a numeric balance')
-            t.ok(entity.account !== undefined, 'Then entity has a nested account object')
-            t.ok(entity.account.name !== undefined, 'Then nested account has a name')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (g) net_worth — SnapshotQuery with monthly intervals
-// ═════════════════════════════════════════════════
-
-test('net_worth — SnapshotQuery monthly balance snapshots', t => {
+test('net_worth — SnapshotQuery tree output with monthly columns', t => {
     t.test('Given the net_worth seed query', t => {
         t.test('When executed against fixture data', t => {
             const result = runFinancialQuery(SEEDS.net_worth, STATE)
 
-            t.ok(QueryResult.TimeSeries.is(result), 'Then result is TimeSeries')
-            t.ok(result.snapshots.length >= 3, 'Then at least 3 monthly snapshots')
-            t.type(result.snapshots[0].total, 'number', 'Then each snapshot has a numeric total')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes (tree shape)')
+            t.ok(Array.isArray(result.columns), 'Then result has columns (date points)')
+            t.ok(result.columns.length >= 3, 'Then at least 3 monthly date points')
+            t.equal(result.nodes.length, 1, 'Then single summary node')
             t.end()
         })
-        t.test('Then snapshots exclude investment account transactions from cash total', t => {
+        t.test('Then tree excludes investment account transactions from cash total', t => {
             const result = runFinancialQuery(SEEDS.net_worth, STATE)
+            const node = result.nodes[0]
+            const janCol = result.columns[0]
 
-            // Fixture has no lots/positions, so investment total is 0.
-            // Only non-investment transactions (Checking + Savings) should be summed.
-            // Brokerage txn (acc_000000000003, $300) should be excluded from cash.
-            const jan = result.snapshots[0]
-
-            // Jan: Checking gets +5000 (Income) +150... wait, Savings gets +150. Brokerage excluded.
-            // Checking: +5000 +200 = 5200 by Jan 31, Savings: +150 by Jan 31 => 5350
-            t.ok(jan.total > 0, 'Then January total is positive')
+            // Fixture: Jan Checking +5000 +200 = 5200, Savings +150 = 5350, Brokerage excluded
+            t.ok(node.aggregate.columns[janCol] > 0, 'Then January total is positive')
             t.end()
         })
-        t.test('Then monthly totals are cumulative', t => {
+        t.test('Then monthly column values are cumulative', t => {
             const result = runFinancialQuery(SEEDS.net_worth, STATE)
-            const totals = result.snapshots.map(s => s.total)
+            const node = result.nodes[0]
+            const firstCol = result.columns[0]
+            const lastCol = result.columns[result.columns.length - 1]
 
-            // Last snapshot should include March income (+5000) and rent (-1500)
-            t.ok(totals[totals.length - 1] !== totals[0], 'Then totals change over time')
+            // Last column should include March income (+5000) and rent (-1500)
+            t.ok(node.aggregate.columns[lastCol] !== node.aggregate.columns[firstCol], 'Then totals change over time')
             t.end()
         })
         t.end()
@@ -320,34 +291,30 @@ test('net_worth — SnapshotQuery monthly balance snapshots', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (h) running_balance — RunningBalanceQuery cumulative
+// (g) spending_over_time — SnapshotQuery with grouping
 // ═════════════════════════════════════════════════
 
-test('running_balance — RunningBalanceQuery cumulative', t => {
-    t.test('Given the running_balance seed query', t => {
+test('spending_over_time — SnapshotQuery with category grouping', t => {
+    t.test('Given the spending_over_time seed query', t => {
         t.test('When executed against fixture data', t => {
-            const result = runFinancialQuery(SEEDS.running_balance, STATE)
+            const result = runFinancialQuery(SEEDS.spending_over_time, STATE)
 
-            t.ok(QueryResult.RunningBalance.is(result), 'Then result is RunningBalance')
-            t.ok(result.entries.length > 0, 'Then entries is not empty')
-            t.type(result.entries[0].balance, 'number', 'Then each entry has a cumulative balance')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes (tree shape)')
+            t.ok(Array.isArray(result.columns), 'Then result has columns (date points)')
+            t.ok(result.nodes.length > 1, 'Then multiple category nodes')
             t.end()
         })
-        t.test('Then entries are sorted by date', t => {
-            const result = runFinancialQuery(SEEDS.running_balance, STATE)
-            const dates = result.entries.map(e => e.date)
-            const sorted = [...dates].sort()
+        t.test('Then per-category nodes have date-point columns with drillable children', t => {
+            const result = runFinancialQuery(SEEDS.spending_over_time, STATE)
+            const food = result.nodes.find(n => n.id === 'Food')
 
-            t.same(dates, sorted, 'Then entries are in chronological order')
-            t.end()
-        })
-        t.test('Then running balance is cumulative', t => {
-            const result = runFinancialQuery(SEEDS.running_balance, STATE)
-            const first = result.entries[0]
-            const last = result.entries[result.entries.length - 1]
+            t.ok(food, 'Then Food parent node exists')
+            t.ok(food.aggregate.columns, 'Then Food has per-date-point columns')
+            t.ok(food.children.length > 0, 'Then Food has drillable children')
 
-            t.equal(first.balance, first.amount, 'Then first entry balance equals its amount')
-            t.not(first.balance, last.balance, 'Then last balance differs from first')
+            const dining = food.children.find(n => n.id === 'Food:Dining')
+            t.ok(dining, 'Then Food:Dining is a child of Food')
+            t.ok(dining.aggregate.columns, 'Then Food:Dining has per-date-point columns')
             t.end()
         })
         t.end()
@@ -356,37 +323,36 @@ test('running_balance — RunningBalanceQuery cumulative', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (i) category_by_year — Pivot with ComputedRow
+// (h) category_by_year — Pivot with IRComputedRow
 // ═════════════════════════════════════════════════
 
-test('category_by_year — pivot with computed row', t => {
+test('category_by_year — 2D tree with computed row', t => {
     t.test('Given the category_by_year seed query', t => {
         t.test('When executed against fixture data', t => {
             const result = runFinancialQuery(SEEDS.category_by_year, STATE)
 
-            t.ok(QueryResult.Pivot.is(result), 'Then result is Pivot')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes (2D tree)')
             t.ok(result.columns.length > 0, 'Then columns exist')
-            t.ok(result.rows.length > 0, 'Then rows exist')
+            t.equal(result.source, 'category', 'Then source is category')
             t.ok(result.computed['Housing % of Income'] !== undefined, 'Then computed row exists')
             t.end()
         })
-        t.test('Then rows use top-level category names', t => {
+        t.test('Then tree has top-level category groups', t => {
             const result = runFinancialQuery(SEEDS.category_by_year, STATE)
+            const names = result.nodes.map(n => n.id)
 
-            t.ok(result.rows.includes('Food'), 'Then Food is a top-level row')
-            t.ok(result.rows.includes('Housing'), 'Then Housing is a top-level row')
-            t.ok(result.rows.includes('Income'), 'Then Income is a top-level row')
-            t.notOk(result.rows.includes('Food:Dining'), 'Then subcategory Food:Dining is not a row')
-            t.notOk(result.rows.includes('Housing:Rent'), 'Then subcategory Housing:Rent is not a row')
+            t.ok(names.includes('Food'), 'Then Food is a top-level node')
+            t.ok(names.includes('Housing'), 'Then Housing is a top-level node')
+            t.ok(names.includes('Income'), 'Then Income is a top-level node')
             t.end()
         })
-        t.test('Then Food row aggregates all Food subcategory transactions', t => {
+        t.test('Then Food node aggregates all Food subcategory transactions', t => {
             const result = runFinancialQuery(SEEDS.category_by_year, STATE)
-            const foodTotal = result.rowTotals.Food
+            const food = result.nodes.find(n => n.id === 'Food')
 
-            // Food:Dining at Savings +150, Food:Dining at Brokerage +300, Food:Groceries +50, Food (generic) +30 = 530
-            t.type(foodTotal, 'number', 'Then Food has a numeric total')
-            t.ok(foodTotal !== 0, 'Then Food total is non-zero')
+            t.type(food.aggregate.total, 'number', 'Then Food has a numeric total')
+            t.ok(food.aggregate.total !== 0, 'Then Food total is non-zero')
+            t.ok(food.aggregate.columns, 'Then Food has per-column values')
             t.end()
         })
         t.test('Then Housing % of Income computed row has values', t => {

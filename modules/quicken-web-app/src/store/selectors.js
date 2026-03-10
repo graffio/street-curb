@@ -452,15 +452,7 @@ const _queryResult = (state, viewId, fallbackIR) => {
     if (!ir) return undefined
     const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
 
-    const result = runFinancialQuery(mergedIR, state)
-    return result.match({
-        Identity: ({ tree }) => tree.nodes,
-        Scalar: r => r,
-        FilteredEntities: r => r,
-        Pivot: r => r,
-        TimeSeries: r => r,
-        RunningBalance: r => r,
-    })
+    return runFinancialQuery(mergedIR, state)
 }
 
 // Describe the merged IR as human-readable text — cheap, no heavy memoization needed

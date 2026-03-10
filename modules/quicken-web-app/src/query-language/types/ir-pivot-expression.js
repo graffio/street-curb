@@ -1,7 +1,7 @@
-// ABOUTME: Generated type definition for PivotExpression
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/pivot-expression.type.js - do not edit manually
+// ABOUTME: Generated type definition for IRPivotExpression
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-pivot-expression.type.js - do not edit manually
 
-/*  PivotExpression generated from: modules/quicken-web-app/type-definitions/ir/pivot-expression.type.js
+/*  IRPivotExpression generated from: modules/quicken-web-app/type-definitions/ir/ir-pivot-expression.type.js
  *
  *  RowRef
  *      name: "String"
@@ -9,8 +9,8 @@
  *      value: "Number"
  *  Binary
  *      op   : FieldTypes.arithmeticOp,
- *      left : "PivotExpression",
- *      right: "PivotExpression"
+ *      left : "IRPivotExpression",
+ *      right: "IRPivotExpression"
  *
  */
 
@@ -20,31 +20,31 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// PivotExpression constructor
+// IRPivotExpression constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const PivotExpression = { toString: () => 'PivotExpression' }
+const IRPivotExpression = { toString: () => 'IRPivotExpression' }
 
 // Add hidden properties
-Object.defineProperty(PivotExpression, '@@typeName', { value: 'PivotExpression', enumerable: false })
-Object.defineProperty(PivotExpression, '@@tagNames', { value: ['RowRef', 'Literal', 'Binary'], enumerable: false })
+Object.defineProperty(IRPivotExpression, '@@typeName', { value: 'IRPivotExpression', enumerable: false })
+Object.defineProperty(IRPivotExpression, '@@tagNames', { value: ['RowRef', 'Literal', 'Binary'], enumerable: false })
 
 // Type prototype with match method
-const PivotExpressionPrototype = {}
+const IRPivotExpressionPrototype = {}
 
-Object.defineProperty(PivotExpressionPrototype, 'match', {
-    value: R.match(PivotExpression['@@tagNames']),
+Object.defineProperty(IRPivotExpressionPrototype, 'match', {
+    value: R.match(IRPivotExpression['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(PivotExpressionPrototype, 'constructor', {
-    value: PivotExpression,
+Object.defineProperty(IRPivotExpressionPrototype, 'constructor', {
+    value: IRPivotExpression,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-PivotExpression.prototype = PivotExpressionPrototype
+IRPivotExpression.prototype = IRPivotExpressionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -53,9 +53,9 @@ PivotExpression.prototype = PivotExpressionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    rowRef : function () { return `PivotExpression.RowRef(${R._toString(this.name)})` },
-    literal: function () { return `PivotExpression.Literal(${R._toString(this.value)})` },
-    binary : function () { return `PivotExpression.Binary(${R._toString(this.op)}, ${R._toString(this.left)}, ${R._toString(this.right)})` },
+    rowRef : function () { return `IRPivotExpression.RowRef(${R._toString(this.name)})` },
+    literal: function () { return `IRPivotExpression.Literal(${R._toString(this.value)})` },
+    binary : function () { return `IRPivotExpression.Binary(${R._toString(this.op)}, ${R._toString(this.left)}, ${R._toString(this.right)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -77,11 +77,11 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a PivotExpression.RowRef instance
- * @sig RowRef :: (String) -> PivotExpression.RowRef
+ * Construct a IRPivotExpression.RowRef instance
+ * @sig RowRef :: (String) -> IRPivotExpression.RowRef
  */
 const RowRefConstructor = function RowRef(name) {
-    const constructorName = 'PivotExpression.RowRef(name)'
+    const constructorName = 'IRPivotExpression.RowRef(name)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateString(constructorName, 'name', false, name)
 
@@ -90,14 +90,14 @@ const RowRefConstructor = function RowRef(name) {
     return result
 }
 
-PivotExpression.RowRef = RowRefConstructor
+IRPivotExpression.RowRef = RowRefConstructor
 
 /*
- * Construct a PivotExpression.Literal instance
- * @sig Literal :: (Number) -> PivotExpression.Literal
+ * Construct a IRPivotExpression.Literal instance
+ * @sig Literal :: (Number) -> IRPivotExpression.Literal
  */
 const LiteralConstructor = function Literal(value) {
-    const constructorName = 'PivotExpression.Literal(value)'
+    const constructorName = 'IRPivotExpression.Literal(value)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateNumber(constructorName, 'value', false, value)
 
@@ -106,18 +106,18 @@ const LiteralConstructor = function Literal(value) {
     return result
 }
 
-PivotExpression.Literal = LiteralConstructor
+IRPivotExpression.Literal = LiteralConstructor
 
 /*
- * Construct a PivotExpression.Binary instance
- * @sig Binary :: (String, PivotExpression, PivotExpression) -> PivotExpression.Binary
+ * Construct a IRPivotExpression.Binary instance
+ * @sig Binary :: (String, IRPivotExpression, IRPivotExpression) -> IRPivotExpression.Binary
  */
 const BinaryConstructor = function Binary(op, left, right) {
-    const constructorName = 'PivotExpression.Binary(op, left, right)'
+    const constructorName = 'IRPivotExpression.Binary(op, left, right)'
     R.validateArgumentLength(constructorName, 3, arguments)
     R.validateRegex(constructorName, FieldTypes.arithmeticOp, 'op', false, op)
-    R.validateTag(constructorName, 'PivotExpression', 'left', false, left)
-    R.validateTag(constructorName, 'PivotExpression', 'right', false, right)
+    R.validateTag(constructorName, 'IRPivotExpression', 'left', false, left)
+    R.validateTag(constructorName, 'IRPivotExpression', 'right', false, right)
 
     const result = Object.create(BinaryPrototype)
     result.op = op
@@ -126,32 +126,32 @@ const BinaryConstructor = function Binary(op, left, right) {
     return result
 }
 
-PivotExpression.Binary = BinaryConstructor
+IRPivotExpression.Binary = BinaryConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const RowRefPrototype = Object.create(PivotExpressionPrototype, {
+const RowRefPrototype = Object.create(IRPivotExpressionPrototype, {
     '@@tagName': { value: 'RowRef', enumerable: false },
-    '@@typeName': { value: 'PivotExpression', enumerable: false },
+    '@@typeName': { value: 'IRPivotExpression', enumerable: false },
     toString: { value: toString.rowRef, enumerable: false },
     toJSON: { value: toJSON.rowRef, enumerable: false },
     constructor: { value: RowRefConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const LiteralPrototype = Object.create(PivotExpressionPrototype, {
+const LiteralPrototype = Object.create(IRPivotExpressionPrototype, {
     '@@tagName': { value: 'Literal', enumerable: false },
-    '@@typeName': { value: 'PivotExpression', enumerable: false },
+    '@@typeName': { value: 'IRPivotExpression', enumerable: false },
     toString: { value: toString.literal, enumerable: false },
     toJSON: { value: toJSON.literal, enumerable: false },
     constructor: { value: LiteralConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const BinaryPrototype = Object.create(PivotExpressionPrototype, {
+const BinaryPrototype = Object.create(IRPivotExpressionPrototype, {
     '@@tagName': { value: 'Binary', enumerable: false },
-    '@@typeName': { value: 'PivotExpression', enumerable: false },
+    '@@typeName': { value: 'IRPivotExpression', enumerable: false },
     toString: { value: toString.binary, enumerable: false },
     toJSON: { value: toJSON.binary, enumerable: false },
     constructor: { value: BinaryConstructor, enumerable: false, writable: true, configurable: true },
@@ -172,17 +172,17 @@ BinaryConstructor.is = val => val && val.constructor === BinaryConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-RowRefConstructor.toString = () => 'PivotExpression.RowRef'
-LiteralConstructor.toString = () => 'PivotExpression.Literal'
-BinaryConstructor.toString = () => 'PivotExpression.Binary'
+RowRefConstructor.toString = () => 'IRPivotExpression.RowRef'
+LiteralConstructor.toString = () => 'IRPivotExpression.Literal'
+BinaryConstructor.toString = () => 'IRPivotExpression.Binary'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-RowRefConstructor._from = _input => PivotExpression.RowRef(_input.name)
-LiteralConstructor._from = _input => PivotExpression.Literal(_input.value)
+RowRefConstructor._from = _input => IRPivotExpression.RowRef(_input.name)
+LiteralConstructor._from = _input => IRPivotExpression.Literal(_input.value)
 BinaryConstructor._from = _input => {
     const { op, left, right } = _input
-    return PivotExpression.Binary(op, left, right)
+    return IRPivotExpression.Binary(op, left, right)
 }
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
@@ -194,11 +194,11 @@ BinaryConstructor.from = BinaryConstructor._from
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a PivotExpression instance
+ * Check if value is a IRPivotExpression instance
  * @sig is :: Any -> Boolean
  */
-PivotExpression.is = v => {
-    const { RowRef, Literal, Binary } = PivotExpression
+IRPivotExpression.is = v => {
+    const { RowRef, Literal, Binary } = IRPivotExpression
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === RowRef || constructor === Literal || constructor === Binary
@@ -210,4 +210,4 @@ PivotExpression.is = v => {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { PivotExpression }
+export { IRPivotExpression }

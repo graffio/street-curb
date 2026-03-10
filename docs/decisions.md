@@ -928,6 +928,18 @@ Future architecture decisions are data-driven and support sustainable business g
 **Decision:** Separate page component per result type, dispatched via `metadata.page` component reference in report-metadata.js. D3 scales + React SVG for charting (no high-level chart library). FilterChipRow extracted as shared component.
 **Why:** Each result type has fundamentally different rendering needs (pivot grid vs line chart vs flat table). Component reference dispatch avoids if/else chains on type strings. D3 scales are pure functions that fit our functional style.
 
+### Remove AccountQuery, ExpressionQuery, RunningBalanceQuery (2026-03-09)
+
+**Context:** FinancialQuery had 6 variants but 3 served no real use case. AccountQuery was a thin demo (accounts list). ExpressionQuery was hypothetical (no UI, second AST, recursive depth tracking). RunningBalanceQuery duplicated register page functionality (which has transfer nav, search, keyboard shortcuts).
+**Decision:** Delete all 3 variants and everything downstream: type definitions, engine code (resolve-expression.js, 3 collect* functions), page components (FilteredEntitiesResultPage, RunningBalanceResultPage), seed queries (bank_accounts, running_balance), and related tests. FinancialQuery is now 3 variants: TransactionQuery, PositionQuery, SnapshotQuery.
+**Why:** Each removed variant added complexity (IRExpression AST, depth limiting, separate page components) for functionality that was either unused or better served by existing UI. TransactionQuery.grouping made required since ungrouped transaction views belong in registers.
+
+### Unified tree output replaces QueryResult/pivot/snapshot indirection (2026-03-09)
+
+**Context:** QueryResult (6 variants) and QueryResultTree (2 variants) added dispatch layers between engine and UI. Pivot used flat grids (not drillable). Snapshots returned flat [{date, total}] arrays (no grouping support). 5 separate page components.
+**Decision:** Engine returns plain objects directly. All grouping produces CategoryTreeNode trees: 1D trees have {total, count}, 2D trees add {columns: {key: value}} per node with parent rollup. Snapshots produce trees with cumulative date-point columns. One QueryResultPage detects shape by property presence. Deleted QueryResult, QueryResultTree, PivotResultPage, TimeSeriesResultPage, RunningBalanceResultPage, FilteredEntitiesResultPage.
+**Why:** The query type already determines result shape — the intermediate result type was ceremony. Trees are strictly more capable than flat grids (hierarchical + drillable). Property-presence detection is simpler than type dispatch for 3 shapes.
+
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 
 **Context:** 30+ type-definition files in a flat directory, hard to find by purpose. Generator copies FieldTypes import paths verbatim, complicating subdirectory moves.

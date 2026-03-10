@@ -1,24 +1,13 @@
 import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'
+import { Account, Category, Lot, LotAllocation, Price, Security, Transaction } from '../../src/types/index.js'
 import {
-    Account,
-    Category,
-    Lot,
-    LotAllocation,
-    Price,
-    QueryResult,
-    QueryResultTree,
-    Security,
-    Transaction,
-} from '../../src/types/index.js'
-import {
-    ComputedRow,
     FinancialQuery,
+    IRComputedRow,
     IRDateRange,
-    IRExpression,
     IRFilter,
     IRGrouping,
-    PivotExpression,
+    IRPivotExpression,
 } from '../../src/query-language/types/index.js'
 import { runFinancialQuery } from '../../src/query-language/run-financial-query.js'
 
@@ -108,9 +97,9 @@ test('TransactionQuery — category grouping with filter', t => {
                 IRGrouping('category'),
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
-            t.ok(QueryResultTree.Category.is(result.tree), 'Then result contains a category tree')
-            t.ok(result.tree.nodes.length > 0, 'Then tree is not empty')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(result.nodes.length > 0, 'Then tree is not empty')
+            t.equal(result.source, 'category', 'Then source is category')
             t.end()
         })
         t.end()
@@ -119,19 +108,23 @@ test('TransactionQuery — category grouping with filter', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (b) TransactionQuery — pivot grouping with ComputedRow
+// (b) TransactionQuery — pivot grouping with IRComputedRow
 // ═════════════════════════════════════════════════
 
 test('TransactionQuery — pivot with computed rows', t => {
     t.test('Given a pivot query grouping by category rows and quarter columns', t => {
         t.test('When executing with a housing-%-of-income computed row', t => {
             const computed = [
-                ComputedRow(
+                IRComputedRow(
                     'Housing % of Income',
-                    PivotExpression.Binary(
+                    IRPivotExpression.Binary(
                         '/',
-                        PivotExpression.RowRef('Housing'),
-                        PivotExpression.Binary('*', PivotExpression.RowRef('Income'), PivotExpression.Literal(-1)),
+                        IRPivotExpression.RowRef('Housing'),
+                        IRPivotExpression.Binary(
+                            '*',
+                            IRPivotExpression.RowRef('Income'),
+                            IRPivotExpression.Literal(-1),
+                        ),
                     ),
                 ),
             ]
@@ -144,10 +137,16 @@ test('TransactionQuery — pivot with computed rows', t => {
                 computed,
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Pivot.is(result), 'Then result is QueryResult.Pivot')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes (2D tree)')
             t.ok(Array.isArray(result.columns), 'Then result has columns array')
-            t.ok(Array.isArray(result.rows), 'Then result has rows array')
-            t.ok(result.cells !== undefined, 'Then result has cells grid')
+            t.equal(result.source, 'category', 'Then source is category')
+
+            // Tree nodes have per-column values in aggregate.columns
+            const food = result.nodes.find(n => n.id === 'Food')
+            t.ok(food, 'Then Food group exists in tree')
+            t.ok(food.aggregate.columns, 'Then Food has per-column values')
+
+            // IRComputedRow evaluation produces per-column ratios
             t.ok(result.computed !== undefined, 'Then result has computed rows')
             t.ok(result.computed['Housing % of Income'] !== undefined, 'Then housing ratio computed row exists')
             t.end()
@@ -166,8 +165,8 @@ test('PositionQuery — positions tree', t => {
         t.test('When executing against state with an investment account', t => {
             const query = FinancialQuery.PositionQuery('positions', 'All positions', undefined, IRDateRange.Year(2025))
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
-            t.ok(QueryResultTree.Positions.is(result.tree), 'Then result contains a positions tree')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.equal(result.source, 'account', 'Then source is account')
             t.end()
         })
         t.end()
@@ -176,76 +175,10 @@ test('PositionQuery — positions tree', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (d) AccountQuery — filter by type
+// (d) SnapshotQuery — balance snapshots over time
 // ═════════════════════════════════════════════════
 
-test('AccountQuery — filter by account type', t => {
-    t.test('Given an AccountQuery filtering by Bank type', t => {
-        t.test('When executing against state', t => {
-            const query = FinancialQuery.AccountQuery(
-                'bank_accounts',
-                'Bank accounts',
-                IRFilter.Equals('accountType', 'Bank'),
-            )
-            const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.FilteredEntities.is(result), 'Then result is QueryResult.FilteredEntities')
-            t.equal(result.entities.length, 1, 'Then one Bank account is returned')
-            t.equal(result.entities[0].account.name, 'Chase Checking', 'Then it is Chase Checking')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (e) ExpressionQuery — recursive sub-query dispatch
-// ═════════════════════════════════════════════════
-
-test('ExpressionQuery — food as percentage of income', t => {
-    t.test('Given an ExpressionQuery with food and income sub-queries', t => {
-        t.test('When executing the ratio expression', t => {
-            const food = FinancialQuery.TransactionQuery(
-                'food',
-                undefined,
-                IRFilter.Equals('category', 'Food'),
-                IRDateRange.Quarter(1, 2025),
-                IRGrouping('category'),
-            )
-            const income = FinancialQuery.TransactionQuery(
-                'income',
-                undefined,
-                IRFilter.Equals('category', 'Income'),
-                IRDateRange.Quarter(1, 2025),
-                IRGrouping('category'),
-            )
-            const expression = IRExpression.Binary(
-                '*',
-                IRExpression.Binary(
-                    '/',
-                    IRExpression.Call('abs', [IRExpression.Reference('left', 'total')]),
-                    IRExpression.Call('abs', [IRExpression.Reference('right', 'total')]),
-                ),
-                IRExpression.Literal(100),
-            )
-            const query = FinancialQuery.ExpressionQuery('food_ratio', 'Food % of income', food, income, expression)
-            const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.Scalar.is(result), 'Then result is QueryResult.Scalar')
-            t.type(result.value, 'number', 'Then value is a number')
-            t.ok(result.value > 0, 'Then the ratio is positive')
-            t.ok(result.value < 100, 'Then the ratio is less than 100%')
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (f) SnapshotQuery — balance snapshots over time
-// ═════════════════════════════════════════════════
-
-test('SnapshotQuery — monthly balance snapshots', t => {
+test('SnapshotQuery — monthly balance snapshots (legacy shape check)', t => {
     t.test('Given a SnapshotQuery for balances at monthly intervals', t => {
         t.test('When executing over Q1 2025', t => {
             const query = FinancialQuery.SnapshotQuery(
@@ -253,15 +186,15 @@ test('SnapshotQuery — monthly balance snapshots', t => {
                 'Net worth over time',
                 'balances',
                 undefined,
+                undefined,
                 IRDateRange.Range('2025-01-01', '2025-03-31'),
                 'monthly',
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.TimeSeries.is(result), 'Then result is QueryResult.TimeSeries')
-            t.ok(Array.isArray(result.snapshots), 'Then result has snapshots array')
-            t.ok(result.snapshots.length >= 3, 'Then there are at least 3 monthly snapshots')
-            t.ok(result.snapshots[0].date !== undefined, 'Then each snapshot has a date')
-            t.type(result.snapshots[0].total, 'number', 'Then each snapshot has a numeric total')
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(Array.isArray(result.columns), 'Then result has columns array')
+            t.ok(result.columns.length >= 3, 'Then at least 3 monthly column keys')
+            t.equal(result.source, 'balances', 'Then source is balances')
             t.end()
         })
         t.end()
@@ -270,26 +203,29 @@ test('SnapshotQuery — monthly balance snapshots', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (g) RunningBalanceQuery — per-transaction cumulative
+// (d2) SnapshotQuery — tree output (ungrouped and grouped)
 // ═════════════════════════════════════════════════
 
-test('RunningBalanceQuery — cumulative balance', t => {
-    t.test('Given a RunningBalanceQuery for Q1 2025', t => {
-        t.test('When executing against state', t => {
-            const query = FinancialQuery.RunningBalanceQuery(
-                'running',
-                'Running balance',
+test('SnapshotQuery — ungrouped tree output', t => {
+    t.test('Given a SnapshotQuery without grouping', t => {
+        t.test('When executing over Q1 2025', t => {
+            const query = FinancialQuery.SnapshotQuery(
+                'net_worth',
+                'Net worth over time',
+                'balances',
                 undefined,
-                IRDateRange.Quarter(1, 2025),
+                undefined,
+                IRDateRange.Range('2025-01-01', '2025-03-31'),
+                'monthly',
             )
             const result = runFinancialQuery(query, STATE)
-            t.ok(QueryResult.RunningBalance.is(result), 'Then result is QueryResult.RunningBalance')
-            t.ok(Array.isArray(result.entries), 'Then result has entries array')
-            t.ok(result.entries.length > 0, 'Then entries is not empty')
-            const first = result.entries[0]
-            t.ok(first.date !== undefined, 'Then each entry has a date')
-            t.type(first.amount, 'number', 'Then each entry has an amount')
-            t.type(first.balance, 'number', 'Then each entry has a cumulative balance')
+
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(Array.isArray(result.columns), 'Then result has columns array')
+            t.ok(result.columns.length >= 3, 'Then at least 3 monthly column keys')
+            t.equal(result.nodes.length, 1, 'Then single summary node')
+            t.ok(result.nodes[0].aggregate.columns, 'Then node has per-date-point columns')
+            t.type(result.nodes[0].aggregate.columns[result.columns[0]], 'number', 'Then column value is numeric')
             t.end()
         })
         t.end()
@@ -297,28 +233,39 @@ test('RunningBalanceQuery — cumulative balance', t => {
     t.end()
 })
 
-// ═════════════════════════════════════════════════
-// (h) ExpressionQuery — depth limit
-// ═════════════════════════════════════════════════
-
-test('ExpressionQuery — depth limit prevents unbounded nesting', t => {
-    t.test('Given a deeply nested ExpressionQuery beyond MAX_DEPTH', t => {
-        t.test('When attempting to execute', t => {
-            const leaf = FinancialQuery.TransactionQuery(
-                'leaf',
-                undefined,
-                undefined,
+test('SnapshotQuery — grouped tree output', t => {
+    t.test('Given a SnapshotQuery with category grouping', t => {
+        t.test('When executing over Q1 2025', t => {
+            const query = FinancialQuery.SnapshotQuery(
+                'spending_by_cat',
+                'Spending by category over time',
+                'balances',
                 undefined,
                 IRGrouping('category'),
+                IRDateRange.Range('2025-01-01', '2025-03-31'),
+                'monthly',
             )
-            const trivialExpr = IRExpression.Literal(1)
+            const result = runFinancialQuery(query, STATE)
 
-            // Build nesting: wrap in ExpressionQuery 12 times (exceeds MAX_DEPTH of 10)
-            let nested = leaf
-            for (let i = 0; i < 12; i++)
-                nested = FinancialQuery.ExpressionQuery(`depth_${i}`, undefined, nested, leaf, trivialExpr)
+            t.ok(Array.isArray(result.nodes), 'Then result has nodes array')
+            t.ok(Array.isArray(result.columns), 'Then result has columns array')
+            t.ok(result.nodes.length > 1, 'Then multiple category nodes')
 
-            t.throws(() => runFinancialQuery(nested, STATE), 'Then execution throws a depth error')
+            const food = result.nodes.find(n => n.id === 'Food')
+            t.ok(food, 'Then Food parent node exists')
+            t.ok(food.aggregate.columns, 'Then Food has per-date-point columns')
+
+            const dining = food.children.find(n => n.id === 'Food:Dining')
+            t.ok(dining, 'Then Food:Dining is a child of Food')
+            t.ok(dining.aggregate.columns, 'Then Food:Dining has per-date-point columns')
+
+            const housing = result.nodes.find(n => n.id === 'Housing')
+            t.ok(housing, 'Then Housing parent node exists')
+            t.ok(housing.aggregate.columns, 'Then Housing has per-date-point columns')
+
+            const rent = housing.children.find(n => n.id === 'Housing:Rent')
+            t.ok(rent, 'Then Housing:Rent is a child of Housing')
+            t.ok(rent.aggregate.columns, 'Then Housing:Rent has per-date-point columns')
             t.end()
         })
         t.end()
@@ -327,7 +274,7 @@ test('ExpressionQuery — depth limit prevents unbounded nesting', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (i) JSON.stringify stability — memoization depends on this
+// (e) JSON.stringify stability — memoization depends on this
 // ═════════════════════════════════════════════════
 
 test('FinancialQuery — JSON.stringify produces stable deterministic output', t => {

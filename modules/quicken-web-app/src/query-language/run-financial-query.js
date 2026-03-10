@@ -1,14 +1,13 @@
-// ABOUTME: Executes a FinancialQuery IR against Redux state via 6-way .match() dispatch
-// ABOUTME: Replaces runQuery — each variant carries only domain-relevant fields
+// ABOUTME: Executes a FinancialQuery IR against Redux state via 3-way .match() dispatch
+// ABOUTME: Returns {nodes, source, columns?, computed?} for all query types; {snapshots} only for positions domain
 
 import { filter, find, iterate, map, reduce, sort } from '@graffio/functional'
 import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
 import { computePositions } from '../financial-computations/compute-positions.js'
 import { MetricRegistry } from '../financial-computations/metric-registry.js'
-import { EnrichedAccount, PositionTreeNode, QueryResult, QueryResultTree, Transaction } from '../types/index.js'
+import { CategoryAggregate, CategoryTreeNode, EnrichedAccount, PositionTreeNode, Transaction } from '../types/index.js'
 import { CategoryTree } from '../utils/category-tree.js'
 import { buildFilterPredicate } from './build-filter-predicate.js'
-import { resolveExpression } from './resolve-expression.js'
 import { IRFilter } from './types/ir-filter.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -97,8 +96,6 @@ const T = {
 
     toFilterableTransaction: t => ({ ...t, category: t.categoryName, account: t.accountName }),
 
-    toFilterableAccount: a => ({ ...a, accountType: a.type, account: a.name }),
-
     toFilterablePosition: p => {
         const { accountName, securityName, securityType } = p
         return { ...p, account: accountName, payee: securityName, category: securityType }
@@ -128,29 +125,6 @@ const T = {
         if (node.position && node.position[field] !== undefined) return node.position[field]
         return 0
     },
-
-    // Map a transaction to its bucket label for a given dimension
-    // @sig toColumnBucket :: (Object, String) -> String
-    toColumnBucket: (txn, dimension) => {
-        const { date, categoryName, accountName, securityName, payee } = txn
-        const [y, m] = date.split('-').map(Number)
-        if (dimension === 'month') return `${y}-${String(m).padStart(2, '0')}`
-        if (dimension === 'quarter') return `${y}-Q${Math.ceil(m / 3)}`
-        if (dimension === 'year') return String(y)
-        if (dimension === 'category') return (categoryName || 'Uncategorized').split(':')[0]
-        if (dimension === 'account') return accountName || 'Unknown'
-        if (dimension === 'security') return securityName || 'Unknown'
-        if (dimension === 'payee') return payee || 'Unknown Payee'
-        return 'Unknown'
-    },
-
-    // Build a running balance entry from a transaction and prior balance
-    // @sig toRunningBalanceEntry :: (Object, Number) -> { entry: Object, balance: Number }
-    toRunningBalanceEntry: (t, balance) => {
-        const { id, date, amount, payee } = t
-        const newBalance = balance + amount
-        return { entry: { id, date, amount, payee, balance: newBalance }, balance: newBalance }
-    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -179,66 +153,21 @@ const A = {
         return CategoryTree.buildTransactionTree(groupBy, filtered)
     },
 
-    // Accumulate a transaction into the pivot cells grid, column set, and row set
-    // @sig collectPivotCell :: (Object, Object, String, String) -> undefined
-    collectPivotCell: (txn, cells, rowDim, colDim) => {
-        const row = T.toColumnBucket(txn, rowDim)
-        const col = T.toColumnBucket(txn, colDim)
-        cells.columnSet.add(col)
-        cells.rowSet.add(row)
-        if (!cells.grid[row]) cells.grid[row] = {}
-        cells.grid[row][col] = (cells.grid[row][col] || 0) + txn.amount
-    },
-
     // Evaluate all computed rows against cells for a single column
-    // @sig collectComputedColumn :: (Object, [ComputedRow], Object, String) -> Object
+    // @sig collectComputedColumn :: (Object, [IRComputedRow], Object, String) -> Object
     collectComputedColumn: (acc, computed, grid, col) =>
         reduce(
-            (colAcc, cr) => ({ ...colAcc, [cr.name]: A.evaluatePivotExpression(cr.expression, grid, col) }),
+            (colAcc, cr) => ({ ...colAcc, [cr.name]: A.evaluateIRPivotExpression(cr.expression, grid, col) }),
             acc,
             computed,
         ),
 
     // Reshape computed results from column-keyed to name-keyed for a single row
-    // @sig collectComputedByName :: (Object, ComputedRow, [String], Object) -> Object
+    // @sig collectComputedByName :: (Object, IRComputedRow, [String], Object) -> Object
     collectComputedByName: (acc, cr, columns, computedResults) => ({
         ...acc,
         [cr.name]: reduce((inner, col) => ({ ...inner, [col]: computedResults[col][cr.name] }), {}, columns),
     }),
-
-    // Sum a single row's values across all columns for row totals
-    // @sig collectRowTotal :: (Object, String, Object, [String]) -> Object
-    collectRowTotal: (acc, row, grid, columns) => {
-        const rowCells = grid[row] || {}
-        return { ...acc, [row]: reduce((sum, col) => sum + (rowCells[col] || 0), 0, columns) }
-    },
-
-    // Build a pivot result with rows x columns grid, row totals, and computed rows
-    // @sig collectPivotResult :: (IRFilter?, IRDateRange?, IRGrouping, [ComputedRow]?, State) -> QueryResult
-    collectPivotResult: (queryFilter, dateDescriptor, grouping, computed, state) => {
-        const filtered = A.collectFilteredTransactions(queryFilter, dateDescriptor, state)
-        const { rows: rowDim, columns: colDim, only } = grouping
-
-        const cells = { grid: {}, columnSet: new Set(), rowSet: new Set() }
-        filtered.forEach(txn => A.collectPivotCell(txn, cells, rowDim, colDim))
-        const { grid, columnSet, rowSet } = cells
-
-        const columns = sort((a, b) => (a < b ? -1 : a > b ? 1 : 0), Array.from(columnSet))
-        let rows = sort((a, b) => (a < b ? -1 : a > b ? 1 : 0), Array.from(rowSet))
-        if (only) rows = filter(r => only.includes(r), rows)
-
-        const rowTotals = reduce((acc, row) => A.collectRowTotal(acc, row, grid, columns), {}, rows)
-
-        const computedResults = computed
-            ? reduce((acc, col) => ({ ...acc, [col]: A.collectComputedColumn({}, computed, grid, col) }), {}, columns)
-            : {}
-
-        const computedByName = computed
-            ? reduce((acc, cr) => A.collectComputedByName(acc, cr, columns, computedResults), {}, computed)
-            : {}
-
-        return QueryResult.Pivot(columns, rows, grid, computedByName, rowTotals)
-    },
 
     // Apply a binary arithmetic operator to two pivot expression results
     // @sig evaluateBinaryOp :: (String, Number, Number) -> Number
@@ -258,18 +187,18 @@ const A = {
         return row[column]
     },
 
-    // Evaluate a Binary PivotExpression by recursing into left and right
+    // Evaluate a Binary IRPivotExpression by recursing into left and right
     // @sig evaluateBinaryExpr :: (Object, Object, String) -> Number
     evaluateBinaryExpr: ({ op, left, right }, cells, column) =>
         A.evaluateBinaryOp(
             op,
-            A.evaluatePivotExpression(left, cells, column),
-            A.evaluatePivotExpression(right, cells, column),
+            A.evaluateIRPivotExpression(left, cells, column),
+            A.evaluateIRPivotExpression(right, cells, column),
         ),
 
-    // Recursively evaluate a PivotExpression AST against a cells grid for one column
-    // @sig evaluatePivotExpression :: (PivotExpression, Object, String) -> Number
-    evaluatePivotExpression: (expr, cells, column) =>
+    // Recursively evaluate a IRPivotExpression AST against a cells grid for one column
+    // @sig evaluateIRPivotExpression :: (IRPivotExpression, Object, String) -> Number
+    evaluateIRPivotExpression: (expr, cells, column) =>
         expr.match({
             RowRef: ({ name }) => A.evaluateRowRef(cells, name, column),
             Literal: ({ value }) => value,
@@ -366,80 +295,58 @@ const A = {
         positions: computePositions({ ...state, asOfDate: date, selectedAccountIds: [], filterQuery: undefined }),
     }),
 
-    // Fold transactions into running balance entries with cumulative totals
-    // @sig collectRunningBalanceEntries :: [Object] -> [Object]
-    collectRunningBalanceEntries: filtered =>
-        reduce(
-            (acc, t) => {
-                const { entry, balance } = T.toRunningBalanceEntry(t, acc.balance)
-                return { balance, entries: [...acc.entries, entry] }
-            },
-            { balance: 0, entries: [] },
-            filtered,
-        ).entries,
+    // Collect sorted unique column keys from all top-level tree node aggregates
+    // @sig collectColumnKeysFromTree :: [CategoryTreeNode] -> [String]
+    collectColumnKeysFromTree: nodes => {
+        const keySet = new Set()
+        nodes.forEach(n => n.aggregate.columns && Object.keys(n.aggregate.columns).forEach(k => keySet.add(k)))
+        return sort((a, b) => (a < b ? -1 : a > b ? 1 : 0), Array.from(keySet))
+    },
 
-    // Extract total from a QueryResult for use in ExpressionQuery binding
-    // @sig collectResultTotal :: QueryResult -> Number
-    collectResultTotal: result =>
-        result.match({
-            Identity: ({ tree }) =>
-                tree.match({
-                    Category: ({ nodes }) => reduce((sum, n) => sum + n.aggregate.total, 0, nodes),
-                    Positions: ({ nodes }) => reduce((sum, n) => sum + n.aggregate.marketValue, 0, nodes),
-                }),
-            Scalar: ({ value }) => value,
-            Pivot: ({ rowTotals }) => reduce((sum, [, v]) => sum + v, 0, Object.entries(rowTotals)),
-            FilteredEntities: () => 0,
-            TimeSeries: () => 0,
-            RunningBalance: () => 0,
-        }),
+    // Build a flat cells lookup from top-level tree nodes for IRComputedRow evaluation
+    // @sig collectCellsFromTree :: [CategoryTreeNode] -> Object
+    collectCellsFromTree: nodes =>
+        reduce((acc, node) => ({ ...acc, [node.id]: node.aggregate.columns || {} }), {}, nodes),
 
-    // Execute a TransactionQuery — pivot or category tree depending on grouping
-    // @sig collectTransactionQueryResult :: (Object, State) -> QueryResult
+    // Evaluate all IRComputedRow expressions against a cells grid, returning {name: {col: value}}
+    // @sig collectComputedFromCells :: ([IRComputedRow], Object, [String]) -> Object
+    collectComputedFromCells: (computed, cells, columns) => {
+        const perColumn = reduce(
+            (acc, col) => ({ ...acc, [col]: A.collectComputedColumn({}, computed, cells, col) }),
+            {},
+            columns,
+        )
+        return reduce((acc, cr) => A.collectComputedByName(acc, cr, columns, perColumn), {}, computed)
+    },
+
+    // Execute a TransactionQuery — 2D tree or flat tree depending on grouping.columns
+    // @sig collectTransactionQueryResult :: (Object, State) -> { nodes, source, ... }
     collectTransactionQueryResult: ({ filter: queryFilter, dateRange, grouping, computed }, state) => {
-        if (grouping && grouping.columns) return A.collectPivotResult(queryFilter, dateRange, grouping, computed, state)
-        const nodes = A.collectTransactionTree(queryFilter, dateRange, grouping, state)
-        return QueryResult.Identity(QueryResultTree.Category(nodes), grouping ? grouping.rows : 'category')
+        const { columns: colDim, rows: rowDim } = grouping
+        if (!colDim) {
+            const nodes = A.collectTransactionTree(queryFilter, dateRange, grouping, state)
+            return { nodes, source: rowDim }
+        }
+        const filtered = A.collectFilteredTransactions(queryFilter, dateRange, state)
+        const nodes = CategoryTree.buildColumnGroupedTree(rowDim, colDim, filtered)
+        const columnKeys = A.collectColumnKeysFromTree(nodes)
+        if (!computed) return { nodes, source: rowDim, columns: columnKeys }
+        const cells = A.collectCellsFromTree(nodes)
+        const computedByName = A.collectComputedFromCells(computed, cells, columnKeys)
+        return { nodes, source: rowDim, columns: columnKeys, computed: computedByName }
     },
 
     // Execute a PositionQuery — optionally sort and limit the results
-    // @sig collectPositionQueryResult :: (Object, State) -> QueryResult
+    // @sig collectPositionQueryResult :: (Object, State) -> { nodes, source }
     collectPositionQueryResult: (
         { filter: queryFilter, dateRange, grouping, metrics, orderByField, orderByDirection, limit },
         state,
     ) => {
         const nodes = A.collectPositionsResult(queryFilter, dateRange, grouping, metrics, state)
-        const tree = QueryResultTree.Positions(nodes)
-        if (!orderByField) return QueryResult.Identity(tree, grouping ? grouping.rows : 'account')
+        if (!orderByField) return { nodes, source: grouping ? grouping.rows : 'account' }
         const sorted = A.collectSortedNodes(nodes, orderByField, orderByDirection || 'asc')
         const limited = limit !== undefined ? sorted.slice(0, limit) : sorted
-        return QueryResult.Identity(QueryResultTree.Positions(limited), grouping ? grouping.rows : 'account')
-    },
-
-    // Execute an AccountQuery — filter accounts by predicate, return enriched with balances
-    // @sig collectAccountQueryResult :: (Object, State) -> QueryResult
-    collectAccountQueryResult: ({ filter: queryFilter }, state) => {
-        const { accounts, transactions } = state
-        const allAccounts = Array.from(accounts)
-        const filtered = queryFilter
-            ? filter(a => buildFilterPredicate(queryFilter)(T.toFilterableAccount(a)), allAccounts)
-            : allAccounts
-        const asOfDate = T.toIsoDate(new Date())
-        const positions = computePositions({ ...state, asOfDate, selectedAccountIds: [], filterQuery: undefined })
-        const enriched = EnrichedAccount.enrichAll(filtered, positions, Array.from(transactions))
-        return QueryResult.FilteredEntities(enriched, 'accounts')
-    },
-
-    // Execute an ExpressionQuery — recursively resolve left/right sub-queries
-    // @sig collectExpressionQueryResult :: (Object, State, Function) -> QueryResult
-    collectExpressionQueryResult: ({ left, right, expression }, state, recurse) => {
-        const leftResult = recurse(left, state)
-        const rightResult = recurse(right, state)
-        const bound = {
-            left: { total: A.collectResultTotal(leftResult) },
-            right: { total: A.collectResultTotal(rightResult) },
-        }
-        return QueryResult.Scalar(resolveExpression(expression, bound), expression)
+        return { nodes: limited, source: grouping ? grouping.rows : 'account' }
     },
 
     // Build a Set of account IDs for investment/retirement accounts
@@ -449,40 +356,63 @@ const A = {
             filter(a => EnrichedAccount.POSITION_BALANCE_TYPES.includes(a.type), Array.from(accounts)).map(a => a.id),
         ),
 
-    // Generate time-series snapshots at interval points within a date range
-    // @sig collectSnapshotQueryResult :: (Object, State) -> QueryResult
-    collectSnapshotQueryResult: ({ domain, filter: queryFilter, dateRange, interval }, state) => {
-        const { accounts } = state
-        const resolved = T.toDateRange(dateRange)
-        if (!resolved) throw new Error('SnapshotQuery requires a date range')
-        const datePoints = A.collectDatePoints(resolved.start, resolved.end, interval)
-
-        if (domain === 'balances') {
-            const filtered = A.collectFilteredTransactions(queryFilter, undefined, state)
-            const investmentAccountIds = A.collectInvestmentAccountIds(accounts)
-            const filteredAccountIds = new Set(filtered.map(t => t.accountId))
-            const investmentAccountIdsInScope = filter(
-                id => filteredAccountIds.has(id),
-                Array.from(investmentAccountIds),
-            )
-            const snapshots = map(
-                date =>
-                    A.collectBalanceSnapshot(date, filtered, investmentAccountIds, investmentAccountIdsInScope, state),
-                datePoints,
-            )
-            return QueryResult.TimeSeries(snapshots, 'balances')
-        }
-        const snapshots = map(date => A.collectPositionSnapshot(state, date), datePoints)
-        return QueryResult.TimeSeries(snapshots, 'positions')
+    // Accumulate balance snapshot totals per date point into a columns object
+    // @sig collectBalanceColumns :: ([String], [Object], Set, [String], State) -> Object
+    collectBalanceColumns: (datePoints, filtered, investmentAccountIds, investmentAccountIdsInScope, state) => {
+        const totalAt = date =>
+            A.collectBalanceSnapshot(date, filtered, investmentAccountIds, investmentAccountIdsInScope, state).total
+        return reduce((cols, date) => ({ ...cols, [date]: totalAt(date) }), {}, datePoints)
     },
 
-    // Filter, sort, and accumulate per-transaction running balance
-    // @sig collectRunningBalanceResult :: (Object, State) -> QueryResult
-    collectRunningBalanceResult: ({ filter: queryFilter, dateRange }, state) => {
-        const filtered = A.collectFilteredTransactions(queryFilter, dateRange, state)
-        const sorted = [...filtered].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
-        const entries = A.collectRunningBalanceEntries(sorted)
-        return QueryResult.RunningBalance(entries)
+    // Build cumulative balance columns per date point as a single summary node
+    // @sig collectUngroupedBalanceTree :: ([String], [Object], Set, [String], State) -> [CategoryTreeNode]
+    collectUngroupedBalanceTree: (datePoints, filtered, investmentAccountIds, investmentAccountIdsInScope, state) => {
+        const columns = A.collectBalanceColumns(
+            datePoints,
+            filtered,
+            investmentAccountIds,
+            investmentAccountIdsInScope,
+            state,
+        )
+        const total = columns[datePoints[datePoints.length - 1]] ?? 0
+        return [CategoryTreeNode.Group('Net worth', [], CategoryAggregate(total, datePoints.length, columns))]
+    },
+
+    // Build per-category cumulative balance tree with date-point columns (hierarchical)
+    // @sig collectGroupedBalanceTree :: ([String], [Object], Set, IRGrouping) -> [CategoryTreeNode]
+    collectGroupedBalanceTree: (datePoints, filtered, investmentAccountIds, grouping) => {
+        const cashTransactions = filter(t => !investmentAccountIds.has(t.accountId), filtered)
+        return CategoryTree.buildSnapshotTree(grouping.rows, datePoints, cashTransactions)
+    },
+
+    // Generate tree output at interval points within a date range
+    // @sig collectSnapshotQueryResult :: (Object, State) -> { nodes, source, columns }
+    collectSnapshotQueryResult: ({ domain, filter: queryFilter, grouping, dateRange, interval }, state) => {
+        const resolved = T.toDateRange(dateRange)
+        if (!resolved) throw new Error('SnapshotQuery requires a date range')
+        const { start, end } = resolved
+        const datePoints = A.collectDatePoints(start, end, interval)
+        if (domain !== 'balances') {
+            const snapshots = map(date => A.collectPositionSnapshot(state, date), datePoints)
+            return { snapshots, source: 'positions' }
+        }
+        const { accounts } = state
+        const filtered = A.collectFilteredTransactions(queryFilter, undefined, state)
+        const investmentAccountIds = A.collectInvestmentAccountIds(accounts)
+        if (grouping) {
+            const nodes = A.collectGroupedBalanceTree(datePoints, filtered, investmentAccountIds, grouping)
+            return { nodes, source: grouping.rows, columns: datePoints }
+        }
+        const filteredAccountIds = new Set(filtered.map(t => t.accountId))
+        const investmentAccountIdsInScope = filter(id => filteredAccountIds.has(id), Array.from(investmentAccountIds))
+        const nodes = A.collectUngroupedBalanceTree(
+            datePoints,
+            filtered,
+            investmentAccountIds,
+            investmentAccountIdsInScope,
+            state,
+        )
+        return { nodes, source: 'balances', columns: datePoints }
     },
 }
 
@@ -512,18 +442,14 @@ const MAX_DEPTH = 10
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Dispatch a FinancialQuery to the appropriate execution path via .match()
-// @sig runFinancialQuery :: (FinancialQuery, State, Number?) -> QueryResult
+// @sig runFinancialQuery :: (FinancialQuery, State, Number?) -> Object
 const runFinancialQuery = (query, state, depth = 0) => {
-    const recurse = (q, s) => runFinancialQuery(q, s, depth + 1)
     if (depth > MAX_DEPTH) throw new Error(`FinancialQuery depth exceeded maximum of ${MAX_DEPTH}`)
 
     return query.match({
         TransactionQuery: fields => A.collectTransactionQueryResult(fields, state),
         PositionQuery: fields => A.collectPositionQueryResult(fields, state),
-        AccountQuery: fields => A.collectAccountQueryResult(fields, state),
-        ExpressionQuery: fields => A.collectExpressionQueryResult(fields, state, recurse),
         SnapshotQuery: fields => A.collectSnapshotQueryResult(fields, state),
-        RunningBalanceQuery: fields => A.collectRunningBalanceResult(fields, state),
     })
 }
 

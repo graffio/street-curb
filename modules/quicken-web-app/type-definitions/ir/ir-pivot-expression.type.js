@@ -1,5 +1,5 @@
-// ABOUTME: TaggedSum type for per-column expressions in pivot query computed rows
-// ABOUTME: Three variants — RowRef, Literal, Binary — separate from IRExpression because RowRef uses free-form names
+// ABOUTME: TaggedSum type for per-column expressions in IR computed rows
+// ABOUTME: Three variants — RowRef, Literal, Binary — RowRef uses free-form row names
 
 import { FieldTypes } from '../field-types.js'
 
@@ -10,12 +10,12 @@ import { FieldTypes } from '../field-types.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-export const PivotExpression = {
-    name: 'PivotExpression',
+export const IRPivotExpression = {
+    name: 'IRPivotExpression',
     kind: 'taggedSum',
     variants: {
         RowRef:  { name: 'String' },
         Literal: { value: 'Number' },
-        Binary:  { op: FieldTypes.arithmeticOp, left: 'PivotExpression', right: 'PivotExpression' },
+        Binary:  { op: FieldTypes.arithmeticOp, left: 'IRPivotExpression', right: 'IRPivotExpression' },
     },
 }

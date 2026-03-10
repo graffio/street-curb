@@ -111,8 +111,6 @@ export const typeMappings = {
     [`${sources.quickenDerived}/category-aggregate.type.js`]  : [targets.quickenWebApp],
     [`${sources.quickenDerived}/category-tree-node.type.js`]  : [targets.quickenWebApp],
     [`${sources.quickenDerived}/register-row.type.js`]        : [targets.quickenWebApp],
-    [`${sources.quickenDerived}/query-result.type.js`]        : [targets.quickenWebApp],
-    [`${sources.quickenDerived}/query-result-tree.type.js`]   : [targets.quickenWebApp],
 
     // ui-state — view/layout/filter configuration
     [`${sources.quickenUiState}/view.type.js`]                : [targets.quickenWebApp],
@@ -129,11 +127,10 @@ export const typeMappings = {
     // query-language IR types (internal to query-language)
     [`${sources.quickenWebAppIR}/ir-date-range.type.js`]      : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/ir-filter.type.js`]          : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/ir-expression.type.js`]      : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/financial-query.type.js`]    : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-financial-query.type.js`]  : [targets.queryLanguage],
     [`${sources.quickenWebAppIR}/ir-grouping.type.js`]        : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/pivot-expression.type.js`]   : [targets.queryLanguage],
-    [`${sources.quickenWebAppIR}/computed-row.type.js`]       : [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-pivot-expression.type.js`]: [targets.queryLanguage],
+    [`${sources.quickenWebAppIR}/ir-computed-row.type.js`]    : [targets.queryLanguage],
 
     // cross-cutting (Action must come after entity types it references)
     [`${sources.quickenWebApp}/action.type.js`]               : [targets.quickenWebApp],
