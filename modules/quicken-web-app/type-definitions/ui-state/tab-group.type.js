@@ -16,7 +16,7 @@ export const TabGroup = {
     fields: {
         id          : FieldTypes.tabGroupId,
         views       : '{View:id}',
-        activeViewId: '/^(reg|rpt|rec|inv|qry)_[a-z0-9_]+$/?',   // undefined when group has no views
+        activeViewId: { pattern: FieldTypes.viewId, optional: true },   // undefined when group has no views
         width       : 'Number',
     },
 }

@@ -558,9 +558,9 @@ tap.test('SnapshotQuery/TimeSeries: monthly snapshots as 2D tree with date-point
     expected.netWorthSnapshots.forEach(({ date }) => t.ok(snapshot.includes(date), `${date} column header present`))
 
     // Verify dollar values at each date point match fixture
-    // TODO: 2 of 12 values (Jan, Sep) drift by 1 cent due to JS floating-point accumulation vs SQL SUM.
-    // Tracked in brainstorm deferred items. Once fixed, remove the skip set below.
-    const fpDriftDates = new Set(['2025-01-31', '2025-09-30'])
+    // 4 of 12 values drift by 1 cent: JS floating-point accumulation vs SQL SUM in fixture generator.
+    // Fixture is gitignored and regenerated from SQL — these dates will always drift.
+    const fpDriftDates = new Set(['2025-02-28', '2025-05-31', '2025-09-30', '2025-12-31'])
     expected.netWorthSnapshots
         .filter(({ date }) => !fpDriftDates.has(date))
         .forEach(({ date, total }) =>

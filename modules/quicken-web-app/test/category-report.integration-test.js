@@ -123,8 +123,8 @@ tap.test('category: custom date filter shows correct filtered totals', async t =
     await wait(200)
 
     // Enter dates via key presses
-    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
-    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/01/2024')
+    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/31/2024')
 
     // Close popover
     session.browser('press', ['Escape'])
