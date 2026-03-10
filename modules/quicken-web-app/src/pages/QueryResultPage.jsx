@@ -142,14 +142,14 @@ const TIME_SERIES_COLUMNS = [
  */
 const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
     // prettier-ignore
-    const { chart, columns, defaultQueryIR, filters, getChildRows, getRowCanExpand, hiddenColumnsByGroup } = metadata
-    const result = useSelector(state => S.QueryResult.fromIR(state, viewId, defaultQueryIR))
+    const { chart, columns, baseQueryIR, filters, getChildRows, getRowCanExpand, hiddenColumnsByGroup } = metadata
+    const result = useSelector(state => S.QueryResult.fromIR(state, viewId, baseQueryIR))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
     const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
     const highlightedRowId = useSelector(state => S.UI.highlightedRowId(state, viewId))
-    const queryDescription = useSelector(state => S.QueryResult.description(state, viewId, defaultQueryIR))
+    const queryDescription = useSelector(state => S.QueryResult.description(state, viewId, baseQueryIR))
 
     if (!result) return undefined
 

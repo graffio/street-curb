@@ -189,25 +189,12 @@ const TabBar = ({ groupId }) => {
     )
 }
 
-// prettier-ignore
-const REPORT_METADATA = {
-    spending:              ReportMetadata.TRANSACTION_TREE_METADATA,
-    positions:             ReportMetadata.POSITION_TREE_METADATA,
-    large_transactions:    ReportMetadata.SEED_QUERY_METADATA.large_transactions,
-    exclude_transfers:     ReportMetadata.SEED_QUERY_METADATA.exclude_transfers,
-    amount_range:          ReportMetadata.SEED_QUERY_METADATA.amount_range,
-    dining_multi_account:  ReportMetadata.SEED_QUERY_METADATA.dining_multi_account,
-    payee_pattern:         ReportMetadata.SEED_QUERY_METADATA.payee_pattern,
-    net_worth:             ReportMetadata.SEED_QUERY_METADATA.net_worth,
-    category_by_year:      ReportMetadata.SEED_QUERY_METADATA.category_by_year,
-    spending_over_time:    ReportMetadata.SEED_QUERY_METADATA.spending_over_time,
-}
-
 // Self-selecting report page — renders correct report type based on reportType
 // @sig ReportPage :: { viewId: String, reportType: String } -> ReactElement
-const ReportPage = ({ viewId, reportType }) => (
-    <QueryResultPage viewId={viewId} metadata={REPORT_METADATA[reportType] ?? REPORT_METADATA.spending} />
-)
+const ReportPage = ({ viewId, reportType }) => {
+    const metadata = ReportMetadata[reportType] ?? ReportMetadata.spending
+    return <QueryResultPage viewId={viewId} metadata={metadata} />
+}
 
 // Renders the appropriate page component for the active view — self-selects group from state
 // @sig ViewContent :: { groupId: String } -> ReactElement
