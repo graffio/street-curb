@@ -12,6 +12,7 @@ import {
 } from '@graffio/functional'
 import {
     computePositions,
+    IRFinancialQuery,
     toFinancialQueryDescription,
     runFinancialQuery,
     applyChipFilters,
@@ -33,6 +34,7 @@ import { toAccountSections } from './to-account-sections.js'
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
+const ACCOUNT_LIST_QUERY = IRFinancialQuery.AccountQuery(ACCOUNT_LIST_VIEW_ID)
 const INVESTMENT_ACTIONS = TransactionFilter.INVESTMENT_ACTIONS
 const ACTION_LABELS_MAP = Object.fromEntries(INVESTMENT_ACTIONS.map(({ id, label }) => [id, label]))
 
@@ -423,13 +425,12 @@ const ACCOUNT_STATE_KEYS = [
     'accountListSortMode',
 ]
 
-// Computes organized account sections from state
+// Computes organized account sections from state via AccountQuery
+// AccountQuery returns [EnrichedAccount] (flat array, not { nodes } like other variants)
 // @sig _organizedAccounts :: State -> LookupTable<AccountSection>
 const _organizedAccounts = state => {
-    const { accounts, transactions, accountListSortMode } = state
-    const positions = Positions.asOf(state, ACCOUNT_LIST_VIEW_ID)
-    const enriched = LookupTable(EnrichedAccount.enrichAll(accounts, positions, transactions), EnrichedAccount, 'id')
-    return toAccountSections(enriched, accountListSortMode)
+    const enriched = runFinancialQuery(ACCOUNT_LIST_QUERY, state)
+    return toAccountSections(LookupTable(enriched, EnrichedAccount, 'id'), state.accountListSortMode)
 }
 
 const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAccounts) }
