@@ -15,7 +15,7 @@ import {
     IRFilter,
     IRGrouping,
     IRPivotExpression,
-} from '../query-language/types/index.js'
+} from '@graffio/query-language'
 import * as S from '../store/selectors.js'
 
 const { AccountFilterColumn } = AccountFilterChip

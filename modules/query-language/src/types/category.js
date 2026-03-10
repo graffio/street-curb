@@ -1,0 +1,127 @@
+// ABOUTME: Generated type definition for Category
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/category.type.js - do not edit manually
+
+/** {@link module:Category} */
+/*  Category generated from: modules/quicken-web-app/type-definitions/entities/category.type.js
+ *
+ *  id              : FieldTypes.categoryId,
+ *  name            : "String",
+ *  description     : "String?",
+ *  budgetAmount    : "Number?",
+ *  isIncomeCategory: "Boolean?",
+ *  isTaxRelated    : "Boolean?",
+ *  taxSchedule     : "String?"
+ *
+ */
+
+import { FieldTypes } from './field-types.js'
+
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// main constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+
+/*
+ * Construct a Category instance
+ * @sig Category :: (String, String, String?, Number?, Boolean?, Boolean?, String?) -> Category
+ */
+const Category = function Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule) {
+    const constructorName = 'Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)'
+
+    R.validateRegex(constructorName, FieldTypes.categoryId, 'id', false, id)
+    R.validateString(constructorName, 'name', false, name)
+    R.validateString(constructorName, 'description', true, description)
+    R.validateNumber(constructorName, 'budgetAmount', true, budgetAmount)
+    R.validateBoolean(constructorName, 'isIncomeCategory', true, isIncomeCategory)
+    R.validateBoolean(constructorName, 'isTaxRelated', true, isTaxRelated)
+    R.validateString(constructorName, 'taxSchedule', true, taxSchedule)
+
+    const result = Object.create(prototype)
+    result.id = id
+    result.name = name
+    if (description !== undefined) result.description = description
+    if (budgetAmount !== undefined) result.budgetAmount = budgetAmount
+    if (isIncomeCategory !== undefined) result.isIncomeCategory = isIncomeCategory
+    if (isTaxRelated !== undefined) result.isTaxRelated = isTaxRelated
+    if (taxSchedule !== undefined) result.taxSchedule = taxSchedule
+    return result
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+
+/*
+ * Convert to string representation
+ * @sig categoryToString :: () -> String
+ */
+const categoryToString = function () {
+    return `Category(${R._toString(this.id)},
+        ${R._toString(this.name)},
+        ${R._toString(this.description)},
+        ${R._toString(this.budgetAmount)},
+        ${R._toString(this.isIncomeCategory)},
+        ${R._toString(this.isTaxRelated)},
+        ${R._toString(this.taxSchedule)})`
+}
+
+/*
+ * Convert to JSON representation
+ * @sig categoryToJSON :: () -> Object
+ */
+const categoryToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'Category', enumerable: false },
+    toString: { value: categoryToString, enumerable: false },
+    toJSON: { value: categoryToJSON, enumerable: false },
+    constructor: { value: Category, enumerable: false, writable: true, configurable: true },
+})
+
+Category.prototype = prototype
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// static methods
+//
+// -------------------------------------------------------------------------------------------------------------
+Category.toString = () => 'Category'
+Category.is = v => v && v['@@typeName'] === 'Category'
+
+Category._from = _input => {
+    const { id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule } = _input
+    return Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)
+}
+Category.from = Category._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
+Category.toParentCategories = name => {
+    const parts = name.split(':')
+    return parts.map((_, i) => parts.slice(0, i + 1).join(':'))
+}
+
+Category.collectAllNames = categories => {
+    if (!categories || categories.length === 0) return []
+    const names = categories.map(c => c.name)
+    const withParents = names.flatMap(Category.toParentCategories)
+    return Array.from(new Set(withParents)).sort()
+}
+
+export { Category }

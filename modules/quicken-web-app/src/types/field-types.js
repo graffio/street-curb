@@ -34,6 +34,7 @@ const FieldTypes = {
     sortDirection         : /^(asc|desc)$/,
     timeSeriesInterval    : /^(daily|weekly|monthly|quarterly|yearly)$/,
     snapshotDomain        : /^(balances|positions)$/,
+    metricLevel           : /^(position|aggregate)$/,
 }
 
 export { FieldTypes }

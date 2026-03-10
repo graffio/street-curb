@@ -1,0 +1,511 @@
+// ABOUTME: Generated type definition for Transaction
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/transaction.type.js - do not edit manually
+
+/*  Transaction generated from: modules/quicken-web-app/type-definitions/entities/transaction.type.js
+ *
+ *  Bank
+ *      accountId        : FieldTypes.accountId,
+ *      amount           : "Number",
+ *      date             : "String",
+ *      id               : FieldTypes.transactionId,
+ *      transactionType  : /^bank$/,
+ *      address          : "String?",
+ *      categoryId       : "String?",
+ *      cleared          : "String?",
+ *      memo             : "String?",
+ *      number           : "String?",
+ *      payee            : "String?",
+ *      runningBalance   : "Number?",
+ *      transferAccountId: FieldTypes.accountId
+ *  Investment
+ *      accountId        : FieldTypes.accountId,
+ *      date             : "String",
+ *      id               : FieldTypes.transactionId,
+ *      transactionType  : /^investment$/,
+ *      address          : "String?",
+ *      amount           : "Number?",
+ *      categoryId       : "String?",
+ *      cleared          : "String?",
+ *      commission       : "Number?",
+ *      investmentAction : /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/,
+ *      memo             : "String?",
+ *      payee            : "String?",
+ *      price            : "Number?",
+ *      quantity         : "Number?",
+ *      runningBalance   : "Number?",
+ *      securityId       : "String?",
+ *      transferAccountId: FieldTypes.accountId
+ *
+ */
+
+import {
+    anyFieldContains,
+    containsIgnoreCase,
+    convertSlashToIso,
+    dateToDateParts,
+    formatDateString,
+} from '@graffio/functional'
+import { FieldTypes } from './field-types.js'
+
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Transaction constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const Transaction = { toString: () => 'Transaction' }
+
+// Add hidden properties
+Object.defineProperty(Transaction, '@@typeName', { value: 'Transaction', enumerable: false })
+Object.defineProperty(Transaction, '@@tagNames', { value: ['Bank', 'Investment'], enumerable: false })
+
+// Type prototype with match method
+const TransactionPrototype = {}
+
+Object.defineProperty(TransactionPrototype, 'match', { value: R.match(Transaction['@@tagNames']), enumerable: false })
+
+Object.defineProperty(TransactionPrototype, 'constructor', {
+    value: Transaction,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+})
+
+Transaction.prototype = TransactionPrototype
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toString methods
+//
+// -------------------------------------------------------------------------------------------------------------
+// prettier-ignore
+const toString = {
+    bank      : function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.runningBalance)}, ${R._toString(this.transferAccountId)})` },
+    investment: function () { return `Transaction.Investment(${R._toString(this.accountId)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.investmentAction)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.runningBalance)}, ${R._toString(this.securityId)}, ${R._toString(this.transferAccountId)})` },
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+// prettier-ignore
+const toJSON = {
+    bank      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    investment: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
+
+/*
+ * Construct a Transaction.Bank instance
+ * @sig Bank :: (String, Number, String, String, TransactionType, String?, String?, String?, String?, String?, String?, Number?, String?) -> Transaction.Bank
+ *     TransactionType = /^bank$/
+ */
+const BankConstructor = function Bank(
+    accountId,
+    amount,
+    date,
+    id,
+    transactionType,
+    address,
+    categoryId,
+    cleared,
+    memo,
+    number,
+    payee,
+    runningBalance,
+    transferAccountId,
+) {
+    const constructorName =
+        'Transaction.Bank(accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee, runningBalance, transferAccountId)'
+
+    R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
+    R.validateNumber(constructorName, 'amount', false, amount)
+    R.validateString(constructorName, 'date', false, date)
+    R.validateRegex(constructorName, FieldTypes.transactionId, 'id', false, id)
+    R.validateRegex(constructorName, /^bank$/, 'transactionType', false, transactionType)
+    R.validateString(constructorName, 'address', true, address)
+    R.validateString(constructorName, 'categoryId', true, categoryId)
+    R.validateString(constructorName, 'cleared', true, cleared)
+    R.validateString(constructorName, 'memo', true, memo)
+    R.validateString(constructorName, 'number', true, number)
+    R.validateString(constructorName, 'payee', true, payee)
+    R.validateNumber(constructorName, 'runningBalance', true, runningBalance)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'transferAccountId', true, transferAccountId)
+
+    const result = Object.create(BankPrototype)
+    result.accountId = accountId
+    result.amount = amount
+    result.date = date
+    result.id = id
+    result.transactionType = transactionType
+    if (address !== undefined) result.address = address
+    if (categoryId !== undefined) result.categoryId = categoryId
+    if (cleared !== undefined) result.cleared = cleared
+    if (memo !== undefined) result.memo = memo
+    if (number !== undefined) result.number = number
+    if (payee !== undefined) result.payee = payee
+    if (runningBalance !== undefined) result.runningBalance = runningBalance
+    if (transferAccountId !== undefined) result.transferAccountId = transferAccountId
+    return result
+}
+
+Transaction.Bank = BankConstructor
+
+/*
+ * Construct a Transaction.Investment instance
+ * @sig Investment :: (String, String, String, TransactionType, String?, Number?, String?, String?, Number?, InvestmentAction, String?, String?, Number?, Number?, Number?, String?, String?) -> Transaction.Investment
+ *     TransactionType = /^investment$/
+ *     InvestmentAction = /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/
+ */
+const InvestmentConstructor = function Investment(
+    accountId,
+    date,
+    id,
+    transactionType,
+    address,
+    amount,
+    categoryId,
+    cleared,
+    commission,
+    investmentAction,
+    memo,
+    payee,
+    price,
+    quantity,
+    runningBalance,
+    securityId,
+    transferAccountId,
+) {
+    const constructorName =
+        'Transaction.Investment(accountId, date, id, transactionType, address, amount, categoryId, cleared, commission, investmentAction, memo, payee, price, quantity, runningBalance, securityId, transferAccountId)'
+
+    R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
+    R.validateString(constructorName, 'date', false, date)
+    R.validateRegex(constructorName, FieldTypes.transactionId, 'id', false, id)
+    R.validateRegex(constructorName, /^investment$/, 'transactionType', false, transactionType)
+    R.validateString(constructorName, 'address', true, address)
+    R.validateNumber(constructorName, 'amount', true, amount)
+    R.validateString(constructorName, 'categoryId', true, categoryId)
+    R.validateString(constructorName, 'cleared', true, cleared)
+    R.validateNumber(constructorName, 'commission', true, commission)
+    R.validateRegex(
+        constructorName,
+        /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/,
+        'investmentAction',
+        false,
+        investmentAction,
+    )
+    R.validateString(constructorName, 'memo', true, memo)
+    R.validateString(constructorName, 'payee', true, payee)
+    R.validateNumber(constructorName, 'price', true, price)
+    R.validateNumber(constructorName, 'quantity', true, quantity)
+    R.validateNumber(constructorName, 'runningBalance', true, runningBalance)
+    R.validateString(constructorName, 'securityId', true, securityId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'transferAccountId', true, transferAccountId)
+
+    const result = Object.create(InvestmentPrototype)
+    result.accountId = accountId
+    result.date = date
+    result.id = id
+    result.transactionType = transactionType
+    if (address !== undefined) result.address = address
+    if (amount !== undefined) result.amount = amount
+    if (categoryId !== undefined) result.categoryId = categoryId
+    if (cleared !== undefined) result.cleared = cleared
+    if (commission !== undefined) result.commission = commission
+    result.investmentAction = investmentAction
+    if (memo !== undefined) result.memo = memo
+    if (payee !== undefined) result.payee = payee
+    if (price !== undefined) result.price = price
+    if (quantity !== undefined) result.quantity = quantity
+    if (runningBalance !== undefined) result.runningBalance = runningBalance
+    if (securityId !== undefined) result.securityId = securityId
+    if (transferAccountId !== undefined) result.transferAccountId = transferAccountId
+    return result
+}
+
+Transaction.Investment = InvestmentConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const BankPrototype = Object.create(TransactionPrototype, {
+    '@@tagName': { value: 'Bank', enumerable: false },
+    '@@typeName': { value: 'Transaction', enumerable: false },
+    toString: { value: toString.bank, enumerable: false },
+    toJSON: { value: toJSON.bank, enumerable: false },
+    constructor: { value: BankConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const InvestmentPrototype = Object.create(TransactionPrototype, {
+    '@@tagName': { value: 'Investment', enumerable: false },
+    '@@typeName': { value: 'Transaction', enumerable: false },
+    toString: { value: toString.investment, enumerable: false },
+    toJSON: { value: toJSON.investment, enumerable: false },
+    constructor: { value: InvestmentConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+// -------------------------------------------------------------------------------------------------------------
+// Variant static prototype
+// -------------------------------------------------------------------------------------------------------------
+BankConstructor.prototype = BankPrototype
+InvestmentConstructor.prototype = InvestmentPrototype
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
+BankConstructor.is = val => val && val.constructor === BankConstructor
+InvestmentConstructor.is = val => val && val.constructor === InvestmentConstructor
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
+BankConstructor.toString = () => 'Transaction.Bank'
+InvestmentConstructor.toString = () => 'Transaction.Investment'
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
+BankConstructor._from = _input => {
+    const {
+        accountId,
+        amount,
+        date,
+        id,
+        transactionType,
+        address,
+        categoryId,
+        cleared,
+        memo,
+        number,
+        payee,
+        runningBalance,
+        transferAccountId,
+    } = _input
+    return Transaction.Bank(
+        accountId,
+        amount,
+        date,
+        id,
+        transactionType,
+        address,
+        categoryId,
+        cleared,
+        memo,
+        number,
+        payee,
+        runningBalance,
+        transferAccountId,
+    )
+}
+InvestmentConstructor._from = _input => {
+    const {
+        accountId,
+        date,
+        id,
+        transactionType,
+        address,
+        amount,
+        categoryId,
+        cleared,
+        commission,
+        investmentAction,
+        memo,
+        payee,
+        price,
+        quantity,
+        runningBalance,
+        securityId,
+        transferAccountId,
+    } = _input
+    return Transaction.Investment(
+        accountId,
+        date,
+        id,
+        transactionType,
+        address,
+        amount,
+        categoryId,
+        cleared,
+        commission,
+        investmentAction,
+        memo,
+        payee,
+        price,
+        quantity,
+        runningBalance,
+        securityId,
+        transferAccountId,
+    )
+}
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
+BankConstructor.from = BankConstructor._from
+InvestmentConstructor.from = InvestmentConstructor._from
+
+// Define is method after variants are attached (allows destructuring)
+
+/*
+ * Check if value is a Transaction instance
+ * @sig is :: Any -> Boolean
+ */
+Transaction.is = v => {
+    if (typeof v !== 'object') return false
+    const constructor = Object.getPrototypeOf(v).constructor
+    return constructor === Transaction.Bank || constructor === Transaction.Investment
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
+Transaction.toCategoryName = (txn, categories) => {
+    if (!txn.categoryId) return undefined
+    return categories.get(txn.categoryId).name
+}
+
+Transaction.toSecurityName = (txn, securities) => {
+    if (!txn.securityId) return undefined
+    const security = securities.get(txn.securityId)
+    return security.symbol || security.name
+}
+
+Transaction.matchesSecurityText = (query, txn, securities) => {
+    if (!txn.securityId) return false
+    const security = securities.get(txn.securityId)
+    const matches = containsIgnoreCase(query)
+    return matches(security.symbol) || matches(security.name)
+}
+
+Transaction.toRegisterRow = txn => ({ transaction: txn, runningBalance: txn.runningBalance })
+
+Transaction.toEnriched = (txn, categories, accounts) => ({
+    ...txn,
+    categoryName: Transaction.toCategoryName(txn, categories) || 'Uncategorized',
+    accountName: accounts.get(txn.accountId).name,
+})
+
+Transaction.ACTION_LABELS = {
+    Buy: 'Buy',
+    Sell: 'Sell',
+    Div: 'Dividend',
+    ReinvDiv: 'Reinvest Div',
+    XIn: 'Transfer In',
+    XOut: 'Transfer Out',
+    ContribX: 'Contribution',
+    WithdrwX: 'Withdrawal',
+    ShtSell: 'Short Sell',
+    CvrShrt: 'Cover Short',
+    CGLong: 'LT Cap Gain',
+    CGShort: 'ST Cap Gain',
+    MargInt: 'Margin Int',
+    ShrsIn: 'Shares In',
+    ShrsOut: 'Shares Out',
+    StkSplit: 'Stock Split',
+    Exercise: 'Exercise',
+    Expire: 'Expire',
+}
+
+Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
+    const matchesFields = anyFieldContains(fields)(query)
+    const matches = containsIgnoreCase(query)
+    if (matchesFields(txn)) return true
+    if (matches(Transaction.toCategoryName(txn, categories))) return true
+    if (securities && Transaction.matchesSecurityText(query, txn, securities)) return true
+    return false
+}
+
+Transaction.matchesAllVisibleFields = (query, categories, securities, txn) => {
+    const { amount, investmentAction, payee } = txn
+    const matches = containsIgnoreCase(query)
+    return (
+        Transaction.matchesAnyText(
+            query,
+            ['memo', 'number', 'investmentAction', 'date'],
+            categories,
+            securities,
+        )(txn) ||
+        matches(payee || 'Unknown Payee') ||
+        matches(Transaction.ACTION_LABELS[investmentAction] || '') ||
+        matches(String(amount))
+    )
+}
+
+Transaction.matchesSearch = (query, categories, securities) => txn => {
+    if (!query.trim()) return false
+    return Transaction.matchesAllVisibleFields(query, categories, securities, txn)
+}
+
+Transaction.matchesText = (query, categories, securities) => txn => {
+    if (!query.trim()) return true
+    return Transaction.matchesAllVisibleFields(query, categories, securities, txn)
+}
+
+Transaction.isInDateRange = dateRange => txn => {
+    const toDateStr = d => convertSlashToIso(formatDateString(dateToDateParts(d)))
+    const { start, end } = dateRange
+    if (!start && !end) return true
+    const startStr = start ? toDateStr(start) : undefined
+    const endStr = end ? toDateStr(end) : undefined
+    if (startStr && txn.date < startStr) return false
+    if (endStr && txn.date > endStr) return false
+    return true
+}
+
+Transaction.matchesCategories = (selected, categories) => txn => {
+    if (!selected.length) return true
+    const categoryName = Transaction.toCategoryName(txn, categories)
+    if (!categoryName) return false
+    return selected.some(s => categoryName === s || categoryName.startsWith(s + ':'))
+}
+
+Transaction.isInAccount = accountId => txn => txn.accountId === accountId
+
+Transaction.matchesSecurities = securityIds => txn => !securityIds.length || securityIds.includes(txn.securityId)
+
+Transaction.matchesInvestmentActions = actions => txn => !actions.length || actions.includes(txn.investmentAction)
+
+Transaction.collectSearchMatchIds = (transactions, query, categories, securities) =>
+    transactions.filter(Transaction.matchesSearch(query, categories, securities)).map(t => t.id)
+
+Transaction.enrichAll = (transactions, categories, accounts) =>
+    transactions.map(txn => Transaction.toEnriched(txn, categories, accounts))
+
+Transaction.toRegisterRows = transactions => transactions.map(Transaction.toRegisterRow)
+
+Transaction.findEarliest = transactions => {
+    if (transactions.length === 0) return undefined
+    return transactions.reduce((earliest, txn) => {
+        const d = new Date(txn.date)
+        return d < earliest ? d : earliest
+    }, new Date(transactions[0].date))
+}
+
+Transaction.currentBalance = transactions => transactions.reduce((sum, txn) => sum + txn.amount, 0)
+
+Transaction.balanceAsOf = (isoDate, transactions) =>
+    transactions.filter(txn => txn.date <= isoDate).reduce((sum, txn) => sum + txn.amount, 0)
+
+Transaction.balanceBreakdown = transactions => {
+    const cleared = transactions
+        .filter(txn => txn.cleared === 'R' || txn.cleared === 'c')
+        .reduce((sum, txn) => sum + txn.amount, 0)
+    const total = transactions.reduce((sum, txn) => sum + txn.amount, 0)
+    return { cleared, uncleared: total - cleared, total }
+}
+
+Transaction.reconciliationDifference = (statementBalance, transactions) => {
+    const { cleared } = Transaction.balanceBreakdown(transactions)
+    return statementBalance - cleared
+}
+
+export { Transaction }

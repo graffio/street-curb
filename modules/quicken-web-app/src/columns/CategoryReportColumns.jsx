@@ -4,7 +4,8 @@
 
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
-import { CategoryTreeNode, ColumnDefinition, Transaction } from '../types/index.js'
+import { CategoryTreeNode } from '@graffio/query-language'
+import { ColumnDefinition, Transaction } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
 
 const { formatCurrency, formatDate } = Formatters

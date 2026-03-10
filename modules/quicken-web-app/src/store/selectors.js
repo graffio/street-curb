@@ -10,13 +10,19 @@ import {
     truncateWithCount,
     wrapIndex,
 } from '@graffio/functional'
-import { computeBenchmarkReturn } from '../financial-computations/compute-benchmark-return.js'
-import { computeDividendIncome } from '../financial-computations/compute-dividend-income.js'
-import { computeIrr } from '../financial-computations/compute-irr.js'
-import { computePositions } from '../financial-computations/compute-positions.js'
-import { computeRealizedGains } from '../financial-computations/compute-realized-gains.js'
+import {
+    CategoryTree,
+    computeBenchmarkReturn,
+    computeDividendIncome,
+    computeIrr,
+    computePositions,
+    computeRealizedGains,
+    buildPositionsTree,
+    toFinancialQueryDescription,
+    runFinancialQuery,
+    MergeChipFilters,
+} from '@graffio/query-language'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter, View } from '../types/index.js'
-import { CategoryTree } from '../utils/category-tree.js'
 
 // COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
 // COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Positions) not P/T/F/V/A/E
@@ -26,14 +32,10 @@ import { CategoryTree } from '../utils/category-tree.js'
 // COMPLEXITY: react-redux-separation — Selectors join multiple state slices by design
 import { DateRangeUtils } from '../utils/date-range-utils.js'
 import { Formatters } from '../utils/formatters.js'
-import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
 import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
-import { toFinancialQueryDescription } from '../query-language/to-financial-query-description.js'
-import { runFinancialQuery } from '../query-language/run-financial-query.js'
-import { MergeChipFilters } from '../query-language/merge-chip-filters.js'
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'

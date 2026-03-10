@@ -1,0 +1,108 @@
+// ABOUTME: Generated type definition for Price
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/price.type.js - do not edit manually
+
+/** {@link module:Price} */
+/*  Price generated from: modules/quicken-web-app/type-definitions/entities/price.type.js
+ *
+ *  id        : FieldTypes.priceId,
+ *  securityId: FieldTypes.securityId,
+ *  date      : "String",
+ *  price     : "Number"
+ *
+ */
+
+import { FieldTypes } from './field-types.js'
+
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// main constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+
+/*
+ * Construct a Price instance
+ * @sig Price :: (String, String, String, Number) -> Price
+ */
+const Price = function Price(id, securityId, date, price) {
+    const constructorName = 'Price(id, securityId, date, price)'
+    R.validateArgumentLength(constructorName, 4, arguments)
+    R.validateRegex(constructorName, FieldTypes.priceId, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.securityId, 'securityId', false, securityId)
+    R.validateString(constructorName, 'date', false, date)
+    R.validateNumber(constructorName, 'price', false, price)
+
+    const result = Object.create(prototype)
+    result.id = id
+    result.securityId = securityId
+    result.date = date
+    result.price = price
+    return result
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+
+/*
+ * Convert to string representation
+ * @sig priceToString :: () -> String
+ */
+const priceToString = function () {
+    return `Price(${R._toString(this.id)},
+        ${R._toString(this.securityId)},
+        ${R._toString(this.date)},
+        ${R._toString(this.price)})`
+}
+
+/*
+ * Convert to JSON representation
+ * @sig priceToJSON :: () -> Object
+ */
+const priceToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'Price', enumerable: false },
+    toString: { value: priceToString, enumerable: false },
+    toJSON: { value: priceToJSON, enumerable: false },
+    constructor: { value: Price, enumerable: false, writable: true, configurable: true },
+})
+
+Price.prototype = prototype
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// static methods
+//
+// -------------------------------------------------------------------------------------------------------------
+Price.toString = () => 'Price'
+Price.is = v => v && v['@@typeName'] === 'Price'
+
+Price._from = _input => {
+    const { id, securityId, date, price } = _input
+    return Price(id, securityId, date, price)
+}
+Price.from = Price._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
+Price.isStale = (priceDate, targetDate, staleDays = 1) => {
+    const diffMs = new Date(targetDate) - new Date(priceDate)
+    return diffMs / (1000 * 60 * 60 * 24) > staleDays
+}
+
+export { Price }

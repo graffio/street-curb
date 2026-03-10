@@ -1,0 +1,19 @@
+{
+    "name": "@graffio/query-language",
+    "version": "0.1.0",
+    "main": "index.js",
+    "module": "index.js",
+    "type": "module",
+    "sideEffects": false,
+    "scripts": {
+        "tap": "../../bash/run-tap.sh test/*.tap.js",
+        "tap:file": "../../bash/run-tap.sh"
+    },
+    "private": true,
+    "dependencies": {
+        "@graffio/functional": "0.1.0"
+    },
+    "devDependencies": {
+        "tap": "^21.1.0"
+    }
+}
