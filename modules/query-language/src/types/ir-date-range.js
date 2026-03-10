@@ -279,6 +279,13 @@ IRDateRange.is = v => {
     )
 }
 
+IRDateRange.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`IRDateRange.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    return IRDateRange[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

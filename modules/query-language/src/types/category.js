@@ -106,6 +106,8 @@ Category._from = _input => {
 }
 Category.from = Category._from
 
+Category.fromJSON = json => (json == null ? json : Category._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

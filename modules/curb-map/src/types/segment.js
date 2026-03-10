@@ -96,6 +96,8 @@ Segment._fromFirestore = (doc, decodeTimestamps) => Segment._from(doc)
 Segment.toFirestore = Segment._toFirestore
 Segment.fromFirestore = Segment._fromFirestore
 
+Segment.fromJSON = json => (json == null ? json : Segment._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

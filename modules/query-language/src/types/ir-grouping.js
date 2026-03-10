@@ -88,6 +88,8 @@ IRGrouping._from = _input => {
 }
 IRGrouping.from = IRGrouping._from
 
+IRGrouping.fromJSON = json => (json == null ? json : IRGrouping._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

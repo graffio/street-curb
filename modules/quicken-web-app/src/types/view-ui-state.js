@@ -152,6 +152,8 @@ ViewUiState._from = _input => {
 }
 ViewUiState.from = ViewUiState._from
 
+ViewUiState.fromJSON = json => (json == null ? json : ViewUiState._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

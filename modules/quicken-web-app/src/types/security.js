@@ -98,6 +98,8 @@ Security._from = _input => {
 }
 Security.from = Security._from
 
+Security.fromJSON = json => (json == null ? json : Security._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

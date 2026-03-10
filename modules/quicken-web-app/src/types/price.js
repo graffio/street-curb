@@ -94,6 +94,8 @@ Price._from = _input => {
 }
 Price.from = Price._from
 
+Price.fromJSON = json => (json == null ? json : Price._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

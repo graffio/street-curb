@@ -102,6 +102,8 @@ Split._from = _input => {
 }
 Split.from = Split._from
 
+Split.fromJSON = json => (json == null ? json : Split._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

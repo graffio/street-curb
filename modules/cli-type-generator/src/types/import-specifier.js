@@ -198,6 +198,13 @@ ImportSpecifier.is = v => {
     return constructor === Default || constructor === Namespace || constructor === Named
 }
 
+ImportSpecifier.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`ImportSpecifier.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    return ImportSpecifier[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

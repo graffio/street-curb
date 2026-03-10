@@ -137,6 +137,8 @@ Member._fromFirestore = (doc, decodeTimestamps) =>
 Member.toFirestore = Member._toFirestore
 Member.fromFirestore = Member._fromFirestore
 
+Member.fromJSON = json => (json == null ? json : Member._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

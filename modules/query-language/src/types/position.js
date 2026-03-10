@@ -201,6 +201,8 @@ Position._from = _input => {
 }
 Position.from = Position._from
 
+Position.fromJSON = json => (json == null ? json : Position._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

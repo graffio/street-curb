@@ -306,6 +306,18 @@ IRFinancialQuery.is = v => {
     return constructor === TransactionQuery || constructor === PositionQuery || constructor === SnapshotQuery
 }
 
+IRFinancialQuery.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`IRFinancialQuery.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    const revived = { ...json }
+    if (revived.filter) revived.filter = IRFilter.fromJSON(revived.filter)
+    if (revived.dateRange) revived.dateRange = IRDateRange.fromJSON(revived.dateRange)
+    if (revived.grouping) revived.grouping = IRGrouping.fromJSON(revived.grouping)
+    if (revived.computed) revived.computed = revived.computed.map(item => IRComputedRow.fromJSON(item))
+    return IRFinancialQuery[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

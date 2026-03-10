@@ -426,6 +426,16 @@ IRFilter.is = v => {
     )
 }
 
+IRFilter.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`IRFilter.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    const revived = { ...json }
+    if (revived.filters) revived.filters = revived.filters.map(item => IRFilter.fromJSON(item))
+    if (revived.filter) revived.filter = IRFilter.fromJSON(revived.filter)
+    return IRFilter[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

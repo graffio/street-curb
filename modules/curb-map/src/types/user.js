@@ -153,6 +153,8 @@ User._fromFirestore = (doc, decodeTimestamps) =>
 User.toFirestore = User._toFirestore
 User.fromFirestore = User._fromFirestore
 
+User.fromJSON = json => (json == null ? json : User._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

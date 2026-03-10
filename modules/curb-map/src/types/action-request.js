@@ -233,6 +233,13 @@ ActionRequest._fromFirestore = (doc, decodeTimestamps) =>
 ActionRequest.toFirestore = ActionRequest._toFirestore
 ActionRequest.fromFirestore = ActionRequest._fromFirestore
 
+ActionRequest.fromJSON = json => {
+    if (json == null) return json
+    const revived = { ...json }
+    revived.action = Action.fromJSON(revived.action)
+    return ActionRequest._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

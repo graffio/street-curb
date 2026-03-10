@@ -80,6 +80,8 @@ NamedLocation.is = v => v && v['@@typeName'] === 'NamedLocation'
 NamedLocation._from = _input => NamedLocation(_input.name, _input.line)
 NamedLocation.from = NamedLocation._from
 
+NamedLocation.fromJSON = json => (json == null ? json : NamedLocation._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

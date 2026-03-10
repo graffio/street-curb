@@ -88,6 +88,8 @@ MetricDefinition._from = _input => {
 }
 MetricDefinition.from = MetricDefinition._from
 
+MetricDefinition.fromJSON = json => (json == null ? json : MetricDefinition._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

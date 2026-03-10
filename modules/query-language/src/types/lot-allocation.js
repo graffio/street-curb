@@ -115,6 +115,8 @@ LotAllocation._from = _input => {
 }
 LotAllocation.from = LotAllocation._from
 
+LotAllocation.fromJSON = json => (json == null ? json : LotAllocation._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

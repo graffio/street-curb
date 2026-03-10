@@ -143,6 +143,8 @@ PositionAggregate._from = _input => {
 }
 PositionAggregate.from = PositionAggregate._from
 
+PositionAggregate.fromJSON = json => (json == null ? json : PositionAggregate._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

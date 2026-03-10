@@ -135,6 +135,8 @@ Project._fromFirestore = (doc, decodeTimestamps) =>
 Project.toFirestore = Project._toFirestore
 Project.fromFirestore = Project._fromFirestore
 
+Project.fromJSON = json => (json == null ? json : Project._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

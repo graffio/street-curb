@@ -100,6 +100,13 @@ EnrichedAccount._from = _input => {
 }
 EnrichedAccount.from = EnrichedAccount._from
 
+EnrichedAccount.fromJSON = json => {
+    if (json == null) return json
+    const revived = { ...json }
+    revived.account = Account.fromJSON(revived.account)
+    return EnrichedAccount._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

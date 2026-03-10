@@ -88,6 +88,8 @@ ColumnDescriptor._from = _input => {
 }
 ColumnDescriptor.from = ColumnDescriptor._from
 
+ColumnDescriptor.fromJSON = json => (json == null ? json : ColumnDescriptor._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

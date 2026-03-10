@@ -152,6 +152,8 @@ Lot._from = _input => {
 }
 Lot.from = Lot._from
 
+Lot.fromJSON = json => (json == null ? json : Lot._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

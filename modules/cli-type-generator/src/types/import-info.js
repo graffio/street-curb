@@ -84,6 +84,13 @@ ImportInfo.is = v => v && v['@@typeName'] === 'ImportInfo'
 ImportInfo._from = _input => ImportInfo(_input.source, _input.specifiers)
 ImportInfo.from = ImportInfo._from
 
+ImportInfo.fromJSON = json => {
+    if (json == null) return json
+    const revived = { ...json }
+    revived.specifiers = revived.specifiers.map(item => ImportSpecifier.fromJSON(item))
+    return ImportInfo._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

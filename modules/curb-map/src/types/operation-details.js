@@ -265,6 +265,13 @@ OperationDetails._fromFirestore = (doc, decodeTimestamps) => {
 OperationDetails.toFirestore = OperationDetails._toFirestore
 OperationDetails.fromFirestore = OperationDetails._fromFirestore
 
+OperationDetails.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`OperationDetails.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    return OperationDetails[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

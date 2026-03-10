@@ -182,6 +182,17 @@ PositionTreeNode.is = v => {
     return constructor === PositionTreeNode.Group || constructor === PositionTreeNode.Position
 }
 
+PositionTreeNode.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`PositionTreeNode.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    const revived = { ...json }
+    if (revived.children) revived.children = revived.children.map(item => PositionTreeNode.fromJSON(item))
+    if (revived.aggregate) revived.aggregate = PositionAggregate.fromJSON(revived.aggregate)
+    if (revived.position) revived.position = Position.fromJSON(revived.position)
+    return PositionTreeNode[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

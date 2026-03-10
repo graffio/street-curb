@@ -362,6 +362,13 @@ Transaction.is = v => {
     return constructor === Transaction.Bank || constructor === Transaction.Investment
 }
 
+Transaction.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`Transaction.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    return Transaction[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

@@ -181,6 +181,8 @@ Organization._fromFirestore = (doc, decodeTimestamps) =>
 Organization.toFirestore = Organization._toFirestore
 Organization.fromFirestore = Organization._fromFirestore
 
+Organization.fromJSON = json => (json == null ? json : Organization._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

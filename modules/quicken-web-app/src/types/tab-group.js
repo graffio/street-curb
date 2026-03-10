@@ -97,6 +97,8 @@ TabGroup._from = _input => {
 }
 TabGroup.from = TabGroup._from
 
+TabGroup.fromJSON = json => (json == null ? json : TabGroup._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

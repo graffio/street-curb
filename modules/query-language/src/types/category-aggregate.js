@@ -86,6 +86,8 @@ CategoryAggregate._from = _input => {
 }
 CategoryAggregate.from = CategoryAggregate._from
 
+CategoryAggregate.fromJSON = json => (json == null ? json : CategoryAggregate._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

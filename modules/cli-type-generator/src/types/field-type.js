@@ -203,6 +203,15 @@ FieldType.is = v => {
     return constructor === StringType || constructor === RegexType || constructor === ImportPlaceholder
 }
 
+FieldType.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`FieldType.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    const revived = { ...json }
+    if (revived.value) revived.value = RegExp.fromJSON(revived.value)
+    return FieldType[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

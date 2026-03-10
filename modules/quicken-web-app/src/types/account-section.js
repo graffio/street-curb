@@ -106,6 +106,8 @@ AccountSection._from = _input => {
 }
 AccountSection.from = AccountSection._from
 
+AccountSection.fromJSON = json => (json == null ? json : AccountSection._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

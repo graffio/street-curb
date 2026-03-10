@@ -218,6 +218,13 @@ SortMode.is = v => {
     return constructor === Alphabetical || constructor === ByAmount || constructor === ByType || constructor === Manual
 }
 
+SortMode.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`SortMode.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    return SortMode[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

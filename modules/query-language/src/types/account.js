@@ -98,6 +98,8 @@ Account._from = _input => {
 }
 Account.from = Account._from
 
+Account.fromJSON = json => (json == null ? json : Account._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

@@ -82,6 +82,13 @@ IRComputedRow.is = v => v && v['@@typeName'] === 'IRComputedRow'
 IRComputedRow._from = _input => IRComputedRow(_input.name, _input.expression)
 IRComputedRow.from = IRComputedRow._from
 
+IRComputedRow.fromJSON = json => {
+    if (json == null) return json
+    const revived = { ...json }
+    revived.expression = IRPivotExpression.fromJSON(revived.expression)
+    return IRComputedRow._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

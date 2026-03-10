@@ -86,6 +86,8 @@ QifSplit._from = _input => {
 }
 QifSplit.from = QifSplit._from
 
+QifSplit.fromJSON = json => (json == null ? json : QifSplit._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

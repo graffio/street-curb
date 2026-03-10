@@ -156,6 +156,13 @@ ImportIssue.is = v => {
     return constructor === ImportIssue.SingleAccount || constructor === ImportIssue.MissingAccounts
 }
 
+ImportIssue.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`ImportIssue.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    return ImportIssue[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file
