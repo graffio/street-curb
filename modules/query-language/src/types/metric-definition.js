@@ -5,7 +5,7 @@
 /*  MetricDefinition generated from: modules/query-language/type-definitions/metric-definition.type.js
  *
  *  name   : "String",
- *  compute: "Any",
+ *  compute: "String",
  *  level  : FieldTypes.metricLevel
  *
  */
@@ -22,13 +22,13 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 /*
  * Construct a MetricDefinition instance
- * @sig MetricDefinition :: (String, Any, String) -> MetricDefinition
+ * @sig MetricDefinition :: (String, String, String) -> MetricDefinition
  */
 const MetricDefinition = function MetricDefinition(name, compute, level) {
     const constructorName = 'MetricDefinition(name, compute, level)'
     R.validateArgumentLength(constructorName, 3, arguments)
     R.validateString(constructorName, 'name', false, name)
-
+    R.validateString(constructorName, 'compute', false, compute)
     R.validateRegex(constructorName, FieldTypes.metricLevel, 'level', false, level)
 
     const result = Object.create(prototype)

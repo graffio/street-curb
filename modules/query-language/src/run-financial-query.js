@@ -234,9 +234,9 @@ const A = {
     // Look up and compute a single named metric for a position
     // @sig collectSingleMetric :: (Object, Object, Object, String) -> Object
     collectSingleMetric: (acc, position, context, name) => {
-        const definition = MetricRegistry.get(name)
+        const definition = MetricRegistry.table.get(name)
         if (!definition) throw new Error(`Unknown metric '${name}'`)
-        return { ...acc, [name]: definition.compute(position, context) }
+        return { ...acc, [name]: MetricRegistry.resolveMetricFn(definition.compute)(position, context) }
     },
 
     // Attach computed metrics to a position tree node
