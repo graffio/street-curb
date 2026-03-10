@@ -186,6 +186,8 @@ PositionTreeNode.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`PositionTreeNode.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!PositionTreeNode['@@tagNames'].includes(tag))
+        throw new TypeError(`PositionTreeNode.fromJSON: unknown variant "${tag}"`)
     const revived = { ...json }
     if (revived.children) revived.children = revived.children.map(item => PositionTreeNode.fromJSON(item))
     if (revived.aggregate) revived.aggregate = PositionAggregate.fromJSON(revived.aggregate)

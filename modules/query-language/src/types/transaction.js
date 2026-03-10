@@ -366,6 +366,7 @@ Transaction.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`Transaction.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!Transaction['@@tagNames'].includes(tag)) throw new TypeError(`Transaction.fromJSON: unknown variant "${tag}"`)
     return Transaction[tag]._from(json)
 }
 

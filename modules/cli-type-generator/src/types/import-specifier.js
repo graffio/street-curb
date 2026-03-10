@@ -202,6 +202,8 @@ ImportSpecifier.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`ImportSpecifier.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!ImportSpecifier['@@tagNames'].includes(tag))
+        throw new TypeError(`ImportSpecifier.fromJSON: unknown variant "${tag}"`)
     return ImportSpecifier[tag]._from(json)
 }
 

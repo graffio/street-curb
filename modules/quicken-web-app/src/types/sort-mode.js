@@ -222,6 +222,7 @@ SortMode.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`SortMode.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!SortMode['@@tagNames'].includes(tag)) throw new TypeError(`SortMode.fromJSON: unknown variant "${tag}"`)
     return SortMode[tag]._from(json)
 }
 

@@ -105,8 +105,11 @@ const generateFromJSONForTagged = (typeName, fields) => {
  */
 const generateFromJSONForTaggedSum = (typeName, variants) => {
     const taggedFields = A.collectUniqueTaggedFields(variants)
+    const missingError = `\`${typeName}.fromJSON: missing @@tagName on \${R._toString(json)}\``
+    const unknownError = `\`${typeName}.fromJSON: unknown variant "\${tag}"\``
     const tagCheck = `const tag = json['@@tagName']
-        if (!tag) throw new TypeError(\`${typeName}.fromJSON: missing @@tagName on \${R._toString(json)}\`)`
+        if (!tag) throw new TypeError(${missingError})
+        if (!${typeName}['@@tagNames'].includes(tag)) throw new TypeError(${unknownError})`
 
     if (taggedFields.length === 0)
         return `${typeName}.fromJSON = json => {

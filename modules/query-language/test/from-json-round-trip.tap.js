@@ -280,3 +280,21 @@ test('IRFinancialQuery.fromJSON — throws on missing @@tagName', t => {
     t.throws(() => IRFinancialQuery.fromJSON({ name: 'test' }), /missing @@tagName/, 'Then throws')
     t.end()
 })
+
+test('IRFinancialQuery.fromJSON — throws on unknown @@tagName', t => {
+    t.throws(
+        () => IRFinancialQuery.fromJSON({ '@@tagName': 'BogusQuery', name: 'test' }),
+        /unknown variant "BogusQuery"/,
+        'Then throws TypeError with variant name',
+    )
+    t.end()
+})
+
+test('IRFilter.fromJSON — throws on unknown @@tagName', t => {
+    t.throws(
+        () => IRFilter.fromJSON({ '@@tagName': 'Nonexistent', field: 'x' }),
+        /unknown variant "Nonexistent"/,
+        'Then throws TypeError with variant name',
+    )
+    t.end()
+})

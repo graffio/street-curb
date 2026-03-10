@@ -208,6 +208,8 @@ IRPivotExpression.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`IRPivotExpression.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!IRPivotExpression['@@tagNames'].includes(tag))
+        throw new TypeError(`IRPivotExpression.fromJSON: unknown variant "${tag}"`)
     const revived = { ...json }
     if (revived.left) revived.left = IRPivotExpression.fromJSON(revived.left)
     if (revived.right) revived.right = IRPivotExpression.fromJSON(revived.right)

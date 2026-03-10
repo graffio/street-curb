@@ -182,6 +182,8 @@ CategoryTreeNode.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`CategoryTreeNode.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!CategoryTreeNode['@@tagNames'].includes(tag))
+        throw new TypeError(`CategoryTreeNode.fromJSON: unknown variant "${tag}"`)
     const revived = { ...json }
     if (revived.children) revived.children = revived.children.map(item => CategoryTreeNode.fromJSON(item))
     if (revived.aggregate) revived.aggregate = CategoryAggregate.fromJSON(revived.aggregate)

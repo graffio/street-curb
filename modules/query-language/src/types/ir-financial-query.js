@@ -360,6 +360,8 @@ IRFinancialQuery.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`IRFinancialQuery.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!IRFinancialQuery['@@tagNames'].includes(tag))
+        throw new TypeError(`IRFinancialQuery.fromJSON: unknown variant "${tag}"`)
     const revived = { ...json }
     if (revived.filter) revived.filter = IRFilter.fromJSON(revived.filter)
     if (revived.dateRange) revived.dateRange = IRDateRange.fromJSON(revived.dateRange)

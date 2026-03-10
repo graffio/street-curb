@@ -430,6 +430,7 @@ IRFilter.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`IRFilter.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!IRFilter['@@tagNames'].includes(tag)) throw new TypeError(`IRFilter.fromJSON: unknown variant "${tag}"`)
     const revived = { ...json }
     if (revived.filters) revived.filters = revived.filters.map(item => IRFilter.fromJSON(item))
     if (revived.filter) revived.filter = IRFilter.fromJSON(revived.filter)

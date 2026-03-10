@@ -283,6 +283,7 @@ IRDateRange.fromJSON = json => {
     if (json == null) return json
     const tag = json['@@tagName']
     if (!tag) throw new TypeError(`IRDateRange.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!IRDateRange['@@tagNames'].includes(tag)) throw new TypeError(`IRDateRange.fromJSON: unknown variant "${tag}"`)
     return IRDateRange[tag]._from(json)
 }
 
