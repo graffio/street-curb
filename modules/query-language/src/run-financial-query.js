@@ -101,6 +101,8 @@ const T = {
         return { ...p, account: accountName, payee: securityName, category: securityType }
     },
 
+    toFilterableAccount: ea => ({ account: ea.account.name }),
+
     // Advance a Date by one interval step and return a new Date
     // @sig toAdvancedDate :: (Date, String) -> Date
     toAdvancedDate: (date, interval) => {
@@ -336,6 +338,19 @@ const A = {
         return { nodes, source: rowDim, columns: columnKeys, computed: computedByName }
     },
 
+    // Execute an AccountQuery — enriched account list with computed balances
+    // Returns [EnrichedAccount] (not { nodes } — accounts are a flat list, not tree nodes)
+    // @sig collectAccountQueryResult :: (Object, State) -> [EnrichedAccount]
+    collectAccountQueryResult: ({ filter: queryFilter, dateRange: dateDescriptor }, state) => {
+        const { accounts, transactions } = state
+        const dateRange = T.toDateRange(dateDescriptor)
+        const asOfDate = dateRange ? dateRange.end : T.toIsoDate(new Date())
+        const positions = computePositions({ ...state, asOfDate, selectedAccountIds: [], filterQuery: undefined })
+        const enriched = EnrichedAccount.enrichAll(Array.from(accounts), positions, Array.from(transactions))
+        if (!queryFilter) return enriched
+        return filter(ea => buildFilterPredicate(queryFilter)(T.toFilterableAccount(ea)), enriched)
+    },
+
     // Execute a PositionQuery — optionally sort and limit the results
     // @sig collectPositionQueryResult :: (Object, State) -> { nodes, source }
     collectPositionQueryResult: (
@@ -450,6 +465,7 @@ const runFinancialQuery = (query, state, depth = 0) => {
         TransactionQuery: fields => A.collectTransactionQueryResult(fields, state),
         PositionQuery: fields => A.collectPositionQueryResult(fields, state),
         SnapshotQuery: fields => A.collectSnapshotQueryResult(fields, state),
+        AccountQuery: fields => A.collectAccountQueryResult(fields, state),
     })
 }
 

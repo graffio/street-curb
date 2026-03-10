@@ -51,6 +51,7 @@ const toFinancialQueryDescription = query =>
         PositionQuery: ({ filter, grouping }) => `positions${T.toFilterPart(filter)}${T.toGroupPart(grouping)}`,
         SnapshotQuery: ({ domain, interval, grouping }) =>
             `${domain} snapshots (${interval})${T.toGroupPart(grouping)}`,
+        AccountQuery: ({ filter }) => `accounts${T.toFilterPart(filter)}`,
     })
 
 export { toFinancialQueryDescription }

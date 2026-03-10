@@ -247,6 +247,29 @@ test('IRFinancialQuery.fromJSON — SnapshotQuery', t => {
     t.end()
 })
 
+test('IRFinancialQuery.fromJSON — AccountQuery minimal', t => {
+    const original = IRFinancialQuery.AccountQuery.from({ name: 'accounts' })
+    const revived = IRFinancialQuery.fromJSON(roundTrip(original))
+
+    t.equal(revived['@@tagName'], 'AccountQuery', 'Then variant is preserved')
+    t.equal(revived.name, 'accounts', 'Then name is preserved')
+    t.end()
+})
+
+test('IRFinancialQuery.fromJSON — AccountQuery with filter', t => {
+    const original = IRFinancialQuery.AccountQuery.from({
+        name: 'filtered',
+        filter: IRFilter.Equals('account', 'Checking'),
+        dateRange: IRDateRange.Range('2025-01-01', '2025-12-31'),
+    })
+    const revived = IRFinancialQuery.fromJSON(roundTrip(original))
+
+    t.equal(revived['@@tagName'], 'AccountQuery', 'Then variant is preserved')
+    t.equal(revived.filter['@@tagName'], 'Equals', 'Then filter is revived')
+    t.equal(revived.dateRange['@@tagName'], 'Range', 'Then dateRange is revived')
+    t.end()
+})
+
 test('IRFinancialQuery.fromJSON — null/undefined passthrough', t => {
     t.equal(IRFinancialQuery.fromJSON(null), null, 'Then null returns null')
     t.equal(IRFinancialQuery.fromJSON(undefined), undefined, 'Then undefined returns undefined')

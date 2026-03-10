@@ -3,6 +3,7 @@ import { LookupTable } from '@graffio/functional'
 import {
     Account,
     Category,
+    EnrichedAccount,
     Lot,
     LotAllocation,
     Price,
@@ -285,7 +286,65 @@ test('SnapshotQuery — grouped tree output', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (e) JSON.stringify stability — memoization depends on this
+// (e) AccountQuery — enriched account list
+// ═════════════════════════════════════════════════
+
+test('AccountQuery — returns enriched accounts with computed balances', t => {
+    t.test('Given an AccountQuery with no filter', t => {
+        t.test('When executing against state with bank and investment accounts', t => {
+            const query = IRFinancialQuery.AccountQuery('all_accounts', 'All accounts')
+            const result = runFinancialQuery(query, STATE)
+            t.ok(Array.isArray(result), 'Then result is an array (not { nodes })')
+            t.equal(result.length, 3, 'Then all 3 accounts are returned')
+            result.forEach(ea => {
+                t.ok(EnrichedAccount.is(ea), `Then ${ea.account.name} is an EnrichedAccount`)
+                t.type(ea.balance, 'number', `Then ${ea.account.name} has a numeric balance`)
+                t.type(ea.dayChange, 'number', `Then ${ea.account.name} has a numeric dayChange`)
+            })
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
+test('AccountQuery — bank account balance derived from transactions', t => {
+    t.test('Given an AccountQuery and bank transactions summing to a known total', t => {
+        t.test('When executing against state', t => {
+            const query = IRFinancialQuery.AccountQuery('accounts')
+            const result = runFinancialQuery(query, STATE)
+            const checking = result.find(ea => ea.account.name === 'Chase Checking')
+            t.ok(checking, 'Then Chase Checking is in the result')
+
+            // Chase Checking transactions: +5000 +5000 +5000 -50 -60 -200 -180 -1500 -1500 -1500 = 10010
+            t.equal(checking.balance, 10010, 'Then balance is sum of all bank transactions')
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
+test('AccountQuery — respects filter', t => {
+    t.test('Given an AccountQuery filtering to a specific account', t => {
+        t.test('When executing with an account name filter', t => {
+            const query = IRFinancialQuery.AccountQuery(
+                'filtered',
+                undefined,
+                IRFilter.Equals('account', 'Chase Checking'),
+            )
+            const result = runFinancialQuery(query, STATE)
+            t.equal(result.length, 1, 'Then only the matching account is returned')
+            t.equal(result[0].account.name, 'Chase Checking', 'Then the correct account is returned')
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
+// ═════════════════════════════════════════════════
+// (f) JSON.stringify stability — memoization depends on this
 // ═════════════════════════════════════════════════
 
 test('IRFinancialQuery — JSON.stringify produces stable deterministic output', t => {

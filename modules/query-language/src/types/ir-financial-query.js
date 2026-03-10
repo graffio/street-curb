@@ -28,6 +28,11 @@
  *      grouping   : "IRGrouping?",
  *      domain     : FieldTypes.snapshotDomain,
  *      interval   : FieldTypes.timeSeriesInterval
+ *  AccountQuery
+ *      name       : "String",
+ *      description: "String?",
+ *      filter     : "IRFilter?",
+ *      dateRange  : "IRDateRange?"
  *
  */
 
@@ -49,7 +54,7 @@ const IRFinancialQuery = { toString: () => 'IRFinancialQuery' }
 // Add hidden properties
 Object.defineProperty(IRFinancialQuery, '@@typeName', { value: 'IRFinancialQuery', enumerable: false })
 Object.defineProperty(IRFinancialQuery, '@@tagNames', {
-    value: ['TransactionQuery', 'PositionQuery', 'SnapshotQuery'],
+    value: ['TransactionQuery', 'PositionQuery', 'SnapshotQuery', 'AccountQuery'],
     enumerable: false,
 })
 
@@ -80,6 +85,7 @@ const toString = {
     transactionQuery: function () { return `IRFinancialQuery.TransactionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.computed)})` },
     positionQuery   : function () { return `IRFinancialQuery.PositionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.metrics)}, ${R._toString(this.orderByField)}, ${R._toString(this.orderByDirection)}, ${R._toString(this.limit)})` },
     snapshotQuery   : function () { return `IRFinancialQuery.SnapshotQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.domain)}, ${R._toString(this.interval)})` },
+    accountQuery    : function () { return `IRFinancialQuery.AccountQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -92,6 +98,7 @@ const toJSON = {
     transactionQuery: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     positionQuery   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     snapshotQuery   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    accountQuery    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -214,6 +221,28 @@ const SnapshotQueryConstructor = function SnapshotQuery(
 
 IRFinancialQuery.SnapshotQuery = SnapshotQueryConstructor
 
+/*
+ * Construct a IRFinancialQuery.AccountQuery instance
+ * @sig AccountQuery :: (String, String?, IRFilter?, IRDateRange?) -> IRFinancialQuery.AccountQuery
+ */
+const AccountQueryConstructor = function AccountQuery(name, description, filter, dateRange) {
+    const constructorName = 'IRFinancialQuery.AccountQuery(name, description, filter, dateRange)'
+
+    R.validateString(constructorName, 'name', false, name)
+    R.validateString(constructorName, 'description', true, description)
+    R.validateTag(constructorName, 'IRFilter', 'filter', true, filter)
+    R.validateTag(constructorName, 'IRDateRange', 'dateRange', true, dateRange)
+
+    const result = Object.create(AccountQueryPrototype)
+    result.name = name
+    if (description !== undefined) result.description = description
+    if (filter !== undefined) result.filter = filter
+    if (dateRange !== undefined) result.dateRange = dateRange
+    return result
+}
+
+IRFinancialQuery.AccountQuery = AccountQueryConstructor
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
@@ -243,24 +272,35 @@ const SnapshotQueryPrototype = Object.create(IRFinancialQueryPrototype, {
     constructor: { value: SnapshotQueryConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const AccountQueryPrototype = Object.create(IRFinancialQueryPrototype, {
+    '@@tagName': { value: 'AccountQuery', enumerable: false },
+    '@@typeName': { value: 'IRFinancialQuery', enumerable: false },
+    toString: { value: toString.accountQuery, enumerable: false },
+    toJSON: { value: toJSON.accountQuery, enumerable: false },
+    constructor: { value: AccountQueryConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 TransactionQueryConstructor.prototype = TransactionQueryPrototype
 PositionQueryConstructor.prototype = PositionQueryPrototype
 SnapshotQueryConstructor.prototype = SnapshotQueryPrototype
+AccountQueryConstructor.prototype = AccountQueryPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
 TransactionQueryConstructor.is = val => val && val.constructor === TransactionQueryConstructor
 PositionQueryConstructor.is = val => val && val.constructor === PositionQueryConstructor
 SnapshotQueryConstructor.is = val => val && val.constructor === SnapshotQueryConstructor
+AccountQueryConstructor.is = val => val && val.constructor === AccountQueryConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
 TransactionQueryConstructor.toString = () => 'IRFinancialQuery.TransactionQuery'
 PositionQueryConstructor.toString = () => 'IRFinancialQuery.PositionQuery'
 SnapshotQueryConstructor.toString = () => 'IRFinancialQuery.SnapshotQuery'
+AccountQueryConstructor.toString = () => 'IRFinancialQuery.AccountQuery'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
@@ -286,12 +326,17 @@ SnapshotQueryConstructor._from = _input => {
     const { name, description, filter, dateRange, grouping, domain, interval } = _input
     return IRFinancialQuery.SnapshotQuery(name, description, filter, dateRange, grouping, domain, interval)
 }
+AccountQueryConstructor._from = _input => {
+    const { name, description, filter, dateRange } = _input
+    return IRFinancialQuery.AccountQuery(name, description, filter, dateRange)
+}
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
 TransactionQueryConstructor.from = TransactionQueryConstructor._from
 PositionQueryConstructor.from = PositionQueryConstructor._from
 SnapshotQueryConstructor.from = SnapshotQueryConstructor._from
+AccountQueryConstructor.from = AccountQueryConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
 
@@ -300,10 +345,15 @@ SnapshotQueryConstructor.from = SnapshotQueryConstructor._from
  * @sig is :: Any -> Boolean
  */
 IRFinancialQuery.is = v => {
-    const { TransactionQuery, PositionQuery, SnapshotQuery } = IRFinancialQuery
+    const { TransactionQuery, PositionQuery, SnapshotQuery, AccountQuery } = IRFinancialQuery
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
-    return constructor === TransactionQuery || constructor === PositionQuery || constructor === SnapshotQuery
+    return (
+        constructor === TransactionQuery ||
+        constructor === PositionQuery ||
+        constructor === SnapshotQuery ||
+        constructor === AccountQuery
+    )
 }
 
 IRFinancialQuery.fromJSON = json => {
