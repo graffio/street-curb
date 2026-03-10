@@ -5,12 +5,12 @@ import { test } from 'tap'
 import { LookupTable, reduce } from '@graffio/functional'
 import { Account, Category, Lot, LotAllocation, Price, Security, Transaction } from '../../src/types/index.js'
 import {
-    ComputedRow,
     FinancialQuery,
+    IRComputedRow,
     IRDateRange,
     IRFilter,
     IRGrouping,
-    PivotExpression,
+    IRPivotExpression,
 } from '../../src/query-language/types/index.js'
 import { runFinancialQuery } from '../../src/query-language/run-financial-query.js'
 
@@ -152,12 +152,12 @@ const SEEDS = {
         undefined,
         IRGrouping('category', 'year'),
         [
-            ComputedRow(
+            IRComputedRow(
                 'Housing % of Income',
-                PivotExpression.Binary(
+                IRPivotExpression.Binary(
                     '/',
-                    PivotExpression.RowRef('Housing'),
-                    PivotExpression.Binary('*', PivotExpression.RowRef('Income'), PivotExpression.Literal(-1)),
+                    IRPivotExpression.RowRef('Housing'),
+                    IRPivotExpression.Binary('*', IRPivotExpression.RowRef('Income'), IRPivotExpression.Literal(-1)),
                 ),
             ),
         ],
@@ -323,7 +323,7 @@ test('spending_over_time — SnapshotQuery with category grouping', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (h) category_by_year — Pivot with ComputedRow
+// (h) category_by_year — Pivot with IRComputedRow
 // ═════════════════════════════════════════════════
 
 test('category_by_year — 2D tree with computed row', t => {

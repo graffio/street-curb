@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for FinancialQuery
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/financial-query.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-financial-query.type.js - do not edit manually
 
-/*  FinancialQuery generated from: modules/quicken-web-app/type-definitions/ir/financial-query.type.js
+/*  FinancialQuery generated from: modules/quicken-web-app/type-definitions/ir/ir-financial-query.type.js
  *
  *  TransactionQuery
  *      name       : "String",
@@ -9,7 +9,7 @@
  *      filter     : "IRFilter?",
  *      dateRange  : "IRDateRange?",
  *      grouping   : "IRGrouping",
- *      computed   : "[ComputedRow]?"
+ *      computed   : "[IRComputedRow]?"
  *  PositionQuery
  *      name            : "String",
  *      description     : "String?",
@@ -37,7 +37,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { IRFilter } from './ir-filter.js'
 import { IRDateRange } from './ir-date-range.js'
 import { IRGrouping } from './ir-grouping.js'
-import { ComputedRow } from './computed-row.js'
+import { IRComputedRow } from './ir-computed-row.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -102,7 +102,7 @@ const toJSON = {
 
 /*
  * Construct a FinancialQuery.TransactionQuery instance
- * @sig TransactionQuery :: (String, String?, IRFilter?, IRDateRange?, IRGrouping, [ComputedRow]?) -> FinancialQuery.TransactionQuery
+ * @sig TransactionQuery :: (String, String?, IRFilter?, IRDateRange?, IRGrouping, [IRComputedRow]?) -> FinancialQuery.TransactionQuery
  */
 const TransactionQueryConstructor = function TransactionQuery(
     name,
@@ -119,7 +119,7 @@ const TransactionQueryConstructor = function TransactionQuery(
     R.validateTag(constructorName, 'IRFilter', 'filter', true, filter)
     R.validateTag(constructorName, 'IRDateRange', 'dateRange', true, dateRange)
     R.validateTag(constructorName, 'IRGrouping', 'grouping', false, grouping)
-    R.validateArray(constructorName, 1, 'Tagged', 'ComputedRow', 'computed', true, computed)
+    R.validateArray(constructorName, 1, 'Tagged', 'IRComputedRow', 'computed', true, computed)
 
     const result = Object.create(TransactionQueryPrototype)
     result.name = name

@@ -1,17 +1,17 @@
-// ABOUTME: Generated type definition for ComputedRow
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/computed-row.type.js - do not edit manually
+// ABOUTME: Generated type definition for IRComputedRow
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir/ir-computed-row.type.js - do not edit manually
 
-/** {@link module:ComputedRow} */
-/*  ComputedRow generated from: modules/quicken-web-app/type-definitions/ir/computed-row.type.js
+/** {@link module:IRComputedRow} */
+/*  IRComputedRow generated from: modules/quicken-web-app/type-definitions/ir/ir-computed-row.type.js
  *
  *  name      : "String",
- *  expression: "PivotExpression"
+ *  expression: "IRPivotExpression"
  *
  */
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
-import { PivotExpression } from './pivot-expression.js'
+import { IRPivotExpression } from './ir-pivot-expression.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -20,14 +20,14 @@ import { PivotExpression } from './pivot-expression.js'
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a ComputedRow instance
- * @sig ComputedRow :: (String, PivotExpression) -> ComputedRow
+ * Construct a IRComputedRow instance
+ * @sig IRComputedRow :: (String, IRPivotExpression) -> IRComputedRow
  */
-const ComputedRow = function ComputedRow(name, expression) {
-    const constructorName = 'ComputedRow(name, expression)'
+const IRComputedRow = function IRComputedRow(name, expression) {
+    const constructorName = 'IRComputedRow(name, expression)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateString(constructorName, 'name', false, name)
-    R.validateTag(constructorName, 'PivotExpression', 'expression', false, expression)
+    R.validateTag(constructorName, 'IRPivotExpression', 'expression', false, expression)
 
     const result = Object.create(prototype)
     result.name = name
@@ -43,17 +43,17 @@ const ComputedRow = function ComputedRow(name, expression) {
 
 /**
  * Convert to string representation
- * @sig computedrowToString :: () -> String
+ * @sig ircomputedrowToString :: () -> String
  */
-const computedrowToString = function () {
-    return `ComputedRow(${R._toString(this.name)}, ${R._toString(this.expression)})`
+const ircomputedrowToString = function () {
+    return `IRComputedRow(${R._toString(this.name)}, ${R._toString(this.expression)})`
 }
 
 /*
  * Convert to JSON representation
- * @sig computedrowToJSON :: () -> Object
+ * @sig ircomputedrowToJSON :: () -> Object
  */
-const computedrowToJSON = function () {
+const ircomputedrowToJSON = function () {
     return this
 }
 
@@ -63,24 +63,24 @@ const computedrowToJSON = function () {
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
-    '@@typeName': { value: 'ComputedRow', enumerable: false },
-    toString: { value: computedrowToString, enumerable: false },
-    toJSON: { value: computedrowToJSON, enumerable: false },
-    constructor: { value: ComputedRow, enumerable: false, writable: true, configurable: true },
+    '@@typeName': { value: 'IRComputedRow', enumerable: false },
+    toString: { value: ircomputedrowToString, enumerable: false },
+    toJSON: { value: ircomputedrowToJSON, enumerable: false },
+    constructor: { value: IRComputedRow, enumerable: false, writable: true, configurable: true },
 })
 
-ComputedRow.prototype = prototype
+IRComputedRow.prototype = prototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // static methods
 //
 // -------------------------------------------------------------------------------------------------------------
-ComputedRow.toString = () => 'ComputedRow'
-ComputedRow.is = v => v && v['@@typeName'] === 'ComputedRow'
+IRComputedRow.toString = () => 'IRComputedRow'
+IRComputedRow.is = v => v && v['@@typeName'] === 'IRComputedRow'
 
-ComputedRow._from = _input => ComputedRow(_input.name, _input.expression)
-ComputedRow.from = ComputedRow._from
+IRComputedRow._from = _input => IRComputedRow(_input.name, _input.expression)
+IRComputedRow.from = IRComputedRow._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -88,4 +88,4 @@ ComputedRow.from = ComputedRow._from
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { ComputedRow }
+export { IRComputedRow }

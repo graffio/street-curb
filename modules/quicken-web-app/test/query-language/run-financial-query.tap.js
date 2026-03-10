@@ -2,12 +2,12 @@ import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'
 import { Account, Category, Lot, LotAllocation, Price, Security, Transaction } from '../../src/types/index.js'
 import {
-    ComputedRow,
     FinancialQuery,
+    IRComputedRow,
     IRDateRange,
     IRFilter,
     IRGrouping,
-    PivotExpression,
+    IRPivotExpression,
 } from '../../src/query-language/types/index.js'
 import { runFinancialQuery } from '../../src/query-language/run-financial-query.js'
 
@@ -108,19 +108,23 @@ test('TransactionQuery — category grouping with filter', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (b) TransactionQuery — pivot grouping with ComputedRow
+// (b) TransactionQuery — pivot grouping with IRComputedRow
 // ═════════════════════════════════════════════════
 
 test('TransactionQuery — pivot with computed rows', t => {
     t.test('Given a pivot query grouping by category rows and quarter columns', t => {
         t.test('When executing with a housing-%-of-income computed row', t => {
             const computed = [
-                ComputedRow(
+                IRComputedRow(
                     'Housing % of Income',
-                    PivotExpression.Binary(
+                    IRPivotExpression.Binary(
                         '/',
-                        PivotExpression.RowRef('Housing'),
-                        PivotExpression.Binary('*', PivotExpression.RowRef('Income'), PivotExpression.Literal(-1)),
+                        IRPivotExpression.RowRef('Housing'),
+                        IRPivotExpression.Binary(
+                            '*',
+                            IRPivotExpression.RowRef('Income'),
+                            IRPivotExpression.Literal(-1),
+                        ),
                     ),
                 ),
             ]
@@ -142,7 +146,7 @@ test('TransactionQuery — pivot with computed rows', t => {
             t.ok(food, 'Then Food group exists in tree')
             t.ok(food.aggregate.columns, 'Then Food has per-column values')
 
-            // ComputedRow evaluation produces per-column ratios
+            // IRComputedRow evaluation produces per-column ratios
             t.ok(result.computed !== undefined, 'Then result has computed rows')
             t.ok(result.computed['Housing % of Income'] !== undefined, 'Then housing ratio computed row exists')
             t.end()

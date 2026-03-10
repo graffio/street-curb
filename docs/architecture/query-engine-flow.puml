@@ -1,4 +1,4 @@
-@startuml "Data Flow"
+@startuml "Query Engine Data Flow"
 
 skinparam componentStyle rectangle
 skinparam defaultTextAlignment center
@@ -24,8 +24,8 @@ package "SnapshotQuery" {
     component "CategoryTreeNode tree\ncolumns = date points (cumulative)\n---\nWithout grouping:\n  single total per date point\n\nWith grouping:\n  Food: Jan -$800  Feb -$1.6k\n  Housing: Jan -$1.5k  Feb -$3k" as Snap
 }
 
-package "One Page" {
-    component "TreePage\n---\nRenders any tree with N value columns.\nExpand/collapse always.\nOptional chart when columns are dates." as TreePage
+package "Unified Page" {
+    component "QueryResultPage\n---\nRenders any tree with N value columns.\nExpand/collapse always.\nOptional chart when metadata.chart is true." as QRP
 }
 
 Claude --> Merge : FinancialQuery IR
@@ -37,8 +37,8 @@ RFQ --> TxnTree
 RFQ --> PTree
 RFQ --> Snap
 
-TxnTree --> TreePage
-PTree --> TreePage
-Snap --> TreePage : "chart opt-in\nwhen columns\nare dates"
+TxnTree --> QRP
+PTree --> QRP
+Snap --> QRP : "chart opt-in\nvia metadata.chart"
 
 @enduml

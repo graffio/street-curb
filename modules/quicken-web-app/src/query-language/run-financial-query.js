@@ -154,16 +154,16 @@ const A = {
     },
 
     // Evaluate all computed rows against cells for a single column
-    // @sig collectComputedColumn :: (Object, [ComputedRow], Object, String) -> Object
+    // @sig collectComputedColumn :: (Object, [IRComputedRow], Object, String) -> Object
     collectComputedColumn: (acc, computed, grid, col) =>
         reduce(
-            (colAcc, cr) => ({ ...colAcc, [cr.name]: A.evaluatePivotExpression(cr.expression, grid, col) }),
+            (colAcc, cr) => ({ ...colAcc, [cr.name]: A.evaluateIRPivotExpression(cr.expression, grid, col) }),
             acc,
             computed,
         ),
 
     // Reshape computed results from column-keyed to name-keyed for a single row
-    // @sig collectComputedByName :: (Object, ComputedRow, [String], Object) -> Object
+    // @sig collectComputedByName :: (Object, IRComputedRow, [String], Object) -> Object
     collectComputedByName: (acc, cr, columns, computedResults) => ({
         ...acc,
         [cr.name]: reduce((inner, col) => ({ ...inner, [col]: computedResults[col][cr.name] }), {}, columns),
@@ -187,18 +187,18 @@ const A = {
         return row[column]
     },
 
-    // Evaluate a Binary PivotExpression by recursing into left and right
+    // Evaluate a Binary IRPivotExpression by recursing into left and right
     // @sig evaluateBinaryExpr :: (Object, Object, String) -> Number
     evaluateBinaryExpr: ({ op, left, right }, cells, column) =>
         A.evaluateBinaryOp(
             op,
-            A.evaluatePivotExpression(left, cells, column),
-            A.evaluatePivotExpression(right, cells, column),
+            A.evaluateIRPivotExpression(left, cells, column),
+            A.evaluateIRPivotExpression(right, cells, column),
         ),
 
-    // Recursively evaluate a PivotExpression AST against a cells grid for one column
-    // @sig evaluatePivotExpression :: (PivotExpression, Object, String) -> Number
-    evaluatePivotExpression: (expr, cells, column) =>
+    // Recursively evaluate a IRPivotExpression AST against a cells grid for one column
+    // @sig evaluateIRPivotExpression :: (IRPivotExpression, Object, String) -> Number
+    evaluateIRPivotExpression: (expr, cells, column) =>
         expr.match({
             RowRef: ({ name }) => A.evaluateRowRef(cells, name, column),
             Literal: ({ value }) => value,
@@ -303,13 +303,13 @@ const A = {
         return sort((a, b) => (a < b ? -1 : a > b ? 1 : 0), Array.from(keySet))
     },
 
-    // Build a flat cells lookup from top-level tree nodes for ComputedRow evaluation
+    // Build a flat cells lookup from top-level tree nodes for IRComputedRow evaluation
     // @sig collectCellsFromTree :: [CategoryTreeNode] -> Object
     collectCellsFromTree: nodes =>
         reduce((acc, node) => ({ ...acc, [node.id]: node.aggregate.columns || {} }), {}, nodes),
 
-    // Evaluate all ComputedRow expressions against a cells grid, returning {name: {col: value}}
-    // @sig collectComputedFromCells :: ([ComputedRow], Object, [String]) -> Object
+    // Evaluate all IRComputedRow expressions against a cells grid, returning {name: {col: value}}
+    // @sig collectComputedFromCells :: ([IRComputedRow], Object, [String]) -> Object
     collectComputedFromCells: (computed, cells, columns) => {
         const perColumn = reduce(
             (acc, col) => ({ ...acc, [col]: A.collectComputedColumn({}, computed, cells, col) }),

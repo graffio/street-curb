@@ -9,12 +9,12 @@ import { DateFilterChip } from '../components/filter-chips/DateFilterChip.jsx'
 import { GroupByFilterChip } from '../components/filter-chips/GroupByFilterChip.jsx'
 import { SearchFilterChip } from '../components/filter-chips/SearchFilterChip.jsx'
 import {
-    ComputedRow,
     FinancialQuery,
+    IRComputedRow,
     IRDateRange,
     IRFilter,
     IRGrouping,
-    PivotExpression,
+    IRPivotExpression,
 } from '../query-language/types/index.js'
 import * as S from '../store/selectors.js'
 
@@ -102,7 +102,7 @@ const SEED_QUERIES = {
     exclude_transfers:    FinancialQuery.TransactionQuery('exclude_transfers', undefined, IRFilter.Not(IRFilter.Equals('category', 'Transfer')), undefined, IRGrouping('category')),
     payee_pattern:        FinancialQuery.TransactionQuery('payee_pattern', undefined, IRFilter.Matches('payee', '^Pac'), undefined, IRGrouping('category')),
     amount_range:         FinancialQuery.TransactionQuery('amount_range', undefined, IRFilter.Between('amount', -1000, -100), undefined, IRGrouping('category')),
-    category_by_year:     FinancialQuery.TransactionQuery('category_by_year', 'Spending by category per year', undefined, undefined, IRGrouping('category', 'year'), [ComputedRow('Food % of Income', PivotExpression.Binary('/', PivotExpression.RowRef('Food'), PivotExpression.Binary('*', PivotExpression.RowRef('Income'), PivotExpression.Literal(-1))))]),
+    category_by_year:     FinancialQuery.TransactionQuery('category_by_year', 'Spending by category per year', undefined, undefined, IRGrouping('category', 'year'), [IRComputedRow('Food % of Income', IRPivotExpression.Binary('/', IRPivotExpression.RowRef('Food'), IRPivotExpression.Binary('*', IRPivotExpression.RowRef('Income'), IRPivotExpression.Literal(-1))))]),
     net_worth:            FinancialQuery.SnapshotQuery('net_worth', 'Net worth over time', 'balances', undefined, undefined, IRDateRange.Year(2025), 'monthly'),
     spending_over_time:   FinancialQuery.SnapshotQuery('spending_over_time', 'Spending by category over time', 'balances', undefined, IRGrouping('category'), IRDateRange.Year(2025), 'monthly'),
 }

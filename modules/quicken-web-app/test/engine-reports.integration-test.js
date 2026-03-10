@@ -277,7 +277,7 @@ tap.test('TransactionQuery/Identity+And+In: Food at Select Accounts filters corr
 
 // ═════════════════════════════════════════════════════════════════════════════
 // TransactionQuery → Pivot (Category by Year)
-// Variant: TransactionQuery with IRGrouping('category', 'year') + ComputedRow
+// Variant: TransactionQuery with IRGrouping('category', 'year') + IRComputedRow
 // ═════════════════════════════════════════════════════════════════════════════
 
 tap.test('TransactionQuery/Pivot: category rows with correct totals and computed row', async t => {
