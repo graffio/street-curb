@@ -20,7 +20,7 @@ import {
     buildPositionsTree,
     toFinancialQueryDescription,
     runFinancialQuery,
-    MergeChipFilters,
+    applyChipFilters,
 } from '@graffio/query-language'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter, View } from '../types/index.js'
 
@@ -452,7 +452,7 @@ const ENGINE_STATE_KEYS = ['accounts', 'categories', 'transactions', 'securities
 const _queryResult = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return undefined
-    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
 
     return runFinancialQuery(mergedIR, state)
 }
@@ -462,7 +462,7 @@ const _queryResult = (state, viewId, fallbackIR) => {
 const _queryDescription = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return ''
-    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
     return toFinancialQueryDescription(mergedIR)
 }
 

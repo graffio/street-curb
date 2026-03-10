@@ -10,7 +10,7 @@
 // Engine
 export { runFinancialQuery } from './src/run-financial-query.js'
 export { toFinancialQueryDescription } from './src/to-financial-query-description.js'
-export { MergeChipFilters } from './src/merge-chip-filters.js'
+export { applyChipFilters } from './src/apply-chip-filters.js'
 export { buildFilterPredicate } from './src/build-filter-predicate.js'
 export { CategoryTree } from './src/category-tree.js'
 
