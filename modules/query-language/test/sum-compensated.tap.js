@@ -2,7 +2,7 @@
 // ABOUTME: Verifies sumCompensated eliminates floating-point accumulation drift
 
 import t from 'tap'
-import { sumCompensated } from '../src/sum-compensated.js'
+import { sumCompensated } from '@graffio/functional'
 
 t.test('sumCompensated', t => {
     t.test('Given an empty array', t => {

@@ -7,6 +7,7 @@ import {
     convertSlashToIso,
     dateToDateParts,
     formatDateString,
+    sumCompensated,
 } from '@graffio/functional'
 import { FieldTypes } from '../field-types.js'
 
@@ -249,21 +250,21 @@ Transaction.findEarliest = transactions => {
 
 // Sum of all transaction amounts
 // @sig currentBalance :: [Transaction] -> Number
-Transaction.currentBalance = transactions => transactions.reduce((sum, txn) => sum + txn.amount, 0)
+Transaction.currentBalance = transactions => sumCompensated(transactions.map(txn => txn.amount))
 
 // Sum of transactions on or before date (inclusive)
 // Date comparison uses ISO string format (lexicographic = chronological)
 // @sig balanceAsOf :: (String, [Transaction]) -> Number
 Transaction.balanceAsOf = (isoDate, transactions) =>
-    transactions.filter(txn => txn.date <= isoDate).reduce((sum, txn) => sum + txn.amount, 0)
+    sumCompensated(transactions.filter(txn => txn.date <= isoDate).map(txn => txn.amount))
 
 // Breakdown by cleared status
 // @sig balanceBreakdown :: [Transaction] -> { cleared: Number, uncleared: Number, total: Number }
 Transaction.balanceBreakdown = transactions => {
-    const cleared = transactions
-        .filter(txn => txn.cleared === 'R' || txn.cleared === 'c')
-        .reduce((sum, txn) => sum + txn.amount, 0)
-    const total = transactions.reduce((sum, txn) => sum + txn.amount, 0)
+    const cleared = sumCompensated(
+        transactions.filter(txn => txn.cleared === 'R' || txn.cleared === 'c').map(txn => txn.amount),
+    )
+    const total = sumCompensated(transactions.map(txn => txn.amount))
     return { cleared, uncleared: total - cleared, total }
 }
 

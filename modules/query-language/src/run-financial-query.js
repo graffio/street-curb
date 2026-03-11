@@ -1,7 +1,7 @@
 // ABOUTME: Executes an IRFinancialQuery IR against Redux state via 3-way .match() dispatch
 // ABOUTME: Returns {nodes, source, columns?, computed?} for all query types; {snapshots} only for positions domain
 
-import { filter, find, iterate, map, reduce, sort } from '@graffio/functional'
+import { filter, find, iterate, map, reduce, sort, sumCompensated, compactMap } from '@graffio/functional'
 import { buildPositionsTree } from './financial-computations/build-positions-tree.js'
 import { computePositions } from './financial-computations/compute-positions.js'
 import { MetricRegistry } from './financial-computations/metric-registry.js'
@@ -281,14 +281,14 @@ const A = {
     // @sig collectBalanceSnapshot :: (String, [Object], Set, [String], State) -> { date: String, total: Number }
     collectBalanceSnapshot: (date, filtered, investmentAccountIds, investmentAccountIdsInScope, state) => {
         const isCashTransaction = ({ date: d, accountId }) => d <= date && !investmentAccountIds.has(accountId)
-        const cashTotal = reduce((sum, t) => (isCashTransaction(t) ? sum + t.amount : sum), 0, filtered)
+        const cashTotal = sumCompensated(compactMap(t => (isCashTransaction(t) ? t.amount : undefined), filtered))
         const positions = computePositions({
             ...state,
             asOfDate: date,
             selectedAccountIds: investmentAccountIdsInScope,
             filterQuery: undefined,
         })
-        const investmentTotal = reduce((sum, p) => sum + p.marketValue, 0, positions)
+        const investmentTotal = sumCompensated(map(p => p.marketValue, positions))
         return { date, total: cashTotal + investmentTotal }
     },
 

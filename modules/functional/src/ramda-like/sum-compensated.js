@@ -1,8 +1,6 @@
 // ABOUTME: Kahan compensated summation for float64 arrays
 // ABOUTME: Eliminates accumulation drift that causes ~1 cent errors in financial sums
 
-import { reduce } from '@graffio/functional'
-
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Transformers
@@ -33,8 +31,8 @@ const T = {
  * @sig [Number] -> Number
  */
 const sumCompensated = values => {
-    const { sum } = reduce(T.toNextAccumulation, { sum: 0, compensation: 0 }, values)
+    const { sum } = values.reduce(T.toNextAccumulation, { sum: 0, compensation: 0 })
     return sum
 }
 
-export { sumCompensated }
+export default sumCompensated

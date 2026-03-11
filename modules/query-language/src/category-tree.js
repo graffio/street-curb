@@ -1,7 +1,15 @@
 // ABOUTME: Transaction tree building utility for spending reports
 // ABOUTME: Composes groupBy -> buildTree -> aggregateTree -> toGroupNode for hierarchical display by dimension
 
-import { groupBy as groupByFn, buildTree, aggregateTree } from '@graffio/functional'
+import {
+    groupBy as groupByFn,
+    buildTree,
+    aggregateTree,
+    map,
+    compactMap,
+    pushToKey,
+    sumCompensated,
+} from '@graffio/functional'
 import { CategoryAggregate } from './types/category-aggregate.js'
 import { CategoryTreeNode } from './types/category-tree-node.js'
 
@@ -64,7 +72,7 @@ const T = {
     // @sig toOthersGroup :: (String, [Transaction]) -> CategoryTreeNode.Group
     toOthersGroup: (parentKey, transactions) => {
         const nodes = transactions.map(T.toTransactionNode)
-        const total = transactions.reduce((sum, t) => sum + t.amount, 0)
+        const total = sumCompensated(map(t => t.amount, transactions))
         return CategoryTreeNode.Group(`${parentKey}:<Others>`, nodes, CategoryAggregate(total, transactions.length))
     },
 
@@ -95,7 +103,8 @@ const F = {
     // Produces an aggregation function that computes cumulative balances at each date point
     // @sig makeSnapshotAggregator :: [String] -> (([Transaction], [Aggregate]) -> Aggregate)
     makeSnapshotAggregator: datePoints => (transactions, childAggregates) => {
-        const cumulativeAt = date => transactions.reduce((sum, t) => (t.date <= date ? sum + (t.amount ?? 0) : sum), 0)
+        const cumulativeAt = date =>
+            sumCompensated(compactMap(t => (t.date <= date ? (t.amount ?? 0) : undefined), transactions))
         const columns = {}
         datePoints.forEach(date => (columns[date] = cumulativeAt(date)))
         childAggregates.forEach(a => a.columns && F.mergeChildColumns(columns, a.columns))
@@ -107,15 +116,14 @@ const F = {
     // Produces an aggregation function that tracks per-column totals alongside the standard total/count
     // @sig makeColumnAggregator :: (Transaction -> String) -> (([Transaction], [Aggregate]) -> Aggregate)
     makeColumnAggregator: getColumnKey => (transactions, childAggregates) => {
-        const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
-        const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
+        const ownTotal = sumCompensated(map(t => t.amount ?? 0, transactions))
+        const childTotal = sumCompensated(map(a => a.total, childAggregates))
         const ownCount = transactions.length
         const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
-        const columns = {}
-        transactions.forEach(t => {
-            const col = getColumnKey(t)
-            columns[col] = (columns[col] ?? 0) + (t.amount ?? 0)
-        })
+        const columnBuckets = transactions.reduce((acc, t) => pushToKey(acc, getColumnKey(t), t.amount ?? 0), {})
+        const columns = Object.fromEntries(
+            Object.entries(columnBuckets).map(([col, vals]) => [col, sumCompensated(vals)]),
+        )
         childAggregates.forEach(a => a.columns && F.mergeChildColumns(columns, a.columns))
         return { total: ownTotal + childTotal, count: ownCount + childCount, columns }
     },
@@ -147,8 +155,8 @@ const columnKeyExtractors = { year: T.toYearKey, quarter: T.toQuarterKey, month:
 // Default aggregation: sum amounts and count transactions (amount ?? 0 guards undefined for splits/transfers)
 // @sig collectTransactionTotals :: ([Transaction], [Aggregate]) -> Aggregate
 const collectTransactionTotals = (transactions, childAggregates) => {
-    const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
-    const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
+    const ownTotal = sumCompensated(map(t => t.amount ?? 0, transactions))
+    const childTotal = sumCompensated(map(a => a.total, childAggregates))
     const ownCount = transactions.length
     const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
     return { total: ownTotal + childTotal, count: ownCount + childCount }

@@ -67,6 +67,7 @@ import reindent from './src/ramda-like/reindent.js'
 import removeNilValues from './src/ramda-like/remove-nil-values.js'
 import renameKeys from './src/ramda-like/rename-keys.js'
 import sort from './src/ramda-like/sort.js'
+import sumCompensated from './src/ramda-like/sum-compensated.js'
 import splitByKey from './src/ramda-like/split-by-key.js'
 import splitEvery from './src/ramda-like/split-every.js'
 import throttle from './src/ramda-like/throttle.js'
@@ -182,6 +183,7 @@ export {
     removeNilValues,
     renameKeys,
     sort,
+    sumCompensated,
     splitByKey,
     splitEvery,
     throttle,
