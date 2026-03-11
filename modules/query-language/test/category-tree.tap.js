@@ -2,7 +2,7 @@
 // ABOUTME: Verifies groupBy -> buildTree -> aggregateTree pipeline for category reports
 
 import t from 'tap'
-import { groupBy, buildTree, aggregateTree } from '@graffio/functional'
+import { groupBy, buildTree, aggregateTree, sumCompensated } from '@graffio/functional'
 import { CategoryTree } from '../src/category-tree.js'
 
 // Test helper: derive parent from colon-delimited category path
@@ -13,8 +13,8 @@ const getParent = key => {
 
 // Test helper: aggregate function for category spending
 const sumTransactions = (transactions, childAggregates) => {
-    const ownTotal = transactions.reduce((sum, t) => sum + t.amount, 0)
-    const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
+    const ownTotal = sumCompensated(transactions.map(t => t.amount))
+    const childTotal = sumCompensated(childAggregates.map(a => a.total))
     const ownCount = transactions.length
     const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
     return { total: ownTotal + childTotal, count: ownCount + childCount }
