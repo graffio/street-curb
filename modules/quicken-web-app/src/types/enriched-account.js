@@ -12,6 +12,7 @@
  *
  */
 
+import { sumCompensated } from '@graffio/functional'
 import { Transaction } from './transaction.js'
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
@@ -117,8 +118,8 @@ EnrichedAccount.POSITION_BALANCE_TYPES = ['Investment', '401(k)/403(b)']
 
 EnrichedAccount.sumPositionsForAccount = (positions, accountId) => {
     const accountPositions = positions.filter(p => p.accountId === accountId)
-    const balance = accountPositions.reduce((sum, p) => sum + p.marketValue, 0)
-    const dayChange = accountPositions.reduce((sum, p) => sum + p.dayGainLoss, 0)
+    const balance = sumCompensated(accountPositions.map(p => p.marketValue))
+    const dayChange = sumCompensated(accountPositions.map(p => p.dayGainLoss))
     const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : undefined
     return { balance, dayChange, dayChangePct }
 }

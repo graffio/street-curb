@@ -44,6 +44,7 @@ import {
     convertSlashToIso,
     dateToDateParts,
     formatDateString,
+    sumCompensated,
 } from '@graffio/functional'
 import { FieldTypes } from './field-types.js'
 
@@ -498,16 +499,16 @@ Transaction.findEarliest = transactions => {
     }, new Date(transactions[0].date))
 }
 
-Transaction.currentBalance = transactions => transactions.reduce((sum, txn) => sum + txn.amount, 0)
+Transaction.currentBalance = transactions => sumCompensated(transactions.map(txn => txn.amount))
 
 Transaction.balanceAsOf = (isoDate, transactions) =>
-    transactions.filter(txn => txn.date <= isoDate).reduce((sum, txn) => sum + txn.amount, 0)
+    sumCompensated(transactions.filter(txn => txn.date <= isoDate).map(txn => txn.amount))
 
 Transaction.balanceBreakdown = transactions => {
-    const cleared = transactions
-        .filter(txn => txn.cleared === 'R' || txn.cleared === 'c')
-        .reduce((sum, txn) => sum + txn.amount, 0)
-    const total = transactions.reduce((sum, txn) => sum + txn.amount, 0)
+    const cleared = sumCompensated(
+        transactions.filter(txn => txn.cleared === 'R' || txn.cleared === 'c').map(txn => txn.amount),
+    )
+    const total = sumCompensated(transactions.map(txn => txn.amount))
     return { cleared, uncleared: total - cleared, total }
 }
 

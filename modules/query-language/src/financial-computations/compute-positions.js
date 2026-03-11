@@ -1,7 +1,7 @@
 // ABOUTME: Computes positions as of a specific date from lots, allocations, prices, and transactions
 // ABOUTME: Aggregates lots, applies allocations, enriches with prices and market values
 
-import { groupBy, LookupTable } from '@graffio/functional'
+import { groupBy, LookupTable, map, sumCompensated } from '@graffio/functional'
 import { Position, Price } from '../types/index.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -40,12 +40,12 @@ const T = {
 
     // Computes remaining quantity after allocations
     // @sig toRemainingQuantity :: (Lot, [LotAllocation]) -> Number
-    toRemainingQuantity: (lot, allocsAsOf) => lot.quantity - allocsAsOf.reduce((sum, a) => sum + a.sharesAllocated, 0),
+    toRemainingQuantity: (lot, allocsAsOf) => lot.quantity - sumCompensated(map(a => a.sharesAllocated, allocsAsOf)),
 
     // Computes remaining cost basis after allocations
     // @sig toRemainingCostBasis :: (Lot, [LotAllocation]) -> Number
     toRemainingCostBasis: (lot, allocsAsOf) =>
-        lot.costBasis - allocsAsOf.reduce((sum, a) => sum + a.costBasisAllocated, 0),
+        lot.costBasis - sumCompensated(map(a => a.costBasisAllocated, allocsAsOf)),
 
     // Creates a grouping key from account and security
     // @sig toLotKey :: Lot -> String

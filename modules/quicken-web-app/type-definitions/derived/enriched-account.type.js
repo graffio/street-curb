@@ -1,5 +1,6 @@
 // ABOUTME: Type definition for EnrichedAccount with balance computation logic
 // ABOUTME: Handles position-based (investment) and transaction-based (bank) balance strategies
+import { sumCompensated } from '@graffio/functional'
 import { Transaction } from './transaction.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -28,8 +29,8 @@ EnrichedAccount.POSITION_BALANCE_TYPES = ['Investment', '401(k)/403(b)']
 // @sig sumPositionsForAccount :: ([Position], String) -> { balance: Number, dayChange: Number, dayChangePct: Number? }
 EnrichedAccount.sumPositionsForAccount = (positions, accountId) => {
     const accountPositions = positions.filter(p => p.accountId === accountId)
-    const balance = accountPositions.reduce((sum, p) => sum + p.marketValue, 0)
-    const dayChange = accountPositions.reduce((sum, p) => sum + p.dayGainLoss, 0)
+    const balance = sumCompensated(accountPositions.map(p => p.marketValue))
+    const dayChange = sumCompensated(accountPositions.map(p => p.dayGainLoss))
     const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : undefined
     return { balance, dayChange, dayChangePct }
 }

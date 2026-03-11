@@ -1,6 +1,8 @@
 // ABOUTME: Computes total dividend income for a position from investment transactions
 // ABOUTME: Pure function — (Position, Context) → Number
 
+import { sumCompensated } from '@graffio/functional'
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Predicates
@@ -45,14 +47,13 @@ const DIVIDEND_ACTIONS = ['Div', 'DivX', 'ReinvDiv', 'ReinvInt', 'ReinvLg', 'Rei
 // @sig computeDividendIncome :: (Position, Context) -> Number
 const computeDividendIncome = (position, context) => {
     const { transactions, dateRange } = context
-    return [...transactions]
-        .filter(
-            txn =>
-                P.isForPosition(txn, position) &&
-                P.isDividendAction(txn.investmentAction) &&
-                P.isInDateRange(txn, dateRange),
-        )
-        .reduce((sum, txn) => sum + Math.abs(txn.amount), 0)
+    const dividends = [...transactions].filter(
+        txn =>
+            P.isForPosition(txn, position) &&
+            P.isDividendAction(txn.investmentAction) &&
+            P.isInDateRange(txn, dateRange),
+    )
+    return sumCompensated(dividends.map(txn => Math.abs(txn.amount)))
 }
 
 export { computeDividendIncome }
