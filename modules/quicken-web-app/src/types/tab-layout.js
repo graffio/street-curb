@@ -96,6 +96,8 @@ TabLayout._from = _input => {
 }
 TabLayout.from = TabLayout._from
 
+TabLayout.fromJSON = json => (json == null ? json : TabLayout._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

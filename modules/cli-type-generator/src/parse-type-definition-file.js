@@ -292,6 +292,7 @@ const findExistingStandardFunctions = functions => {
     const isStandardFunction = functionName => {
         const standardFunctions = [
             'from',
+            'fromJSON',
             'is',
             'toString',
             'toFirestore',

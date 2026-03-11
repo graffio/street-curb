@@ -177,6 +177,15 @@ TypeDefinition.is = v => {
     return constructor === TypeDefinition.Tagged || constructor === TypeDefinition.TaggedSum
 }
 
+TypeDefinition.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`TypeDefinition.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!TypeDefinition['@@tagNames'].includes(tag))
+        throw new TypeError(`TypeDefinition.fromJSON: unknown variant "${tag}"`)
+    return TypeDefinition[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

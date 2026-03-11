@@ -90,6 +90,8 @@ OrganizationMember._fromFirestore = (doc, decodeTimestamps) => OrganizationMembe
 OrganizationMember.toFirestore = OrganizationMember._toFirestore
 OrganizationMember.fromFirestore = OrganizationMember._fromFirestore
 
+OrganizationMember.fromJSON = json => (json == null ? json : OrganizationMember._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

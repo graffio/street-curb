@@ -1,7 +1,7 @@
 // ABOUTME: Field type validators for quicken-web-app
 // ABOUTME: Contains regex patterns for tagged type field validation
 
-const viewIdRegex = /^(reg|rpt|rec|inv|qry)_[a-z0-9_]+$/
+const viewIdRegex = /^(reg|rpt|rec|inv|qry)_[a-zA-Z0-9_]+$/
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -34,6 +34,7 @@ const FieldTypes = {
     sortDirection         : /^(asc|desc)$/,
     timeSeriesInterval    : /^(daily|weekly|monthly|quarterly|yearly)$/,
     snapshotDomain        : /^(balances|positions)$/,
+    metricLevel           : /^(position|aggregate)$/,
 }
 
 export { FieldTypes }

@@ -1,4 +1,4 @@
-// ABOUTME: Unified report page that renders all FinancialQuery result shapes
+// ABOUTME: Unified report page that renders all IRFinancialQuery result shapes
 // ABOUTME: Tree views, pivot tables, and time series charts — driven by metadata constants
 
 import { isNil } from '@graffio/functional'
@@ -142,26 +142,19 @@ const TIME_SERIES_COLUMNS = [
  */
 const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
     // prettier-ignore
-    const { chart, columns, countSelector, defaultQueryIR, filters, getChildRows, getRowCanExpand,
-        hiddenColumnsByGroup, selector } = metadata
-    const result = useSelector(state =>
-        defaultQueryIR ? S.QueryResult.fromIR(state, viewId, defaultQueryIR) : selector(state, viewId),
-    )
-    const countSource = useSelector(state => (countSelector ? countSelector(state, viewId) : undefined))
+    const { chart, columns, baseQueryIR, filters, getChildRows, getRowCanExpand, hiddenColumnsByGroup } = metadata
+    const result = useSelector(state => S.QueryResult.fromIR(state, viewId, baseQueryIR))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
     const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
     const highlightedRowId = useSelector(state => S.UI.highlightedRowId(state, viewId))
-    const queryDescription = useSelector(state =>
-        defaultQueryIR ? S.QueryResult.description(state, viewId, defaultQueryIR) : '',
-    )
+    const queryDescription = useSelector(state => S.QueryResult.description(state, viewId, baseQueryIR))
 
     if (!result) return undefined
 
     const { columns: resultColumns, computed, nodes, snapshots } = result
-    const filteredCount = countSource ? countSource.length : undefined
-    const chipRowProps = { viewId, filteredCount, totalCount: filteredCount, itemLabel: metadata.itemLabel }
+    const chipRowProps = { viewId, itemLabel: metadata.itemLabel }
 
     const chipRow = (
         <FilterChipRow {...chipRowProps}>
@@ -230,7 +223,6 @@ const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
         )
     }
 
-    // Tree result (engine {nodes} shape) or flat array (selector path — CategoryReportPage, InvestmentReportPage)
     const treeData = nodes ?? result
     const treeExtraProps = {
         columns,

@@ -907,7 +907,7 @@ Future architecture decisions are data-driven and support sustainable business g
 ### IR filter tree replaces flat filter list (2026-03-05)
 
 **Context:** IRFilter was a flat list of Equals/In variants. Users need compound conditions (e.g., "dining AND checking account AND over $50") that flat lists cannot express.
-**Decision:** IRFilter becomes a 10-variant boolean tree (7 leaf predicates + And/Or/Not combinators). Each FinancialQuery variant holds an optional single filter root node. Pre-compiled evaluator in `build-filter-predicate.js` converts tree to `entity => Boolean`.
+**Decision:** IRFilter becomes a 10-variant boolean tree (7 leaf predicates + And/Or/Not combinators). Each IRFinancialQuery variant holds an optional single filter root node. Pre-compiled evaluator in `build-filter-predicate.js` converts tree to `entity => Boolean`.
 **Why:** Users describe complex conditions in natural language; Claude constructs the boolean tree. Flat list would need N^2 special-case handling for combinations that the tree handles naturally via recursion.
 
 ### Query IR as single source of truth for engine views (2026-03-05)
@@ -916,10 +916,10 @@ Future architecture decisions are data-driven and support sustainable business g
 **Decision:** `state.queryIR[viewId]` is the authoritative query per view. `QueryResult.fromIR` selector merges chip filter state into IR, executes via engine, memoized with `memoizeReduxStatePerKey`. Components provide fallback IR via metadata; Redux state takes precedence.
 **Why:** IR-as-state keeps the engine in the loop for every change. Chip filter merge happens at selector level — existing chip components dispatch the same actions, no new components needed. Memoization on 7 entity state keys provides cache invalidation without per-field tracking.
 
-### FinancialQuery replaces Query+IRSource+IRDomain+IRComputation (2026-03-07)
+### IRFinancialQuery replaces Query+IRSource+IRDomain+IRComputation (2026-03-07)
 
 **Context:** The old 4-type assembly (Query + IRSource + IRDomain + IRComputation) required constructing 4+ intermediate objects for simple queries. Named sources and IRComputation were pure indirection for the common case.
-**Decision:** FinancialQuery TaggedSum with 6 domain-specific variants (TransactionQuery, PositionQuery, AccountQuery, ExpressionQuery, SnapshotQuery, RunningBalanceQuery). Each variant carries only its domain-relevant fields. Engine dispatches via single `.match()`. IRGrouping replaces groupBy string with pivot support (rows × columns). ComputedRow enables per-column expressions on pivot queries.
+**Decision:** IRFinancialQuery TaggedSum with 6 domain-specific variants (TransactionQuery, PositionQuery, AccountQuery, ExpressionQuery, SnapshotQuery, RunningBalanceQuery). Each variant carries only its domain-relevant fields. Engine dispatches via single `.match()`. IRGrouping replaces groupBy string with pivot support (rows × columns). ComputedRow enables per-column expressions on pivot queries.
 **Why:** Most queries collapse from 4+ constructor calls to 1. New capabilities (pivot tables, time series snapshots, running balances) are first-class variants, not IRComputation hacks. Spikes 8-10 validated the approach with 122 assertions.
 
 ### Page-per-type view dispatch for QueryResult variants (2026-03-07)
@@ -930,8 +930,8 @@ Future architecture decisions are data-driven and support sustainable business g
 
 ### Remove AccountQuery, ExpressionQuery, RunningBalanceQuery (2026-03-09)
 
-**Context:** FinancialQuery had 6 variants but 3 served no real use case. AccountQuery was a thin demo (accounts list). ExpressionQuery was hypothetical (no UI, second AST, recursive depth tracking). RunningBalanceQuery duplicated register page functionality (which has transfer nav, search, keyboard shortcuts).
-**Decision:** Delete all 3 variants and everything downstream: type definitions, engine code (resolve-expression.js, 3 collect* functions), page components (FilteredEntitiesResultPage, RunningBalanceResultPage), seed queries (bank_accounts, running_balance), and related tests. FinancialQuery is now 3 variants: TransactionQuery, PositionQuery, SnapshotQuery.
+**Context:** IRFinancialQuery had 6 variants but 3 served no real use case. AccountQuery was a thin demo (accounts list). ExpressionQuery was hypothetical (no UI, second AST, recursive depth tracking). RunningBalanceQuery duplicated register page functionality (which has transfer nav, search, keyboard shortcuts).
+**Decision:** Delete all 3 variants and everything downstream: type definitions, engine code (resolve-expression.js, 3 collect* functions), page components (FilteredEntitiesResultPage, RunningBalanceResultPage), seed queries (bank_accounts, running_balance), and related tests. IRFinancialQuery is now 3 variants: TransactionQuery, PositionQuery, SnapshotQuery.
 **Why:** Each removed variant added complexity (IRExpression AST, depth limiting, separate page components) for functionality that was either unused or better served by existing UI. TransactionQuery.grouping made required since ungrouped transaction views belong in registers.
 
 ### Unified tree output replaces QueryResult/pivot/snapshot indirection (2026-03-09)
@@ -939,6 +939,30 @@ Future architecture decisions are data-driven and support sustainable business g
 **Context:** QueryResult (6 variants) and QueryResultTree (2 variants) added dispatch layers between engine and UI. Pivot used flat grids (not drillable). Snapshots returned flat [{date, total}] arrays (no grouping support). 5 separate page components.
 **Decision:** Engine returns plain objects directly. All grouping produces CategoryTreeNode trees: 1D trees have {total, count}, 2D trees add {columns: {key: value}} per node with parent rollup. Snapshots produce trees with cumulative date-point columns. One QueryResultPage detects shape by property presence. Deleted QueryResult, QueryResultTree, PivotResultPage, TimeSeriesResultPage, RunningBalanceResultPage, FilteredEntitiesResultPage.
 **Why:** The query type already determines result shape — the intermediate result type was ceremony. Trees are strictly more capable than flat grids (hierarchical + drillable). Property-presence detection is simpler than type dispatch for 3 shapes.
+
+### Generator-emitted fromJSON for Tagged and TaggedSum types (2026-03-10)
+
+**Context:** Consumers constructed IR queries by importing 6 IR types directly. Persisting queries as JSON required hand-written fromJSON in each type definition file.
+**Decision:** `cli-type-generator` emits `fromJSON` static methods automatically. `parseTaggedValue(plain, variantMap)` runtime helper reads `@@tagName` to dispatch. Tagged types revive required fields unconditionally; TaggedSum types guard all fields (variants differ). No global type registry — each generated file imports referenced types directly.
+**Why:** Enables consumers to work with plain JSON instead of IR type imports. Foundation for Claude-generated query persistence. Eliminates hand-written deserialization maintenance.
+
+### AccountQuery variant re-added for sidebar account list (2026-03-10)
+
+**Context:** AccountQuery was deleted in the 2026-03-09 cleanup as "a thin demo." But `_organizedAccounts` selector still imported `computePositions` directly, leaking engine internals through the barrel.
+**Decision:** Re-add AccountQuery as an IRFinancialQuery variant. Engine handles position computation and account enrichment internally, returns `[EnrichedAccount]`. `_organizedAccounts` delegates to `runFinancialQuery(AccountQuery(...))`.
+**Why:** Encapsulates position computation inside the engine. `computePositions` stays in the barrel only for `_positionsAsOf` (separate concern, pending future cleanup).
+
+### MetricDefinition.compute as string reference, not function (2026-03-10)
+
+**Context:** MetricDefinition held a function in its `compute` field (`'Any'` type). Functions can't survive JSON round-trips, blocking query persistence for Claude-generated queries that include metrics.
+**Decision:** Change `compute` to `'String'` — a name that indexes into `COMPUTE_FNS` map in metric-registry.js. `MetricRegistry.resolveMetricFn(name)` performs the lookup at execution time.
+**Why:** MetricDefinition is now fully serializable. The string-to-function indirection is resolved at the last possible moment (engine execution), keeping the IR clean for persistence.
+
+### Barrel trimmed to 1 IR type export via fromJSON (2026-03-10)
+
+**Context:** After building fromJSON, the barrel still exported 6 IR types. Consumers imported all 6 to construct seed queries directly, defeating the module boundary.
+**Decision:** Convert seed queries to JSON literals + `IRFinancialQuery.fromJSON()`. Remove IRFilter, IRGrouping, IRDateRange, IRComputedRow, IRPivotExpression from barrel. Only IRFinancialQuery remains (provides `.fromJSON` entry point and `.match()` dispatch). Add `@@tagNames` whitelist guard to generated fromJSON for fail-fast on unknown variants.
+**Why:** Module boundary is now enforced — internal IR types are not importable. `fromJSON` is the single entry point for query construction from outside the module.
 
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 

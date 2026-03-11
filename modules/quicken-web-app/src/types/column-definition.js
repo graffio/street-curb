@@ -163,6 +163,8 @@ ColumnDefinition._from = _input => {
 }
 ColumnDefinition.from = ColumnDefinition._from
 
+ColumnDefinition.fromJSON = json => (json == null ? json : ColumnDefinition._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

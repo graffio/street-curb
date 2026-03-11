@@ -94,6 +94,8 @@ Tag._from = _input => {
 }
 Tag.from = Tag._from
 
+Tag.fromJSON = json => (json == null ? json : Tag._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

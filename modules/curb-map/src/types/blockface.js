@@ -197,6 +197,8 @@ Blockface._fromFirestore = (doc, decodeTimestamps) =>
 
 // Public aliases (override if necessary)
 
+Blockface.fromJSON = json => (json == null ? json : Blockface._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

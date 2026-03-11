@@ -91,6 +91,8 @@ TableLayout._from = _input => {
 }
 TableLayout.from = TableLayout._from
 
+TableLayout.fromJSON = json => (json == null ? json : TableLayout._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

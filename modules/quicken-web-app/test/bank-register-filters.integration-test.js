@@ -129,9 +129,9 @@ tap.test('bank-filters: custom date filter shows correct filtered count', async 
     session.clickPopoverItem('Custom dates')
     await wait(200)
 
-    // Enter Feb 2024 date range
-    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
-    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+    // Enter Mar 2024 date range
+    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/01/2024')
+    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/31/2024')
 
     session.browser('press', ['Escape'])
     await wait(200)
@@ -156,13 +156,13 @@ tap.test('bank-filters: combined date + category filter shows intersection', asy
     const expected = loadExpected()
     const primaryCount = expected.accounts.find(a => a.name === 'Primary Checking').transactionCount
 
-    // Apply date filter (Custom dates, Feb 2024)
+    // Apply date filter (Custom dates, Mar 2024)
     session.clickByText('Date:')
     await wait(200)
     session.clickPopoverItem('Custom dates')
     await wait(200)
-    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
-    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/01/2024')
+    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/31/2024')
     session.browser('press', ['Escape'])
     await wait(200)
 

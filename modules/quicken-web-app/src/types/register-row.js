@@ -82,6 +82,13 @@ RegisterRow.is = v => v && v['@@typeName'] === 'RegisterRow'
 RegisterRow._from = _input => RegisterRow(_input.transaction, _input.runningBalance)
 RegisterRow.from = RegisterRow._from
 
+RegisterRow.fromJSON = json => {
+    if (json == null) return json
+    const revived = { ...json }
+    revived.transaction = Transaction.fromJSON(revived.transaction)
+    return RegisterRow._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

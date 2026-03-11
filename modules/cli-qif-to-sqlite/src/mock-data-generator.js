@@ -528,10 +528,11 @@ const generateMockData = (seed = 12345) => {
     }
 
     const random = createRng(seed)
-    const endDate = new Date()
-    endDate.setDate(endDate.getDate() - 3)
-    const startDate = new Date(endDate)
-    startDate.setFullYear(startDate.getFullYear() - 2)
+
+    // Pinned to a fixed date so regenerating fixtures produces identical data regardless of when the script runs.
+    // The 2-year window (2024-01-01 to 2025-12-28) covers the date ranges used by integration test assertions.
+    const endDate = new Date(2025, 11, 28)
+    const startDate = new Date(2024, 0, 1)
 
     const { investments, bankTransfers } = generateInvestmentTransactions()
     const bankTransactions = [...generateBankTransactions(), ...bankTransfers].sort((a, b) => a.date - b.date)

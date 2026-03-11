@@ -86,6 +86,8 @@ FunctionInfo._from = _input => {
 }
 FunctionInfo.from = FunctionInfo._from
 
+FunctionInfo.fromJSON = json => (json == null ? json : FunctionInfo._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

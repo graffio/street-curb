@@ -3,7 +3,7 @@ skinparam linetype ortho
 skinparam classAttributeIconSize 0
 hide circle
 
-package "FinancialQuery (TaggedSum: 3 variants)" {
+package "IRFinancialQuery (TaggedSum: 3 variants)" {
     class TransactionQuery {
         name : String
         filter? : IRFilter

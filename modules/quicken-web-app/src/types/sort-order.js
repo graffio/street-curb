@@ -82,6 +82,8 @@ SortOrder.is = v => v && v['@@typeName'] === 'SortOrder'
 SortOrder._from = _input => SortOrder(_input.id, _input.isDescending)
 SortOrder.from = SortOrder._from
 
+SortOrder.fromJSON = json => (json == null ? json : SortOrder._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

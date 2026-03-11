@@ -1,6 +1,7 @@
 // ABOUTME: Static metadata constants that configure QueryResultPage for each report domain
 // ABOUTME: Each constant bundles columns, filters, tree config, and chip row overrides
 
+import { IRFinancialQuery } from '@graffio/query-language'
 import { CategoryReportColumns, InvestmentReportColumns } from '../columns/index.js'
 import { AccountFilterChip } from '../components/filter-chips/AccountFilterChip.jsx'
 import { AsOfDateChip } from '../components/filter-chips/AsOfDateChip.jsx'
@@ -8,15 +9,6 @@ import { CategoryFilterChip } from '../components/filter-chips/CategoryFilterChi
 import { DateFilterChip } from '../components/filter-chips/DateFilterChip.jsx'
 import { GroupByFilterChip } from '../components/filter-chips/GroupByFilterChip.jsx'
 import { SearchFilterChip } from '../components/filter-chips/SearchFilterChip.jsx'
-import {
-    FinancialQuery,
-    IRComputedRow,
-    IRDateRange,
-    IRFilter,
-    IRGrouping,
-    IRPivotExpression,
-} from '../query-language/types/index.js'
-import * as S from '../store/selectors.js'
 
 const { AccountFilterColumn } = AccountFilterChip
 const { AsOfDateColumn } = AsOfDateChip
@@ -32,7 +24,8 @@ const { SearchFilterColumn } = SearchFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
 const TRANSACTION_TREE_METADATA = {
-    selector: S.Transactions.tree,
+    getChildRows: row => row.children,
+    getRowCanExpand: row => row.original.children.length > 0,
     columns: CategoryReportColumns,
     hiddenColumnsByGroup: { account: { account: false }, payee: { payee: false } },
     filters: [
@@ -42,51 +35,13 @@ const TRANSACTION_TREE_METADATA = {
         { component: GroupByFilterColumn },
         { component: SearchFilterColumn },
     ],
-    getChildRows: row => row.children,
-    getRowCanExpand: row => row.original.children.length > 0,
 }
 
 const POSITION_TREE_METADATA = {
-    selector: S.Positions.tree,
-    countSelector: S.Positions.asOf,
-    itemLabel: 'positions',
-    columns: InvestmentReportColumns,
-    filters: [
-        { component: AsOfDateColumn },
-        { component: AccountFilterColumn },
-        { component: GroupByFilterColumn, props: { items: investmentGroupByItems } },
-        { component: SearchFilterColumn },
-    ],
     getChildRows: row => row.children,
     getRowCanExpand: row => row.original.children.length > 0,
-}
-
-const ENGINE_TRANSACTION_FILTERS = [
-    { component: DateFilterColumn },
-    { component: CategoryFilterColumn },
-    { component: AccountFilterColumn },
-    { component: GroupByFilterColumn },
-    { component: SearchFilterColumn },
-]
-
-const ENGINE_TRANSACTION_TREE_METADATA = {
-    ...TRANSACTION_TREE_METADATA,
-    selector: undefined,
-    defaultQueryIR: FinancialQuery.TransactionQuery(
-        'transactions',
-        undefined,
-        undefined,
-        undefined,
-        IRGrouping('category'),
-    ),
-    filters: ENGINE_TRANSACTION_FILTERS,
-}
-
-const ENGINE_POSITION_TREE_METADATA = {
-    ...POSITION_TREE_METADATA,
-    selector: undefined,
-    countSelector: undefined,
-    defaultQueryIR: FinancialQuery.PositionQuery('positions', undefined, undefined, undefined, IRGrouping('account')),
+    columns: InvestmentReportColumns,
+    itemLabel: 'positions',
     filters: [
         { component: AsOfDateColumn },
         { component: AccountFilterColumn },
@@ -95,29 +50,37 @@ const ENGINE_POSITION_TREE_METADATA = {
     ],
 }
 
+// Seed queries as JSON — revived via IRFinancialQuery.fromJSON() to avoid importing IR construction
+// types. The expression tree in categoryByYear is verbose as JSON but structurally necessary.
+const fromJSON = IRFinancialQuery.fromJSON
+
 // prettier-ignore
-const SEED_QUERIES = {
-    large_transactions:   FinancialQuery.TransactionQuery('large_transactions', undefined, IRFilter.LessThan('amount', -500), undefined, IRGrouping('category')),
-    dining_multi_account: FinancialQuery.TransactionQuery('dining_multi_account', undefined, IRFilter.And([IRFilter.Equals('category', 'Food'), IRFilter.In('account', ['Primary Checking', 'Chase Sapphire'])]), undefined, IRGrouping('category')),
-    exclude_transfers:    FinancialQuery.TransactionQuery('exclude_transfers', undefined, IRFilter.Not(IRFilter.Equals('category', 'Transfer')), undefined, IRGrouping('category')),
-    payee_pattern:        FinancialQuery.TransactionQuery('payee_pattern', undefined, IRFilter.Matches('payee', '^Pac'), undefined, IRGrouping('category')),
-    amount_range:         FinancialQuery.TransactionQuery('amount_range', undefined, IRFilter.Between('amount', -1000, -100), undefined, IRGrouping('category')),
-    category_by_year:     FinancialQuery.TransactionQuery('category_by_year', 'Spending by category per year', undefined, undefined, IRGrouping('category', 'year'), [IRComputedRow('Food % of Income', IRPivotExpression.Binary('/', IRPivotExpression.RowRef('Food'), IRPivotExpression.Binary('*', IRPivotExpression.RowRef('Income'), IRPivotExpression.Literal(-1))))]),
-    net_worth:            FinancialQuery.SnapshotQuery('net_worth', 'Net worth over time', 'balances', undefined, undefined, IRDateRange.Year(2025), 'monthly'),
-    spending_over_time:   FinancialQuery.SnapshotQuery('spending_over_time', 'Spending by category over time', 'balances', undefined, IRGrouping('category'), IRDateRange.Year(2025), 'monthly'),
+const BASE_QUERIES = {
+    spending:           fromJSON({ '@@tagName': 'TransactionQuery', name: 'spending',          grouping: { rows: 'category' } }),
+    positions:          fromJSON({ '@@tagName': 'PositionQuery',    name: 'positions',         grouping: { rows: 'account' } }),
+    largeTransactions:  fromJSON({ '@@tagName': 'TransactionQuery', name: 'largeTransactions', grouping: { rows: 'category' }, filter: { '@@tagName': 'LessThan', field: 'amount', value: -500 } }),
+    excludeTransfers:   fromJSON({ '@@tagName': 'TransactionQuery', name: 'excludeTransfers',  grouping: { rows: 'category' }, filter: { '@@tagName': 'Not', filter: { '@@tagName': 'Equals', field: 'category', value: 'Transfer' } } }),
+    amountRange:        fromJSON({ '@@tagName': 'TransactionQuery', name: 'amountRange',       grouping: { rows: 'category' }, filter: { '@@tagName': 'Between', field: 'amount', low: -1000, high: -100 } }),
+    diningMultiAccount: fromJSON({ '@@tagName': 'TransactionQuery', name: 'diningMultiAccount',grouping: { rows: 'category' }, filter: { '@@tagName': 'And', filters: [{ '@@tagName': 'Equals', field: 'category', value: 'Food' }, { '@@tagName': 'In', field: 'account', values: ['Primary Checking', 'Chase Sapphire'] }] } }),
+    payeePattern:       fromJSON({ '@@tagName': 'TransactionQuery', name: 'payeePattern',      grouping: { rows: 'category' }, filter: { '@@tagName': 'Matches', field: 'payee', pattern: '^Pac' } }),
+    categoryByYear:     fromJSON({ '@@tagName': 'TransactionQuery', name: 'categoryByYear',    grouping: { rows: 'category', columns: 'year' }, description: 'Spending by category per year', computed: [{ name: 'Food % of Income', expression: { '@@tagName': 'Binary', op: '/', left: { '@@tagName': 'RowRef', name: 'Food' }, right: { '@@tagName': 'Binary', op: '*', left: { '@@tagName': 'RowRef', name: 'Income' }, right: { '@@tagName': 'Literal', value: -1 } } } }] }),
+    netWorth:           fromJSON({ '@@tagName': 'SnapshotQuery',    name: 'netWorth',          domain: 'balances', dateRange: { '@@tagName': 'Year', year: 2025 }, interval: 'monthly', description: 'Net worth over time' }),
+    spendingOverTime:   fromJSON({ '@@tagName': 'SnapshotQuery',    name: 'spendingOverTime',  domain: 'balances', dateRange: { '@@tagName': 'Year', year: 2025 }, interval: 'monthly', description: 'Spending by category over time', grouping: { rows: 'category' } }),
 }
 
-// Seed query metadata — pre-filtered engine reports demonstrating compound IR filters
+// Report metadata — each key is a reportType that maps to a full QueryResultPage configuration
 // prettier-ignore
-const SEED_QUERY_METADATA = {
-    large_transactions:   { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.large_transactions },
-    exclude_transfers:    { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.exclude_transfers },
-    amount_range:         { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.amount_range },
-    dining_multi_account: { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.dining_multi_account },
-    payee_pattern:        { ...ENGINE_TRANSACTION_TREE_METADATA, defaultQueryIR: SEED_QUERIES.payee_pattern },
-    net_worth:            { chart: true, defaultQueryIR: SEED_QUERIES.net_worth, filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
-    category_by_year:     { defaultQueryIR: SEED_QUERIES.category_by_year, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
-    spending_over_time:   { chart: true, defaultQueryIR: SEED_QUERIES.spending_over_time, filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
+const ReportMetadata = {
+    spending:            { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.spending },
+    positions:           { ...POSITION_TREE_METADATA,    baseQueryIR: BASE_QUERIES.positions },
+    largeTransactions:   { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.largeTransactions },
+    excludeTransfers:    { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.excludeTransfers },
+    amountRange:         { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.amountRange },
+    diningMultiAccount:  { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.diningMultiAccount },
+    payeePattern:        { ...TRANSACTION_TREE_METADATA, baseQueryIR: BASE_QUERIES.payeePattern },
+    categoryByYear:      {                               baseQueryIR: BASE_QUERIES.categoryByYear,    filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }, { component: SearchFilterColumn }] },
+    netWorth:            { chart: true,                  baseQueryIR: BASE_QUERIES.netWorth,          filters: [{ component: DateFilterColumn }, { component: AccountFilterColumn }] },
+    spendingOverTime:    { chart: true,                  baseQueryIR: BASE_QUERIES.spendingOverTime,  filters: [{ component: DateFilterColumn }, { component: CategoryFilterColumn }, { component: AccountFilterColumn }] },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -125,12 +88,5 @@ const SEED_QUERY_METADATA = {
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
-
-// prettier-ignore
-const ReportMetadata = {
-    TRANSACTION_TREE_METADATA, POSITION_TREE_METADATA,
-    ENGINE_TRANSACTION_TREE_METADATA, ENGINE_POSITION_TREE_METADATA,
-    SEED_QUERIES, SEED_QUERY_METADATA,
-}
 
 export { ReportMetadata }

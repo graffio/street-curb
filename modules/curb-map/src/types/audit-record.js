@@ -220,6 +220,13 @@ AuditRecord._fromFirestore = (doc, decodeTimestamps) =>
 AuditRecord.toFirestore = AuditRecord._toFirestore
 AuditRecord.fromFirestore = AuditRecord._fromFirestore
 
+AuditRecord.fromJSON = json => {
+    if (json == null) return json
+    const revived = { ...json }
+    revived.operationDetails = OperationDetails.fromJSON(revived.operationDetails)
+    return AuditRecord._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

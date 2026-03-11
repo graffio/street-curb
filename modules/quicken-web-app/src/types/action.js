@@ -1682,6 +1682,18 @@ Action.is = v => {
     )
 }
 
+Action.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`Action.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!Action['@@tagNames'].includes(tag)) throw new TypeError(`Action.fromJSON: unknown variant "${tag}"`)
+    const revived = { ...json }
+    if (revived.tableLayout) revived.tableLayout = TableLayout.fromJSON(revived.tableLayout)
+    if (revived.view) revived.view = View.fromJSON(revived.view)
+    if (revived.sortMode) revived.sortMode = SortMode.fromJSON(revived.sortMode)
+    return Action[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

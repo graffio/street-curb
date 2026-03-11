@@ -100,6 +100,8 @@ Violation._from = _input => {
 }
 Violation.from = Violation._from
 
+Violation.fromJSON = json => (json == null ? json : Violation._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

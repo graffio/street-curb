@@ -182,6 +182,8 @@ TransactionFilter._from = _input => {
 }
 TransactionFilter.from = TransactionFilter._from
 
+TransactionFilter.fromJSON = json => (json == null ? json : TransactionFilter._from(json))
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

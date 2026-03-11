@@ -1115,6 +1115,20 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
 Action.toFirestore = Action._toFirestore
 Action.fromFirestore = Action._fromFirestore
 
+Action.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`Action.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!Action['@@tagNames'].includes(tag)) throw new TypeError(`Action.fromJSON: unknown variant "${tag}"`)
+    const revived = { ...json }
+    if (revived.user) revived.user = User.fromJSON(revived.user)
+    if (revived.organization) revived.organization = Organization.fromJSON(revived.organization)
+    if (revived.blockfaces) revived.blockfaces = revived.blockfaces.map(item => Blockface.fromJSON(item))
+    if (revived.blockface) revived.blockface = Blockface.fromJSON(revived.blockface)
+    if (revived.segments) revived.segments = revived.segments.map(item => Segment.fromJSON(item))
+    return Action[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

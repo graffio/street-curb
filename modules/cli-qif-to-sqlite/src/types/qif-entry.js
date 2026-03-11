@@ -672,6 +672,16 @@ QifEntry.is = v => {
     )
 }
 
+QifEntry.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`QifEntry.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!QifEntry['@@tagNames'].includes(tag)) throw new TypeError(`QifEntry.fromJSON: unknown variant "${tag}"`)
+    const revived = { ...json }
+    if (revived.splits) revived.splits = revived.splits.map(item => QifSplit.fromJSON(item))
+    return QifEntry[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

@@ -4,6 +4,7 @@
 import { generateConstructorSig } from './codegen/constructor-sig.js'
 import { Expressions } from './codegen/expressions.js'
 import { FirestoreSerialization } from './codegen/firestore-serialization.js'
+import { FromJson } from './codegen/from-json.js'
 import { generateImportsSection } from './codegen/imports.js'
 import { generateIsMethod } from './codegen/is-method.js'
 import { ToJson } from './codegen/to-json.js'
@@ -156,12 +157,14 @@ const generateStaticTaggedType = async typeDefinition => {
                 : ''
         }
 
+        ${shouldGenerate('fromJSON', existingStandard) ? FromJson.generateFromJSONForTagged(name, fields) : ''}
+
         // -------------------------------------------------------------------------------------------------------------
         //
         // Additional functions copied from type definition file
         //
         // -------------------------------------------------------------------------------------------------------------
-        
+
         ${functions.map(fn => `${fn.sourceCode}`).join('\n\n')}
 
         export { ${name} }
@@ -182,6 +185,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
     const { name, variants, relativePath, firestore, imports = [], functions = [] } = typeDefinition
     const variantNames = Object.keys(variants)
+    const existingStandard = ParseTypeDefinitionFile.findExistingStandardFunctions(functions)
 
     // Validate all variants upfront
     if (firestore) variantNames.forEach(vn => validateNoDateArrays(`${name}.${vn}`, variants[vn]))
@@ -315,12 +319,14 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
         ${firestore ? FirestoreSerialization.generateFirestoreSerializationForTaggedSum(name, variants) : ''}
 
+        ${!existingStandard.includes('fromJSON') ? FromJson.generateFromJSONForTaggedSum(name, variants) : ''}
+
         // -------------------------------------------------------------------------------------------------------------
         //
         // Additional functions copied from type definition file
         //
         // -------------------------------------------------------------------------------------------------------------
-        
+
         ${functions.map(fn => `${fn.sourceCode}`).join('\n\n')}
 
         export { ${name} }

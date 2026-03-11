@@ -115,9 +115,9 @@ tap.test('investment-filters: custom date filter shows correct filtered count', 
     session.clickPopoverItem('Custom dates')
     await wait(200)
 
-    // Enter Feb 2024 date range
-    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
-    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+    // Enter Mar 2024 date range
+    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/01/2024')
+    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '03/31/2024')
 
     session.browser('press', ['Escape'])
     await wait(200)
@@ -126,7 +126,7 @@ tap.test('investment-filters: custom date filter shows correct filtered count', 
     const fidelityDateFiltered = expected.dateFiltered.accountCounts.find(a => a.account === 'Fidelity Brokerage').count
     t.ok(
         afterDateFilter.includes(`${fidelityDateFiltered} transactions`),
-        `shows ${fidelityDateFiltered} transactions for Feb 2024`,
+        `shows ${fidelityDateFiltered} transactions for Mar 2024`,
     )
     t.ok(afterDateFilter.includes(`filtered from ${fidelityCount}`), `shows "filtered from ${fidelityCount}"`)
 

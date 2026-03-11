@@ -10,7 +10,7 @@ package "Selector Layer" {
     component "merge-chip-filters" as Merge
 }
 
-component "runFinancialQuery" as RFQ
+component "runIRFinancialQuery" as RFQ
 
 package "TransactionQuery" {
     component "CategoryTreeNode tree\n---\neach node: {total, count, columns?}\ndrillable always\n\n1D: Food -$3,200\n      Groceries -$2,000\n\n2D: Food  '23 -$3.2k  '24 -$3.8k\n      Groceries  ...  ..." as TxnTree
@@ -28,7 +28,7 @@ package "Unified Page" {
     component "QueryResultPage\n---\nRenders any tree with N value columns.\nExpand/collapse always.\nOptional chart when metadata.chart is true." as QRP
 }
 
-Claude --> Merge : FinancialQuery IR
+Claude --> Merge : IRFinancialQuery IR
 Chips --> Merge : filter patches
 
 Merge --> RFQ : merged IR + Redux state

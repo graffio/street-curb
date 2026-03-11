@@ -94,6 +94,14 @@ ParseResult._from = _input => {
 }
 ParseResult.from = ParseResult._from
 
+ParseResult.fromJSON = json => {
+    if (json == null) return json
+    const revived = { ...json }
+    revived.imports = Array.fromJSON(revived.imports)
+    revived.functions = Array.fromJSON(revived.functions)
+    return ParseResult._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

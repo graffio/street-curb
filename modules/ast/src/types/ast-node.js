@@ -1462,6 +1462,16 @@ ASTNode.is = v => {
     )
 }
 
+ASTNode.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`ASTNode.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!ASTNode['@@tagNames'].includes(tag)) throw new TypeError(`ASTNode.fromJSON: unknown variant "${tag}"`)
+    const revived = { ...json }
+    if (revived.parent) revived.parent = ASTNode.fromJSON(revived.parent)
+    return ASTNode[tag]._from(revived)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

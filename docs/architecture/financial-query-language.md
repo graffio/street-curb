@@ -1,19 +1,19 @@
 ---
-summary: "Query engine architecture — FinancialQuery IR with 3 query variants producing tree nodes directly, unified page component, 2D column grouping, D3 charting, position enrichment, metric registry"
-keywords: [ "query", "IR", "execution", "financial", "position", "metric", "tree", "snapshot", "FinancialQuery", "CategoryTreeNode" ]
-module: quicken-web-app
-last_updated: "2026-03-09"
+summary: "Query engine architecture — IRFinancialQuery IR with 4 query variants, fromJSON round-trip deserialization, unified page component, 2D column grouping, D3 charting, position enrichment, metric registry"
+keywords: [ "query", "IR", "execution", "financial", "position", "metric", "tree", "snapshot", "IRFinancialQuery", "CategoryTreeNode", "fromJSON", "AccountQuery" ]
+module: query-language
+last_updated: "2026-03-10"
 ---
 
 # Financial Query Engine
 
-Query engine that takes FinancialQuery IR, executes against Redux state, and returns tree nodes directly to a single
+Query engine that takes IRFinancialQuery IR, executes against Redux state, and returns tree nodes directly to a single
 unified page component. Claude constructs IR Tagged values from natural language — no DSL parser.
 
 ## Architecture
 
 ```
-Claude → FinancialQuery IR → Execution Engine → {nodes, source, columns?, computed?} → QueryResultPage
+Claude → IRFinancialQuery IR → Execution Engine → {nodes, source, columns?, computed?} → QueryResultPage
                                     ↑
                                Redux state
 ```
@@ -25,21 +25,26 @@ Claude → FinancialQuery IR → Execution Engine → {nodes, source, columns?, 
 | Filter compiler  | `build-filter-predicate.js`         | `(IRFilter)` → `entity => Boolean`     |
 | Tree builder     | `category-tree.js`                  | transactions → CategoryTreeNode tree   |
 
-## FinancialQuery IR
+## IRFinancialQuery IR
 
 Domain-specific TaggedSum — each variant carries only its domain-relevant fields.
 
-### 3 Variants
+### 4 Variants
 
 | Variant          | Fields                                                                         | Output shape                              |
 |------------------|--------------------------------------------------------------------------------|-------------------------------------------|
 | TransactionQuery | name, description?, filter?, dateRange?, grouping, computed?                   | `{nodes, source, columns?, computed?}`    |
 | PositionQuery    | name, description?, filter?, dateRange?, grouping?, metrics?, orderBy?, limit? | `{nodes, source}` or `{snapshots}`        |
 | SnapshotQuery    | name, description?, domain, filter?, grouping?, dateRange, interval            | `{nodes, source, columns}` (tree output)  |
+| AccountQuery     | name, description?, filter?, dateRange?                                        | `[EnrichedAccount]` (flat array)          |
+
+**AccountQuery** returns a flat `[EnrichedAccount]` array — not `{nodes}` like tree-producing variants. This is
+intentional: accounts are a flat list for the sidebar AccountList, not tree nodes for QueryResultPage. The engine calls
+`computePositions` internally, keeping it as an implementation detail.
 
 **Key change from prior architecture:** TransactionQuery.grouping is required (registers handle ungrouped views).
-SnapshotQuery accepts optional grouping for per-category breakdowns. AccountQuery, ExpressionQuery, and
-RunningBalanceQuery were removed — they served no real use case.
+SnapshotQuery accepts optional grouping for per-category breakdowns. ExpressionQuery and RunningBalanceQuery were
+removed — they served no real use case.
 
 ### Engine Output Shapes
 
@@ -71,7 +76,7 @@ empty And/Or rejected, depth > 20 rejected, invalid regex throws with clear mess
 
 ## Execution Engine
 
-`run-financial-query.js` dispatches via `FinancialQuery.match()` to domain-specific collectors:
+`run-financial-query.js` dispatches via `IRFinancialQuery.match()` to domain-specific collectors:
 
 - **TransactionQuery**: enrich → filter → group. Without `columns` → 1D tree. With `columns` → 2D tree via
   `buildColumnGroupedTree` (hierarchical, drillable). IRComputedRow expressions extracted from top-level node aggregates
@@ -80,6 +85,7 @@ empty And/Or rejected, depth > 20 rejected, invalid regex throws with clear mess
 - **SnapshotQuery**: generate date points at interval. Balances domain: without grouping → single summary node with
   cumulative columns; with grouping → per-category tree with cumulative date-point columns via
   `makeSnapshotAggregator`. Positions domain: flat `{snapshots}`.
+- **AccountQuery**: computePositions → EnrichedAccount.enrichAll → optional filter → flat `[EnrichedAccount]`.
 
 **2D tree building:** `category-tree.js` provides `buildColumnGroupedTree(rowDim, colDim, transactions)` which uses
 `makeColumnAggregator(getColumnKey)` to produce hierarchical trees where each node aggregates per-column values from
@@ -93,13 +99,33 @@ Shared helpers: `toResolvedFilter` (category prefix expansion — `Equals('categ
 `Matches('category', '^Food(:|$)')` to match subcategories), `buildFilterPredicate` (IRFilter → entity predicate),
 `toFilterableTransaction`/`toFilterablePosition` (field mapping for predicate evaluation).
 
+## JSON Round-Trip (fromJSON)
+
+All Tagged and TaggedSum types have generator-emitted `fromJSON` static methods. `JSON.parse(JSON.stringify(ir))` loses
+prototype chain and `@@tagName` (non-enumerable), so `fromJSON` restores Tagged instances:
+
+- **Tagged types**: `Type.fromJSON(json)` — spreads, revives Tagged fields, calls `_from`
+- **TaggedSum types**: `Type.fromJSON(json)` — reads `@@tagName`, revives Tagged fields (all guarded since variants
+  differ), dispatches to `Type[tag]._from`
+- **Null passthrough**: `fromJSON(null)` → `null`, `fromJSON(undefined)` → `undefined`
+- **Missing @@tagName**: throws `TypeError` with descriptive message
+- **Unknown @@tagName**: throws `TypeError` with variant name (whitelist guard via `@@tagNames.includes`)
+
+Consumers express queries as plain JSON with `@@tagName` fields and revive via `IRFinancialQuery.fromJSON()`. The barrel
+exports only `IRFinancialQuery` — internal IR types (IRFilter, IRGrouping, IRDateRange, IRComputedRow, IRPivotExpression)
+are not importable from outside the module.
+
+Generated by `cli-type-generator/src/codegen/from-json.js`. Field type info from `FieldDescriptor.parseAny()` determines
+which fields need recursive revival. Hand-written `fromJSON` in `.type.js` overrides the generator via
+`findExistingStandardFunctions`.
+
 ## Chip Merge & Selector Integration
 
 `merge-chip-filters.js` converts UI chip state into IR patches and applies them variant-agnostically via
 `constructor.from({ ...ir, ...patch })`. Unused patch keys silently ignored through `_from` destructuring.
 
 ```
-Redux state.queryIR[viewId] → applyChipFilters → runFinancialQuery → result object
+Redux state.queryIR[viewId] → applyChipFilters → runIRFinancialQuery → result object
                                       ↑
                               transactionFilters[viewId] (chip state)
 ```
@@ -155,7 +181,7 @@ Decomposed into single-function modules in `financial-computations/`:
 
 | File                                                   | Purpose                                         |
 |--------------------------------------------------------|-------------------------------------------------|
-| `src/query-language/run-financial-query.js`            | FinancialQuery IR → result object (3 variants)  |
+| `src/query-language/run-financial-query.js`            | IRFinancialQuery IR → result object (4 variants)  |
 | `src/query-language/to-financial-query-description.js` | IR → human-readable description                 |
 | `src/query-language/build-filter-predicate.js`         | IRFilter tree → compiled predicate              |
 | `src/query-language/merge-chip-filters.js`             | Variant-agnostic chip state → IR merge          |
@@ -167,7 +193,7 @@ Decomposed into single-function modules in `financial-computations/`:
 | `src/components/FilterChipRow.jsx`                     | Shared filter chip row                          |
 | `src/financial-computations/metric-registry.js`        | MetricDefinition LookupTable (7 metrics)        |
 | `src/financial-computations/compute-positions.js`      | Lot aggregation + price → Position              |
-| `type-definitions/ir/financial-query.type.js`          | FinancialQuery TaggedSum (3 variants)            |
+| `type-definitions/ir-financial-query.type.js`          | IRFinancialQuery TaggedSum (4 variants)            |
 | `type-definitions/ir/ir-grouping.type.js`              | IRGrouping Tagged type                          |
 | `type-definitions/ir/ir-computed-row.type.js`          | IRComputedRow Tagged type                       |
 | `type-definitions/ir/ir-pivot-expression.type.js`      | IRPivotExpression TaggedSum                     |
@@ -175,7 +201,9 @@ Decomposed into single-function modules in `financial-computations/`:
 ## Design Decisions
 
 - **Claude constructs IR directly** — no DSL parser; Claude produces Tagged IR values from natural language
-- **3 domain-specific query types** — each variant carries only domain-relevant fields, dispatched via `.match()`
+- **4 domain-specific query types** — each variant carries only domain-relevant fields, dispatched via `.match()`
+- **AccountQuery returns flat array** — `[EnrichedAccount]` not `{nodes}`, used by sidebar not QueryResultPage
+- **Generator-emitted fromJSON** — all Tagged/TaggedSum types get `fromJSON` automatically via codegen
 - **No result type indirection** — engine returns plain objects; QueryResult/QueryResultTree removed
 - **Unified page component** — QueryResultPage detects result shape by property presence, not type dispatch
 - **Trees for everything** — 1D grouping, 2D grouping, and snapshots all produce CategoryTreeNode trees

@@ -382,6 +382,23 @@ const redact = value => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
+/**
+ * Revive a plain object (from JSON) into a Tagged instance using @@tagName dispatch
+ * Generated fromJSON methods call this for each Tagged field they encounter
+ * @sig parseTaggedValue :: (Object, {[String]: Function}) -> Tagged
+ */
+const parseTaggedValue = (plain, variantMap) => {
+    if (plain === undefined || plain === null) return plain
+    const tagName = plain['@@tagName']
+    if (!tagName) throw new TypeError(`parseTaggedValue: missing @@tagName on ${_toString(plain)}`)
+    const Constructor = variantMap[tagName]
+    if (!Constructor)
+        throw new TypeError(
+            `parseTaggedValue: unknown variant '${tagName}' (known: ${Object.keys(variantMap).join(', ')})`,
+        )
+    return Constructor._from(plain)
+}
+
 const RuntimeForGeneratedTypes = {
     validateArgumentLength,
     validateArray,
@@ -398,6 +415,7 @@ const RuntimeForGeneratedTypes = {
     match,
     _toString,
     redact,
+    parseTaggedValue,
 }
 
 export { RuntimeForGeneratedTypes }

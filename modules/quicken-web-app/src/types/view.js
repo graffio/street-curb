@@ -219,6 +219,14 @@ View.is = v => {
     return constructor === Register || constructor === Report || constructor === Reconciliation
 }
 
+View.fromJSON = json => {
+    if (json == null) return json
+    const tag = json['@@tagName']
+    if (!tag) throw new TypeError(`View.fromJSON: missing @@tagName on ${R._toString(json)}`)
+    if (!View['@@tagNames'].includes(tag)) throw new TypeError(`View.fromJSON: unknown variant "${tag}"`)
+    return View[tag]._from(json)
+}
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

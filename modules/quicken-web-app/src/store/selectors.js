@@ -10,13 +10,14 @@ import {
     truncateWithCount,
     wrapIndex,
 } from '@graffio/functional'
-import { computeBenchmarkReturn } from '../financial-computations/compute-benchmark-return.js'
-import { computeDividendIncome } from '../financial-computations/compute-dividend-income.js'
-import { computeIrr } from '../financial-computations/compute-irr.js'
-import { computePositions } from '../financial-computations/compute-positions.js'
-import { computeRealizedGains } from '../financial-computations/compute-realized-gains.js'
+import {
+    computePositions,
+    IRFinancialQuery,
+    toFinancialQueryDescription,
+    runFinancialQuery,
+    applyChipFilters,
+} from '@graffio/query-language'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter, View } from '../types/index.js'
-import { CategoryTree } from '../utils/category-tree.js'
 
 // COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
 // COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Positions) not P/T/F/V/A/E
@@ -26,17 +27,14 @@ import { CategoryTree } from '../utils/category-tree.js'
 // COMPLEXITY: react-redux-separation — Selectors join multiple state slices by design
 import { DateRangeUtils } from '../utils/date-range-utils.js'
 import { Formatters } from '../utils/formatters.js'
-import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
 import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
-import { toFinancialQueryDescription } from '../query-language/to-financial-query-description.js'
-import { runFinancialQuery } from '../query-language/run-financial-query.js'
-import { MergeChipFilters } from '../query-language/merge-chip-filters.js'
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
+const ACCOUNT_LIST_QUERY = IRFinancialQuery.AccountQuery(ACCOUNT_LIST_VIEW_ID)
 const INVESTMENT_ACTIONS = TransactionFilter.INVESTMENT_ACTIONS
 const ACTION_LABELS_MAP = Object.fromEntries(INVESTMENT_ACTIONS.map(({ id, label }) => [id, label]))
 
@@ -427,13 +425,12 @@ const ACCOUNT_STATE_KEYS = [
     'accountListSortMode',
 ]
 
-// Computes organized account sections from state
+// Computes organized account sections from state via AccountQuery
+// AccountQuery returns [EnrichedAccount] (flat array, not { nodes } like other variants)
 // @sig _organizedAccounts :: State -> LookupTable<AccountSection>
 const _organizedAccounts = state => {
-    const { accounts, transactions, accountListSortMode } = state
-    const positions = Positions.asOf(state, ACCOUNT_LIST_VIEW_ID)
-    const enriched = LookupTable(EnrichedAccount.enrichAll(accounts, positions, transactions), EnrichedAccount, 'id')
-    return toAccountSections(enriched, accountListSortMode)
+    const enriched = runFinancialQuery(ACCOUNT_LIST_QUERY, state)
+    return toAccountSections(LookupTable(enriched, EnrichedAccount, 'id'), state.accountListSortMode)
 }
 
 const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAccounts) }
@@ -450,17 +447,17 @@ const ENGINE_STATE_KEYS = ['accounts', 'categories', 'transactions', 'securities
 const _queryResult = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return undefined
-    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
 
     return runFinancialQuery(mergedIR, state)
 }
 
 // Describe the merged IR as human-readable text — cheap, no heavy memoization needed
-// @sig _queryDescription :: (State, String, FinancialQuery?) -> String
+// @sig _queryDescription :: (State, String, IRFinancialQuery?) -> String
 const _queryDescription = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
     if (!ir) return ''
-    const mergedIR = MergeChipFilters.applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
+    const mergedIR = applyChipFilters(ir, state.transactionFilters.get(viewId), accounts(state))
     return toFinancialQueryDescription(mergedIR)
 }
 
@@ -496,60 +493,7 @@ const positionsAsOf = memoizeReduxStatePerKey(
     _positionsAsOf,
 )
 
-const _positionsTree = (state, viewId) => {
-    const groupBy = filter(state, viewId).groupBy || 'account'
-    return buildPositionsTree(groupBy, positionsAsOf(state, viewId))
-}
-
-const positionsTree = memoizeReduxStatePerKey(
-    ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
-    'transactionFilters',
-    _positionsTree,
-)
-
-const benchmarkSecurity = memoizeReduxState(['securities'], state => state.securities.find(s => s.symbol === 'SPY'))
-
-const _enrichedPosition = (state, accountId, securityId) => {
-    const { lots, lotAllocations, prices, securities, transactions } = state
-    const positions = positionsAsOf(state, ACCOUNT_LIST_VIEW_ID)
-    const position = positions.find(p => p.accountId === accountId && p.securityId === securityId)
-    if (!position) return undefined
-
-    const benchmark = benchmarkSecurity(state)
-    const { asOfDate } = filter(state, ACCOUNT_LIST_VIEW_ID)
-    const context = {
-        lots,
-        lotAllocations,
-        transactions,
-        securities,
-        prices,
-        asOfDate: asOfDate ?? new Date().toISOString().slice(0, 10),
-        benchmarkSecurityId: benchmark?.id,
-    }
-
-    const realizedGains = computeRealizedGains(position, context)
-    const dividendIncome = computeDividendIncome(position, context)
-    const { unrealizedGainLoss, costBasis } = position
-    const totalReturnDollars = unrealizedGainLoss + realizedGains.totalRealizedGain + dividendIncome
-    const totalReturnPercent = costBasis !== 0 ? totalReturnDollars / costBasis : 0
-
-    return {
-        ...position,
-        realizedGains,
-        dividendIncome,
-        irr: computeIrr(position, context),
-        benchmarkReturnPct: computeBenchmarkReturn(position, context),
-        totalReturn: { totalReturnDollars, totalReturnPercent },
-    }
-}
-
-const enrichedPosition = memoizeReduxStatePerKey(
-    ['lots', 'lotAllocations', 'prices', 'securities', 'transactions'],
-    'transactionFilters',
-    _enrichedPosition,
-)
-
-const Positions = { asOf: positionsAsOf, tree: positionsTree, enriched: enrichedPosition }
+const Positions = { asOf: positionsAsOf }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Transactions - memoized selectors
@@ -569,11 +513,6 @@ const _searchMatches = (state, viewId, accountId) =>
     )
 
 const _enriched = (state, viewId) => Transaction.enrichAll(T.filtered(state, viewId), state.categories, state.accounts)
-
-const _transactionTree = (state, viewId) => {
-    const groupBy = filter(state, viewId).groupBy || 'category'
-    return CategoryTree.buildTransactionTree(groupBy, T.enriched(state, viewId))
-}
 
 const _forAccount = (state, _viewId, accountId) => state.transactions.filter(Transaction.isInAccount(accountId))
 
@@ -611,7 +550,6 @@ const T = {
 
 // prettier-ignore
 const T2 = {
-    tree                : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'], 'transactionFilters', _transactionTree),
     sortedForDisplay    : memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForInvestment)),
     sortedForBankDisplay: memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForAccount)),
 }
