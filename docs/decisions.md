@@ -958,6 +958,12 @@ Future architecture decisions are data-driven and support sustainable business g
 **Decision:** Change `compute` to `'String'` — a name that indexes into `COMPUTE_FNS` map in metric-registry.js. `MetricRegistry.resolveMetricFn(name)` performs the lookup at execution time.
 **Why:** MetricDefinition is now fully serializable. The string-to-function indirection is resolved at the last possible moment (engine execution), keeping the IR clean for persistence.
 
+### Barrel trimmed to 1 IR type export via fromJSON (2026-03-10)
+
+**Context:** After building fromJSON, the barrel still exported 6 IR types. Consumers imported all 6 to construct seed queries directly, defeating the module boundary.
+**Decision:** Convert seed queries to JSON literals + `IRFinancialQuery.fromJSON()`. Remove IRFilter, IRGrouping, IRDateRange, IRComputedRow, IRPivotExpression from barrel. Only IRFinancialQuery remains (provides `.fromJSON` entry point and `.match()` dispatch). Add `@@tagNames` whitelist guard to generated fromJSON for fail-fast on unknown variants.
+**Why:** Module boundary is now enforced — internal IR types are not importable. `fromJSON` is the single entry point for query construction from outside the module.
+
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 
 **Context:** 30+ type-definition files in a flat directory, hard to find by purpose. Generator copies FieldTypes import paths verbatim, complicating subdirectory moves.
