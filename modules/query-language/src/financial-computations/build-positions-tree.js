@@ -1,7 +1,7 @@
 // ABOUTME: Position tree building utility for investment reports
 // ABOUTME: Composes groupBy -> buildTree -> aggregateTree for hierarchical display by dimension
 
-import { groupBy as groupByFn, buildTree, aggregateTree } from '@graffio/functional'
+import { groupBy as groupByFn, buildTree, aggregateTree, map, sumCompensated } from '@graffio/functional'
 import { PositionAggregate } from '../types/position-aggregate.js'
 import { PositionTreeNode } from '../types/position-tree-node.js'
 
@@ -63,8 +63,8 @@ const A = {
     // Sum quantities, cost basis, market value, and gains across positions and child aggregates
     // @sig sumPositions :: ([Position], [Object]) -> Object
     sumPositions: (positions, childAggregates) => {
-        const sumField = field => positions.reduce((sum, p) => sum + (p[field] ?? 0), 0)
-        const sumChildField = field => childAggregates.reduce((sum, a) => sum + (a[field] ?? 0), 0)
+        const sumField = field => sumCompensated(map(p => p[field] ?? 0, positions))
+        const sumChildField = field => sumCompensated(map(a => a[field] ?? 0, childAggregates))
 
         const shares = sumField('quantity') + sumChildField('shares')
         const costBasis = sumField('costBasis') + sumChildField('costBasis')
