@@ -151,7 +151,7 @@ test('applyChipFilters — groupBy chip overrides existing grouping', t => {
 // ═════════════════════════════════════════════════
 
 test('applyChipFilters — dateRange chip converts Date objects to ISO strings', t => {
-    const state = { ...emptyChipState, dateRange: { start: new Date('2025-01-01'), end: new Date('2025-12-31') } }
+    const state = { ...emptyChipState, dateRange: { start: new Date(2025, 0, 1), end: new Date(2025, 11, 31) } }
     const result = applyChipFilters(txQuery, state, ACCOUNTS)
     t.equal(result.dateRange['@@tagName'], 'Range', 'Then dateRange is a Range')
     t.equal(result.dateRange.start, '2025-01-01', 'Then start is ISO formatted')
@@ -175,7 +175,7 @@ test('applyChipFilters — asOfDate takes priority over dateRange', t => {
     const state = {
         ...emptyChipState,
         asOfDate: '2025-06-15',
-        dateRange: { start: new Date('2025-01-01'), end: new Date('2025-12-31') },
+        dateRange: { start: new Date(2025, 0, 1), end: new Date(2025, 11, 31) },
     }
     const result = applyChipFilters(posQuery, state, ACCOUNTS)
     t.equal(result.dateRange.start, '2025-06-15', 'Then asOfDate wins over dateRange')
@@ -234,7 +234,7 @@ test('applyChipFilters — SnapshotQuery merges filter and dateRange', t => {
     const state = {
         ...emptyChipState,
         selectedAccounts: ['acc_000000000001'],
-        dateRange: { start: new Date('2024-01-01'), end: new Date('2024-12-31') },
+        dateRange: { start: new Date(2024, 0, 1), end: new Date(2024, 11, 31) },
     }
     const result = applyChipFilters(snapQuery, state, ACCOUNTS)
     t.equal(result['@@tagName'], 'SnapshotQuery', 'Then result is a SnapshotQuery')
@@ -242,6 +242,54 @@ test('applyChipFilters — SnapshotQuery merges filter and dateRange', t => {
     t.equal(result.dateRange.start, '2024-01-01', 'Then dateRange is overridden')
     t.equal(result.domain, 'balances', 'Then domain preserved')
     t.equal(result.interval, 'monthly', 'Then interval preserved')
+    t.end()
+})
+
+// ═════════════════════════════════════════════════
+// Cross-variant chip coverage
+// ═════════════════════════════════════════════════
+
+test('applyChipFilters — groupBy chip overrides PositionQuery grouping to goal', t => {
+    const state = { ...emptyChipState, groupBy: 'goal' }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.grouping.rows, 'goal', 'Then grouping rows is overridden to goal')
+    t.end()
+})
+
+test('applyChipFilters — groupBy chip overrides PositionQuery grouping to securityType', t => {
+    const state = { ...emptyChipState, groupBy: 'securityType' }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.grouping.rows, 'securityType', 'Then grouping rows is overridden to securityType')
+    t.end()
+})
+
+test('applyChipFilters — category chip on SnapshotQuery preserves domain and interval', t => {
+    const state = { ...emptyChipState, selectedCategories: ['Food'] }
+    const result = applyChipFilters(snapQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'SnapshotQuery', 'Then result is a SnapshotQuery')
+    t.ok(result.filter, 'Then filter is set')
+    t.equal(result.domain, 'balances', 'Then domain preserved')
+    t.equal(result.interval, 'monthly', 'Then interval preserved')
+    t.end()
+})
+
+test('applyChipFilters — account chip applies filter to PositionQuery', t => {
+    const state = { ...emptyChipState, selectedAccounts: ['acc_000000000001'] }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.filter['@@tagName'], 'In', 'Then filter is In')
+    t.same(result.filter.values, ['Checking'], 'Then values are resolved account names')
+    t.end()
+})
+
+test('applyChipFilters — search chip applies filter to PositionQuery', t => {
+    const state = { ...emptyChipState, filterQuery: 'AAPL' }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.filter['@@tagName'], 'Or', 'Then filter is Or')
+    t.equal(result.filter.filters.length, 8, 'Then Or searches 8 fields')
     t.end()
 })
 
@@ -256,7 +304,7 @@ test('applyChipFilters — multiple chip types applied simultaneously', t => {
         selectedAccounts: ['acc_000000000001'],
         filterQuery: 'coffee',
         groupBy: 'payee',
-        dateRange: { start: new Date('2025-01-01'), end: new Date('2025-06-30') },
+        dateRange: { start: new Date(2025, 0, 1), end: new Date(2025, 5, 30) },
     }
     const result = applyChipFilters(txQuery, state, ACCOUNTS)
     t.equal(result['@@tagName'], 'TransactionQuery', 'Then result is a TransactionQuery')

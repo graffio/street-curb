@@ -3,7 +3,7 @@
 // COMPLEXITY: require-action-registry — per-tab onClick (switch tab, set active group) has no direct
 // ActionRegistry equivalent. Covered by tab:cycle-left/right, tab:move-left/right, and tab:picker.
 
-import { Box, Button, ContextMenu, Flex, Kbd, Text } from '@radix-ui/themes'
+import { Box, Button, ContextMenu, Flex, Kbd, Text, Tooltip } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
@@ -102,6 +102,14 @@ const Tab = ({ viewId, groupId }) => {
     const { title } = view
     const icon = view.match({ Register: () => '☰', Report: () => '◑', Reconciliation: () => '✓' })
 
+    const titleRef = React.useRef(undefined)
+    const [isOverflowing, setIsOverflowing] = React.useState(false)
+
+    React.useLayoutEffect(() => {
+        const el = titleRef.current
+        setIsOverflowing(el ? el.scrollWidth > el.clientWidth : false)
+    }, [title])
+
     const tabProps = {
         draggable: true,
         onDragStart: handleDragStart,
@@ -110,16 +118,18 @@ const Tab = ({ viewId, groupId }) => {
         onClick: () => post(Action.SetActiveView(groupId, viewId)),
     }
 
+    const titleTextProps = { size: '2', weight: isActive ? 'medium' : 'regular', style: TAB_TITLE_STYLE, ref: titleRef }
+
     return (
         <ContextMenu.Root>
             <ContextMenu.Trigger>
-                <Flex title={title} {...tabProps}>
+                <Flex {...tabProps}>
                     <Text size="2" color="gray">
                         {icon}
                     </Text>
-                    <Text size="2" weight={isActive ? 'medium' : 'regular'} style={TAB_TITLE_STYLE}>
-                        {title}
-                    </Text>
+                    <Tooltip content={title} open={isOverflowing ? undefined : false}>
+                        <Text {...titleTextProps}>{title}</Text>
+                    </Tooltip>
                     <Button size="1" variant="ghost" onClick={handleClose} style={CLOSE_BUTTON_STYLE}>
                         ×
                     </Button>

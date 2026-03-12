@@ -581,7 +581,7 @@ tap.test('SnapshotQuery/TimeSeries: account filter changes totals', async t => {
     t.ok(afterFilter.includes('1 selected'), 'account chip shows "1 selected"')
     t.not(afterFilter, beforeFilter, 'display changes after filtering')
 
-    session.clickClear()
+    session.clickClear(1) // nth=1: account clear button (nth=0 is the date chip clear)
     await wait(500)
     const afterClear = session.browser('snapshot')
     t.not(afterClear, afterFilter, 'display changes after clearing filter')
@@ -619,4 +619,35 @@ tap.test('SnapshotQuery/TimeSeries: date filter narrows visible columns', async 
     await wait(500)
     const afterClear = session.browser('snapshot')
     t.ok(afterClear.includes('2025-06-30'), '2025-06-30 column visible again after clearing date filter')
+})
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SnapshotQuery → TimeSeries (Spending Over Time)
+// Variant: SnapshotQuery with domain='balances', grouping='category', 'monthly'
+// ═════════════════════════════════════════════════════════════════════════════
+
+tap.test('SnapshotQuery/SpendingOverTime: category filter changes totals', async t => {
+    session.clickByRef('Spending Over Time')
+    await wait(1000)
+
+    const beforeFilter = session.browser('snapshot')
+    t.notOk(beforeFilter.includes('Something went wrong'), 'no crash after opening report')
+    t.ok(beforeFilter.includes('Categories:'), 'Categories chip visible')
+
+    session.clickByText('Categories:')
+    await wait(500)
+    session.clickPopoverItem('Food')
+    await wait(500)
+    session.browser('press', ['Escape'])
+    await wait(500)
+
+    const afterFilter = session.browser('snapshot')
+    t.notOk(afterFilter.includes('Something went wrong'), 'no crash after category filter')
+    t.ok(afterFilter.includes('1 selected'), 'category chip shows "1 selected"')
+    t.not(afterFilter, beforeFilter, 'display changes after filtering')
+
+    session.clickClear(1) // nth=1: category clear button (nth=0 is the date chip clear)
+    await wait(500)
+    const afterClear = session.browser('snapshot')
+    t.not(afterClear, afterFilter, 'display changes after clearing filter')
 })

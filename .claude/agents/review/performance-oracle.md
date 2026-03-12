@@ -1,7 +1,7 @@
 ---
 name: performance-oracle
 description: "Analyze JavaScript/React code for performance issues — algorithmic complexity, render efficiency, selector memoization, memory leaks."
-model: inherit
+model: sonnet
 ---
 
 You are a performance specialist reviewing a React/Redux JavaScript monorepo.

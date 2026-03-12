@@ -4,12 +4,13 @@
 /*  IRFinancialQuery generated from: modules/query-language/type-definitions/ir-financial-query.type.js
  *
  *  TransactionQuery
- *      name       : "String",
- *      description: "String?",
- *      filter     : "IRFilter?",
- *      dateRange  : "IRDateRange?",
- *      grouping   : "IRGrouping",
- *      computed   : "[IRComputedRow]?"
+ *      name           : "String",
+ *      description    : "String?",
+ *      filter         : "IRFilter?",
+ *      dateRange      : "IRDateRange?",
+ *      grouping       : "IRGrouping",
+ *      computed       : "[IRComputedRow]?",
+ *      editableFilters: "EditableFilters?"
  *  PositionQuery
  *      name            : "String",
  *      description     : "String?",
@@ -19,20 +20,23 @@
  *      metrics         : "[String]?",
  *      orderByField    : "String?",
  *      orderByDirection: FieldTypes.sortDirection,
- *      limit           : "Number?"
+ *      limit           : "Number?",
+ *      editableFilters : "EditableFilters?"
  *  SnapshotQuery
- *      name       : "String",
- *      description: "String?",
- *      filter     : "IRFilter?",
- *      dateRange  : "IRDateRange",
- *      grouping   : "IRGrouping?",
- *      domain     : FieldTypes.snapshotDomain,
- *      interval   : FieldTypes.timeSeriesInterval
+ *      name           : "String",
+ *      description    : "String?",
+ *      filter         : "IRFilter?",
+ *      dateRange      : "IRDateRange",
+ *      grouping       : "IRGrouping?",
+ *      domain         : FieldTypes.snapshotDomain,
+ *      interval       : FieldTypes.timeSeriesInterval,
+ *      editableFilters: "EditableFilters?"
  *  AccountQuery
- *      name       : "String",
- *      description: "String?",
- *      filter     : "IRFilter?",
- *      dateRange  : "IRDateRange?"
+ *      name           : "String",
+ *      description    : "String?",
+ *      filter         : "IRFilter?",
+ *      dateRange      : "IRDateRange?",
+ *      editableFilters: "EditableFilters?"
  *
  */
 
@@ -43,6 +47,7 @@ import { IRFilter } from './ir-filter.js'
 import { IRDateRange } from './ir-date-range.js'
 import { IRGrouping } from './ir-grouping.js'
 import { IRComputedRow } from './ir-computed-row.js'
+import { EditableFilters } from './editable-filters.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -82,10 +87,10 @@ IRFinancialQuery.prototype = IRFinancialQueryPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    transactionQuery: function () { return `IRFinancialQuery.TransactionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.computed)})` },
-    positionQuery   : function () { return `IRFinancialQuery.PositionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.metrics)}, ${R._toString(this.orderByField)}, ${R._toString(this.orderByDirection)}, ${R._toString(this.limit)})` },
-    snapshotQuery   : function () { return `IRFinancialQuery.SnapshotQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.domain)}, ${R._toString(this.interval)})` },
-    accountQuery    : function () { return `IRFinancialQuery.AccountQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)})` },
+    transactionQuery: function () { return `IRFinancialQuery.TransactionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.computed)}, ${R._toString(this.editableFilters)})` },
+    positionQuery   : function () { return `IRFinancialQuery.PositionQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.metrics)}, ${R._toString(this.orderByField)}, ${R._toString(this.orderByDirection)}, ${R._toString(this.limit)}, ${R._toString(this.editableFilters)})` },
+    snapshotQuery   : function () { return `IRFinancialQuery.SnapshotQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.grouping)}, ${R._toString(this.domain)}, ${R._toString(this.interval)}, ${R._toString(this.editableFilters)})` },
+    accountQuery    : function () { return `IRFinancialQuery.AccountQuery(${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.filter)}, ${R._toString(this.dateRange)}, ${R._toString(this.editableFilters)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -109,7 +114,7 @@ const toJSON = {
 
 /*
  * Construct a IRFinancialQuery.TransactionQuery instance
- * @sig TransactionQuery :: (String, String?, IRFilter?, IRDateRange?, IRGrouping, [IRComputedRow]?) -> IRFinancialQuery.TransactionQuery
+ * @sig TransactionQuery :: (String, String?, IRFilter?, IRDateRange?, IRGrouping, [IRComputedRow]?, EditableFilters?) -> IRFinancialQuery.TransactionQuery
  */
 const TransactionQueryConstructor = function TransactionQuery(
     name,
@@ -118,9 +123,10 @@ const TransactionQueryConstructor = function TransactionQuery(
     dateRange,
     grouping,
     computed,
+    editableFilters,
 ) {
     const constructorName =
-        'IRFinancialQuery.TransactionQuery(name, description, filter, dateRange, grouping, computed)'
+        'IRFinancialQuery.TransactionQuery(name, description, filter, dateRange, grouping, computed, editableFilters)'
 
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
@@ -128,6 +134,7 @@ const TransactionQueryConstructor = function TransactionQuery(
     R.validateTag(constructorName, 'IRDateRange', 'dateRange', true, dateRange)
     R.validateTag(constructorName, 'IRGrouping', 'grouping', false, grouping)
     R.validateArray(constructorName, 1, 'Tagged', 'IRComputedRow', 'computed', true, computed)
+    R.validateTag(constructorName, 'EditableFilters', 'editableFilters', true, editableFilters)
 
     const result = Object.create(TransactionQueryPrototype)
     result.name = name
@@ -136,6 +143,7 @@ const TransactionQueryConstructor = function TransactionQuery(
     if (dateRange !== undefined) result.dateRange = dateRange
     result.grouping = grouping
     if (computed !== undefined) result.computed = computed
+    if (editableFilters !== undefined) result.editableFilters = editableFilters
     return result
 }
 
@@ -143,7 +151,7 @@ IRFinancialQuery.TransactionQuery = TransactionQueryConstructor
 
 /*
  * Construct a IRFinancialQuery.PositionQuery instance
- * @sig PositionQuery :: (String, String?, IRFilter?, IRDateRange?, IRGrouping?, [String]?, String?, String?, Number?) -> IRFinancialQuery.PositionQuery
+ * @sig PositionQuery :: (String, String?, IRFilter?, IRDateRange?, IRGrouping?, [String]?, String?, String?, Number?, EditableFilters?) -> IRFinancialQuery.PositionQuery
  */
 const PositionQueryConstructor = function PositionQuery(
     name,
@@ -155,9 +163,10 @@ const PositionQueryConstructor = function PositionQuery(
     orderByField,
     orderByDirection,
     limit,
+    editableFilters,
 ) {
     const constructorName =
-        'IRFinancialQuery.PositionQuery(name, description, filter, dateRange, grouping, metrics, orderByField, orderByDirection, limit)'
+        'IRFinancialQuery.PositionQuery(name, description, filter, dateRange, grouping, metrics, orderByField, orderByDirection, limit, editableFilters)'
 
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
@@ -168,6 +177,7 @@ const PositionQueryConstructor = function PositionQuery(
     R.validateString(constructorName, 'orderByField', true, orderByField)
     R.validateRegex(constructorName, FieldTypes.sortDirection, 'orderByDirection', true, orderByDirection)
     R.validateNumber(constructorName, 'limit', true, limit)
+    R.validateTag(constructorName, 'EditableFilters', 'editableFilters', true, editableFilters)
 
     const result = Object.create(PositionQueryPrototype)
     result.name = name
@@ -179,6 +189,7 @@ const PositionQueryConstructor = function PositionQuery(
     if (orderByField !== undefined) result.orderByField = orderByField
     if (orderByDirection !== undefined) result.orderByDirection = orderByDirection
     if (limit !== undefined) result.limit = limit
+    if (editableFilters !== undefined) result.editableFilters = editableFilters
     return result
 }
 
@@ -186,7 +197,7 @@ IRFinancialQuery.PositionQuery = PositionQueryConstructor
 
 /*
  * Construct a IRFinancialQuery.SnapshotQuery instance
- * @sig SnapshotQuery :: (String, String?, IRFilter?, IRDateRange, IRGrouping?, String, String) -> IRFinancialQuery.SnapshotQuery
+ * @sig SnapshotQuery :: (String, String?, IRFilter?, IRDateRange, IRGrouping?, String, String, EditableFilters?) -> IRFinancialQuery.SnapshotQuery
  */
 const SnapshotQueryConstructor = function SnapshotQuery(
     name,
@@ -196,9 +207,10 @@ const SnapshotQueryConstructor = function SnapshotQuery(
     grouping,
     domain,
     interval,
+    editableFilters,
 ) {
     const constructorName =
-        'IRFinancialQuery.SnapshotQuery(name, description, filter, dateRange, grouping, domain, interval)'
+        'IRFinancialQuery.SnapshotQuery(name, description, filter, dateRange, grouping, domain, interval, editableFilters)'
 
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
@@ -207,6 +219,7 @@ const SnapshotQueryConstructor = function SnapshotQuery(
     R.validateTag(constructorName, 'IRGrouping', 'grouping', true, grouping)
     R.validateRegex(constructorName, FieldTypes.snapshotDomain, 'domain', false, domain)
     R.validateRegex(constructorName, FieldTypes.timeSeriesInterval, 'interval', false, interval)
+    R.validateTag(constructorName, 'EditableFilters', 'editableFilters', true, editableFilters)
 
     const result = Object.create(SnapshotQueryPrototype)
     result.name = name
@@ -216,6 +229,7 @@ const SnapshotQueryConstructor = function SnapshotQuery(
     if (grouping !== undefined) result.grouping = grouping
     result.domain = domain
     result.interval = interval
+    if (editableFilters !== undefined) result.editableFilters = editableFilters
     return result
 }
 
@@ -223,21 +237,23 @@ IRFinancialQuery.SnapshotQuery = SnapshotQueryConstructor
 
 /*
  * Construct a IRFinancialQuery.AccountQuery instance
- * @sig AccountQuery :: (String, String?, IRFilter?, IRDateRange?) -> IRFinancialQuery.AccountQuery
+ * @sig AccountQuery :: (String, String?, IRFilter?, IRDateRange?, EditableFilters?) -> IRFinancialQuery.AccountQuery
  */
-const AccountQueryConstructor = function AccountQuery(name, description, filter, dateRange) {
-    const constructorName = 'IRFinancialQuery.AccountQuery(name, description, filter, dateRange)'
+const AccountQueryConstructor = function AccountQuery(name, description, filter, dateRange, editableFilters) {
+    const constructorName = 'IRFinancialQuery.AccountQuery(name, description, filter, dateRange, editableFilters)'
 
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
     R.validateTag(constructorName, 'IRFilter', 'filter', true, filter)
     R.validateTag(constructorName, 'IRDateRange', 'dateRange', true, dateRange)
+    R.validateTag(constructorName, 'EditableFilters', 'editableFilters', true, editableFilters)
 
     const result = Object.create(AccountQueryPrototype)
     result.name = name
     if (description !== undefined) result.description = description
     if (filter !== undefined) result.filter = filter
     if (dateRange !== undefined) result.dateRange = dateRange
+    if (editableFilters !== undefined) result.editableFilters = editableFilters
     return result
 }
 
@@ -305,11 +321,22 @@ AccountQueryConstructor.toString = () => 'IRFinancialQuery.AccountQuery'
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 TransactionQueryConstructor._from = _input => {
-    const { name, description, filter, dateRange, grouping, computed } = _input
-    return IRFinancialQuery.TransactionQuery(name, description, filter, dateRange, grouping, computed)
+    const { name, description, filter, dateRange, grouping, computed, editableFilters } = _input
+    return IRFinancialQuery.TransactionQuery(name, description, filter, dateRange, grouping, computed, editableFilters)
 }
 PositionQueryConstructor._from = _input => {
-    const { name, description, filter, dateRange, grouping, metrics, orderByField, orderByDirection, limit } = _input
+    const {
+        name,
+        description,
+        filter,
+        dateRange,
+        grouping,
+        metrics,
+        orderByField,
+        orderByDirection,
+        limit,
+        editableFilters,
+    } = _input
     return IRFinancialQuery.PositionQuery(
         name,
         description,
@@ -320,15 +347,25 @@ PositionQueryConstructor._from = _input => {
         orderByField,
         orderByDirection,
         limit,
+        editableFilters,
     )
 }
 SnapshotQueryConstructor._from = _input => {
-    const { name, description, filter, dateRange, grouping, domain, interval } = _input
-    return IRFinancialQuery.SnapshotQuery(name, description, filter, dateRange, grouping, domain, interval)
+    const { name, description, filter, dateRange, grouping, domain, interval, editableFilters } = _input
+    return IRFinancialQuery.SnapshotQuery(
+        name,
+        description,
+        filter,
+        dateRange,
+        grouping,
+        domain,
+        interval,
+        editableFilters,
+    )
 }
 AccountQueryConstructor._from = _input => {
-    const { name, description, filter, dateRange } = _input
-    return IRFinancialQuery.AccountQuery(name, description, filter, dateRange)
+    const { name, description, filter, dateRange, editableFilters } = _input
+    return IRFinancialQuery.AccountQuery(name, description, filter, dateRange, editableFilters)
 }
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
@@ -367,6 +404,7 @@ IRFinancialQuery.fromJSON = json => {
     if (revived.dateRange) revived.dateRange = IRDateRange.fromJSON(revived.dateRange)
     if (revived.grouping) revived.grouping = IRGrouping.fromJSON(revived.grouping)
     if (revived.computed) revived.computed = revived.computed.map(item => IRComputedRow.fromJSON(item))
+    if (revived.editableFilters) revived.editableFilters = EditableFilters.fromJSON(revived.editableFilters)
     return IRFinancialQuery[tag]._from(revived)
 }
 

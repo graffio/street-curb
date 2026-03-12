@@ -49,7 +49,8 @@
             "Edit",
             "Task",
             "WebSearch",
-            "Write"
+            "Write",
+            "WebFetch(domain:*)"
         ],
         "deny": [],
         "defaultMode": "acceptEdits"

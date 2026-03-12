@@ -46,9 +46,3 @@ With the unified tree page and engine in place, these are new seed queries + col
 - **Strategy entity** — multi-leg options and managed position lifecycle.
 - **Tax schedule/overview reports**
 
-## Test Gaps
-
-- **Chip x variant matrix** — GroupBy on PositionQuery (goal/securityType) and SnapshotQuery with CategoryFilterChip not
-  covered in merge-chip-filters tests.
-- **Snapshot date chip interaction** — removed from integration tests due to ambiguous selector (Date chip vs DataTable
-  Date column header). Test infrastructure problem, not engine problem.

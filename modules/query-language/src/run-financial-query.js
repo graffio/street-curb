@@ -68,6 +68,7 @@ const T = {
     toDateRange: descriptor => {
         if (!descriptor) return undefined
         return descriptor.match({
+            AllDates: () => undefined,
             Year: ({ year }) => ({ start: `${year}-01-01`, end: `${year}-12-31` }),
             Quarter: ({ quarter, year }) => {
                 const firstMonth = (quarter - 1) * 3 + 1

@@ -16,6 +16,7 @@ export { applyChipFilters } from './src/apply-chip-filters.js'
 export { computePositions } from './src/financial-computations/compute-positions.js'
 
 // IR types (public — query construction and result matching)
+export { EditableFilters } from './src/types/editable-filters.js'
 export { IRFinancialQuery } from './src/types/ir-financial-query.js'
 
 // Output types (public — consumers read query results with these shapes)

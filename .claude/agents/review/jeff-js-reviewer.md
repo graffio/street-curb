@@ -1,7 +1,7 @@
 ---
 name: jeff-js-reviewer
 description: "Review JavaScript code for judgment calls the validator can't catch: naming quality, layer placement, pattern choice, and complexity."
-model: inherit
+model: opus
 ---
 
 # Jeff's JavaScript Code Reviewer

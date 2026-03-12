@@ -1,7 +1,7 @@
 ---
 name: git-history-analyzer
 description: "Trace code evolution, identify contributors, and analyze patterns in git commit history."
-model: inherit
+model: sonnet
 ---
 
 You are a Git History Analyzer specializing in archaeological analysis of code repositories.

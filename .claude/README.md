@@ -74,9 +74,8 @@ Schema adds `style_card` field:
 | Command                 | Purpose                                      |
 |-------------------------|----------------------------------------------|
 | `/workflows:plan`       | Read brainstorm → generate task file         |
-| `/workflows:wrap-up`    | Commit quality → knowledge capture → cleanup |
-| `/workflows:review`     | Parallel agent review (pre-merge)            |
-| `/workflows:brainstorm` | Exploration before planning                  |
+| `/workflows:wrap-up`    | Full-branch review → commit quality → knowledge capture → cleanup |
+| `/workflows:brainstorm` | Exploration before planning                                       |
 | `review <file>`         | Quick quality check during development       |
 | `review staged`         | Quality check on all staged files            |
 

@@ -247,3 +247,41 @@ tap.test('positions: AccountFilterChip keyboard Escape dismisses without change'
     const snapshot = session.browser('snapshot')
     t.ok(snapshot.includes('All'), 'selection unchanged after Escape — still shows "All"')
 })
+
+tap.test('positions: GroupBy Security Type changes display', async t => {
+    const beforeGroupBy = session.browser('snapshot')
+
+    session.clickByText('Group by:')
+    await wait(200)
+    session.clickPopoverItem('Type')
+    await wait(200)
+
+    const afterGroupBy = session.browser('snapshot')
+    t.notOk(afterGroupBy.includes('Something went wrong'), 'no crash after group by Type')
+    t.not(afterGroupBy, beforeGroupBy, 'display changes after group by Type')
+
+    // Switch back to Account for subsequent tests
+    session.clickByText('Group by:')
+    await wait(200)
+    session.clickPopoverItem('Account')
+    await wait(200)
+})
+
+tap.test('positions: search filter narrows results', async t => {
+    const beforeSearch = session.browser('snapshot')
+
+    session.browser('click', ['text=Filter >> nth=0'])
+    await wait(200)
+    session.browser('find', ['placeholder', 'Type to filter...', 'fill', 'AAPL'])
+    await wait(200)
+
+    const afterSearch = session.browser('snapshot')
+    t.notOk(afterSearch.includes('Something went wrong'), 'no crash after search filter')
+    t.ok(afterSearch.includes('AAPL'), 'search results contain AAPL')
+    t.not(afterSearch, beforeSearch, 'display changes after search')
+
+    // Clear search
+    session.clickClear()
+    await wait(200)
+    t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after clearing search')
+})

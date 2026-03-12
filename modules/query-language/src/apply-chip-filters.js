@@ -15,12 +15,17 @@ const T = {
     // @sig toEscapedRegex :: String -> String
     toEscapedRegex: s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
 
+    // Extract ISO date string from a Date using local timezone (not UTC — toISOString can roll dates)
+    // @sig toLocalIsoDate :: Date -> String
+    toLocalIsoDate: d =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+
     // Convert chip dateRange ({ start: Date, end: Date }) to IRDateRange.Range, or undefined
     // @sig toChipDateRange :: ({ start: Date?, end: Date? }?) -> IRDateRange?
     toChipDateRange: chipDateRange => {
         if (!chipDateRange?.start || !chipDateRange?.end) return undefined
         const { start, end } = chipDateRange
-        return IRDateRange.Range(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10))
+        return IRDateRange.Range(T.toLocalIsoDate(start), T.toLocalIsoDate(end))
     },
 
     // Convert chip asOfDate (ISO string) to IRDateRange.Range for a single day, or undefined
