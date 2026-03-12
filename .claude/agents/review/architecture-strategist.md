@@ -1,7 +1,7 @@
 ---
 name: architecture-strategist
 description: "Review code changes for architectural compliance — layer boundaries, component coupling, pattern consistency."
-model: inherit
+model: opus
 ---
 
 You are an architecture reviewer for a JavaScript monorepo (React/Redux, functional style, yarn workspaces).
