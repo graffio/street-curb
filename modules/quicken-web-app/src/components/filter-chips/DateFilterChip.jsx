@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux'
 import { post } from '../../commands/post.js'
 import * as S from '../../store/selectors.js'
 import { Action } from '../../types/action.js'
+import { Formatters } from '../../utils/formatters.js'
 import { ChipStyles } from './chip-styles.js'
 import { FilterColumn } from './FilterColumn.jsx'
 
@@ -303,6 +304,7 @@ const Chip = ({ viewId, isActive = false }) => {
     const contentRef = el => E.registerContentActions(viewId, el)
 
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
+    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
     const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
@@ -310,7 +312,10 @@ const Chip = ({ viewId, isActive = false }) => {
     const isOpen = popoverId === 'date'
     const triggerStyle = ChipStyles.makeChipTriggerStyle(180, isActive)
     const contentStyle = { padding: 'var(--space-1)', width: 220 }
-    const currentLabel = DateRangeUtils.DATE_RANGES[dateRangeKey] || 'All dates'
+    const currentLabel =
+        dateRangeKey === 'customDates'
+            ? Formatters.formatDateRange(dateRange?.start, dateRange?.end) || 'Custom dates...'
+            : DateRangeUtils.DATE_RANGES[dateRangeKey] || 'All dates'
 
     // prettier-ignore
     chipStates.set(viewId, { next: nextHighlightIndex, prev: prevHighlightIndex, highlightedItemId, dateRangeKey, customStartDate, customEndDate })

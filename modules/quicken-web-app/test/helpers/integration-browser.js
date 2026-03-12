@@ -78,9 +78,9 @@ const createSession = sessionName => {
     // @sig clickPopoverItem :: String -> String
     const clickPopoverItem = text => browser('click', [`[data-radix-popper-content-wrapper] >> text=${text} >> nth=0`])
 
-    // Clicks the chip clear button (circular div with border-radius: 50%)
-    // @sig clickClear :: () -> String
-    const clickClear = () => browser('click', ['[style*="border-radius: 50%"]'])
+    // Clicks a chip clear button (circular div with border-radius: 50%)
+    // @sig clickClear :: (Number?) -> String
+    const clickClear = (nth = 0) => browser('click', [`[style*="border-radius: 50%"] >> nth=${nth}`])
 
     // Enters a date into KeyboardDateInput using keyboard-mode key presses.
     // Click focuses the input, digits go through handleNumberTyping, '/' advances segment.

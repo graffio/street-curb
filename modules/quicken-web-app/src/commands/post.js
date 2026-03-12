@@ -4,10 +4,12 @@
 import { debounce } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { TransactionColumns } from '../columns/index.js'
+import { ReportMetadata } from '../pages/report-metadata.js'
 import { currentStore, Selectors as S } from '../store/index.js'
 import { RegisterNavigation } from '../store/register-navigation.js'
 import { Account } from '../types/account.js'
 import { Action } from '../types/action.js'
+import { EditableFiltersToChipState } from './editable-filters-to-chip-state.js'
 import { IndexedDbStorage } from './data-sources/indexed-db-storage.js'
 import { handleInitializeSystem } from './operations/handle-initialize-system.js'
 import { handleOpenFile } from './operations/handle-open-file.js'
@@ -123,6 +125,26 @@ const E = {
         E.persistTabLayout()
     },
 
+    // Opens a view, then seeds chip state from editableFilters and stores the stripped IR
+    // @sig handleOpenView :: (Function, Action.OpenView) -> void
+    handleOpenView: (dispatch, action) => {
+        dispatch(action)
+        E.persistTabLayout()
+        const { id, reportType } = action.view
+        const metadata = reportType ? ReportMetadata[reportType] : undefined
+        if (!metadata?.baseQueryIR) return
+
+        // Strip editableFilters before storing IR — it seeds chips at open time, not at query time
+        const { editableFilters, ...irFields } = metadata.baseQueryIR
+        if (editableFilters) {
+            const accountsLT = S.accounts(currentStore().getState())
+            dispatch(
+                Action.SetTransactionFilter(id, EditableFiltersToChipState.toChipChanges(editableFilters, accountsLT)),
+            )
+        }
+        dispatch(Action.SetQueryIR(id, metadata.baseQueryIR.constructor.from(irFields)))
+    },
+
     // Dispatches and debounces tab layout persistence (for high-frequency drag resize)
     // @sig handleTabGroupWidthAction :: (Function, Action) -> void
     handleTabGroupWidthAction: (dispatch, action) => {
@@ -153,6 +175,12 @@ E.debouncedPersistTabLayout = debounce(500, E.persistTabLayout)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -178,7 +206,7 @@ const post = action => {
         EnsureTableLayout      : () => E.handleSetTableLayout(E.dispatch, action),
 
         // Tab layout actions (all persist to IndexedDB)
-        OpenView          : () => E.handleTabLayoutAction(E.dispatch, action),
+        OpenView          : () => E.handleOpenView(E.dispatch, action),
         CloseView         : () => E.handleTabLayoutAction(E.dispatch, action),
         MoveView          : () => E.handleTabLayoutAction(E.dispatch, action),
         CreateTabGroup    : () => E.handleTabLayoutAction(E.dispatch, action),
