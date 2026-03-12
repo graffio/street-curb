@@ -14,9 +14,9 @@ export const IRFinancialQuery = {
     name: 'IRFinancialQuery',
     kind: 'taggedSum',
     variants: {
-        TransactionQuery:{ name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange?', grouping: 'IRGrouping', computed: '[IRComputedRow]?' },
-        PositionQuery:   { name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange?', grouping: 'IRGrouping?', metrics: '[String]?', orderByField: 'String?', orderByDirection: { pattern: FieldTypes.sortDirection, optional: true }, limit: 'Number?' },
-        SnapshotQuery:   { name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange',  grouping: 'IRGrouping?', domain: FieldTypes.snapshotDomain, interval: FieldTypes.timeSeriesInterval },
-        AccountQuery:    { name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange?' },
+        TransactionQuery:{ name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange?', grouping: 'IRGrouping', computed: '[IRComputedRow]?', editableFilters: 'EditableFilters?' },
+        PositionQuery:   { name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange?', grouping: 'IRGrouping?', metrics: '[String]?', orderByField: 'String?', orderByDirection: { pattern: FieldTypes.sortDirection, optional: true }, limit: 'Number?', editableFilters: 'EditableFilters?' },
+        SnapshotQuery:   { name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange',  grouping: 'IRGrouping?', domain: FieldTypes.snapshotDomain, interval: FieldTypes.timeSeriesInterval, editableFilters: 'EditableFilters?' },
+        AccountQuery:    { name: 'String', description: 'String?', filter: 'IRFilter?', dateRange: 'IRDateRange?', editableFilters: 'EditableFilters?' },
     },
 }

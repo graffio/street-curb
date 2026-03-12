@@ -452,7 +452,7 @@ const _queryResult = (state, viewId, fallbackIR) => {
     return runFinancialQuery(mergedIR, state)
 }
 
-// Describe the merged IR as human-readable text — cheap, no heavy memoization needed
+// Describe the merged IR as human-readable text
 // @sig _queryDescription :: (State, String, IRFinancialQuery?) -> String
 const _queryDescription = (state, viewId, fallbackIR) => {
     const ir = state.queryIR[viewId] ?? fallbackIR
@@ -464,7 +464,7 @@ const _queryDescription = (state, viewId, fallbackIR) => {
 // prettier-ignore
 const QueryResult = {
     fromIR:      memoizeReduxStatePerKey(ENGINE_STATE_KEYS, 'queryIR', _queryResult),
-    description: _queryDescription,
+    description: memoizeReduxStatePerKey(ENGINE_STATE_KEYS, 'queryIR', _queryDescription),
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

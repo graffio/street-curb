@@ -1,12 +1,18 @@
 // ABOUTME: Unified report page that renders all IRFinancialQuery result shapes
 // ABOUTME: Tree views, pivot tables, and time series charts — driven by metadata constants
 
-import { isNil } from '@graffio/functional'
+import { isNil, keys } from '@graffio/functional'
 import { Flex, Text } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { CellRenderers } from '../columns/CellRenderers.jsx'
+import { AccountFilterChip } from '../components/filter-chips/AccountFilterChip.jsx'
+import { AsOfDateChip } from '../components/filter-chips/AsOfDateChip.jsx'
+import { CategoryFilterChip } from '../components/filter-chips/CategoryFilterChip.jsx'
+import { DateFilterChip } from '../components/filter-chips/DateFilterChip.jsx'
+import { GroupByFilterChip } from '../components/filter-chips/GroupByFilterChip.jsx'
+import { SearchFilterChip } from '../components/filter-chips/SearchFilterChip.jsx'
 import { DataTable } from '../components/DataTable.jsx'
 import { FilterChipRow } from '../components/FilterChipRow.jsx'
 import { TimeSeriesChart } from '../components/TimeSeriesChart.jsx'
@@ -21,6 +27,26 @@ import { Formatters } from '../utils/formatters.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
+    // Build scoping chip elements from editableFilters keys present in CHIP_MAP
+    // @sig toScopingChips :: (EditableFilters, String, Object) -> [ReactElement]
+    toScopingChips: (editableFilters, viewId, metadata) =>
+        keys(CHIP_MAP)
+            .filter(k => k in editableFilters)
+            .map(k => {
+                const { Component, extraProps } = CHIP_MAP[k]
+                const props = extraProps ? { viewId, ...extraProps(metadata) } : { viewId }
+                return <Component key={k} {...props} />
+            }),
+
+    // Build utility chip elements from the utilityChips set
+    // @sig toUtilityChips :: (Set, String) -> [ReactElement]
+    toUtilityChips: (utilityChips, viewId) =>
+        Array.from(utilityChips).map(k => {
+            const Component = UTILITY_CHIP_MAP[k]
+            if (!Component) throw new Error(`Unknown utility chip key: ${k}`)
+            return <Component key={k} viewId={viewId} />
+        }),
+
     // Build a value column def for one 2D tree column key
     // @sig toTreeValueColumn :: (String, Object?) -> ColumnDef
     toTreeValueColumn: (col, computed) => ({
@@ -77,13 +103,6 @@ const F = {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Renders a single filter entry from metadata — component + optional extra props
-// @sig FilterEntry :: { entry: { component, props? }, viewId: String } -> ReactElement
-const FilterEntry = ({ entry, viewId }) => {
-    const Component = entry.component
-    return <Component viewId={viewId} {...entry.props} />
-}
-
 // Row label with italic + separator for computed rows
 // @sig PivotRowLabelCell :: { getValue, row } -> ReactElement
 const PivotRowLabelCell = ({ getValue, row }) => {
@@ -122,7 +141,25 @@ const PivotPercentCell = ({ getValue }) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const QUERY_DESCRIPTION_STYLE = { fontStyle: 'italic', width: '100%', paddingBottom: 'var(--space-1)' }
+// Maps editableFilters keys to scoping chip components — key order determines chip display order
+// prettier-ignore
+const CHIP_MAP = {
+    dateRange:  { Component: DateFilterChip.DateFilterColumn },
+    categories: { Component: CategoryFilterChip.CategoryFilterColumn },
+    accounts:   { Component: AccountFilterChip.AccountFilterColumn },
+    groupBy:    { Component: GroupByFilterChip.GroupByFilterColumn, extraProps: m => m.groupByItems ? { items: m.groupByItems } : {} },
+    asOfDate:   { Component: AsOfDateChip.AsOfDateColumn },
+}
+
+// Maps utilityChips set entries to always-on chip components
+const UTILITY_CHIP_MAP = { search: SearchFilterChip.SearchFilterColumn }
+
+const QUERY_DESCRIPTION_STYLE = {
+    fontStyle: 'italic',
+    width: '100%',
+    paddingLeft: 'var(--space-2)',
+    paddingBottom: 'var(--space-1)',
+}
 
 // prettier-ignore
 const TIME_SERIES_COLUMNS = [
@@ -142,7 +179,8 @@ const TIME_SERIES_COLUMNS = [
  */
 const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
     // prettier-ignore
-    const { chart, columns, baseQueryIR, filters, getChildRows, getRowCanExpand, hiddenColumnsByGroup } = metadata
+    const { chart, columns, baseQueryIR, utilityChips, getChildRows, getRowCanExpand, hiddenColumnsByGroup } = metadata
+    const editableFilters = baseQueryIR.editableFilters
     const result = useSelector(state => S.QueryResult.fromIR(state, viewId, baseQueryIR))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
@@ -160,12 +198,11 @@ const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
         <FilterChipRow {...chipRowProps}>
             {queryDescription && (
                 <Text size="1" color="gray" style={QUERY_DESCRIPTION_STYLE}>
-                    {queryDescription}
+                    Query: {queryDescription}
                 </Text>
             )}
-            {filters.map((entry, i) => (
-                <FilterEntry key={i} entry={entry} viewId={viewId} />
-            ))}
+            {editableFilters && F.toScopingChips(editableFilters, viewId, metadata)}
+            {F.toUtilityChips(utilityChips, viewId)}
         </FilterChipRow>
     )
 

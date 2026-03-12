@@ -14,6 +14,7 @@ export const IRDateRange = {
     name: 'IRDateRange',
     kind: 'taggedSum',
     variants: {
+        AllDates: {},
         Year:     { year: 'Number' },
         Quarter:  { quarter: 'Number', year: 'Number' },
         Month:    { month: 'Number', year: 'Number' },
