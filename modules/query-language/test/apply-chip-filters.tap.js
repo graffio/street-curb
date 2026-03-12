@@ -246,6 +246,54 @@ test('applyChipFilters — SnapshotQuery merges filter and dateRange', t => {
 })
 
 // ═════════════════════════════════════════════════
+// Cross-variant chip coverage
+// ═════════════════════════════════════════════════
+
+test('applyChipFilters — groupBy chip overrides PositionQuery grouping to goal', t => {
+    const state = { ...emptyChipState, groupBy: 'goal' }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.grouping.rows, 'goal', 'Then grouping rows is overridden to goal')
+    t.end()
+})
+
+test('applyChipFilters — groupBy chip overrides PositionQuery grouping to securityType', t => {
+    const state = { ...emptyChipState, groupBy: 'securityType' }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.grouping.rows, 'securityType', 'Then grouping rows is overridden to securityType')
+    t.end()
+})
+
+test('applyChipFilters — category chip on SnapshotQuery preserves domain and interval', t => {
+    const state = { ...emptyChipState, selectedCategories: ['Food'] }
+    const result = applyChipFilters(snapQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'SnapshotQuery', 'Then result is a SnapshotQuery')
+    t.ok(result.filter, 'Then filter is set')
+    t.equal(result.domain, 'balances', 'Then domain preserved')
+    t.equal(result.interval, 'monthly', 'Then interval preserved')
+    t.end()
+})
+
+test('applyChipFilters — account chip applies filter to PositionQuery', t => {
+    const state = { ...emptyChipState, selectedAccounts: ['acc_000000000001'] }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.filter['@@tagName'], 'In', 'Then filter is In')
+    t.same(result.filter.values, ['Checking'], 'Then values are resolved account names')
+    t.end()
+})
+
+test('applyChipFilters — search chip applies filter to PositionQuery', t => {
+    const state = { ...emptyChipState, filterQuery: 'AAPL' }
+    const result = applyChipFilters(posQuery, state, ACCOUNTS)
+    t.equal(result['@@tagName'], 'PositionQuery', 'Then result is a PositionQuery')
+    t.equal(result.filter['@@tagName'], 'Or', 'Then filter is Or')
+    t.equal(result.filter.filters.length, 8, 'Then Or searches 8 fields')
+    t.end()
+})
+
+// ═════════════════════════════════════════════════
 // Combined chips
 // ═════════════════════════════════════════════════
 
