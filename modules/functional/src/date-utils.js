@@ -172,6 +172,28 @@ const dateToDateParts = date => {
  */
 const datePartsToDate = ({ month, day, year }) => new Date(year, month - 1, day)
 
+// prettier-ignore
+const SHORT_MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/*
+ * Format a Date as short readable text (e.g., "Jan 1, 2025")
+ * @sig formatShortDate :: Date -> String
+ */
+const formatShortDate = date => `${SHORT_MONTH_NAMES[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+
+/*
+ * Format an ISO date string (YYYY-MM-DD) as short readable text (e.g., "Jan 1, 2025")
+ * Parses as local date to avoid timezone shift.
+ * @sig formatIsoDate :: String -> String
+ */
+const formatIsoDate = iso => formatShortDate(new Date(iso.replace(/-/g, '/')))
+
+/*
+ * Format a date range as readable text (e.g., "Jan 1, 2025 – Dec 31, 2025")
+ * @sig formatDateRange :: (Date, Date) -> String
+ */
+const formatDateRange = (start, end) => `${formatShortDate(start)} – ${formatShortDate(end)}`
+
 /*
  * Convert MM/DD/YYYY to YYYY-MM-DD format for Date constructor
  * @sig convertSlashToIso :: String -> String
@@ -209,6 +231,9 @@ export {
     parseIsoDateFormat,
     parseSlashDateFormat,
     formatDateString,
+    formatShortDate,
+    formatIsoDate,
+    formatDateRange,
     dateToDateParts,
     datePartsToDate,
     convertSlashToIso,

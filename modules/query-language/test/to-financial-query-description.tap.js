@@ -109,7 +109,11 @@ test('SnapshotQuery — balances monthly', t => {
         'balances',
         'monthly',
     )
-    t.equal(toFinancialQueryDescription(ir), 'balances snapshots (monthly)', 'Then includes domain and interval')
+    t.equal(
+        toFinancialQueryDescription(ir),
+        'balances snapshots (monthly), 2025',
+        'Then includes domain, interval, and date range',
+    )
     t.end()
 })
 
@@ -123,7 +127,69 @@ test('SnapshotQuery — positions quarterly', t => {
         'positions',
         'quarterly',
     )
-    t.equal(toFinancialQueryDescription(ir), 'positions snapshots (quarterly)', 'Then includes domain and interval')
+    t.equal(
+        toFinancialQueryDescription(ir),
+        'positions snapshots (quarterly), 2025',
+        'Then includes domain, interval, and date range',
+    )
+    t.end()
+})
+
+// ═════════════════════════════════════════════════
+// Date range descriptions
+// ═════════════════════════════════════════════════
+
+test('TransactionQuery — with Relative date range', t => {
+    const ir = IRFinancialQuery.TransactionQuery(
+        'test',
+        undefined,
+        undefined,
+        IRDateRange.Relative('months', 12),
+        IRGrouping('category'),
+    )
+    t.equal(
+        toFinancialQueryDescription(ir),
+        'transactions, last 12 months, grouped by category',
+        'Then includes date range',
+    )
+    t.end()
+})
+
+test('TransactionQuery — with AllDates date range', t => {
+    const ir = IRFinancialQuery.TransactionQuery(
+        'test',
+        undefined,
+        undefined,
+        IRDateRange.AllDates(),
+        IRGrouping('category'),
+    )
+    t.equal(
+        toFinancialQueryDescription(ir),
+        'transactions, grouped by category',
+        'Then omits AllDates from description',
+    )
+    t.end()
+})
+
+test('TransactionQuery — with Range date range', t => {
+    const ir = IRFinancialQuery.TransactionQuery(
+        'test',
+        undefined,
+        undefined,
+        IRDateRange.Range('2025-01-01', '2025-12-31'),
+        IRGrouping('category'),
+    )
+    t.equal(
+        toFinancialQueryDescription(ir),
+        'transactions, Jan 1, 2025 – Dec 31, 2025, grouped by category',
+        'Then includes formatted date range',
+    )
+    t.end()
+})
+
+test('TransactionQuery — no date range', t => {
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, undefined, undefined, IRGrouping('category'))
+    t.equal(toFinancialQueryDescription(ir), 'transactions, grouped by category', 'Then no date range part')
     t.end()
 })
 
@@ -193,6 +259,22 @@ test('GreaterThan filter description', t => {
         toFinancialQueryDescription(ir),
         'transactions where amount > 1000, grouped by category',
         'Then uses > operator',
+    )
+    t.end()
+})
+
+test('Text search filter description — Or of all Matches with same pattern', t => {
+    const filter = IRFilter.Or([
+        IRFilter.Matches('payee', '401'),
+        IRFilter.Matches('category', '401'),
+        IRFilter.Matches('memo', '401'),
+        IRFilter.Matches('amount', '401'),
+    ])
+    const ir = IRFinancialQuery.TransactionQuery('test', undefined, filter, undefined, IRGrouping('category'))
+    t.equal(
+        toFinancialQueryDescription(ir),
+        'transactions where filter: 401, grouped by category',
+        'Then collapses to "filter: <pattern>"',
     )
     t.end()
 })
