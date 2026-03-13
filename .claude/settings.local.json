@@ -14,7 +14,6 @@
             "Bash(for:*)",
             "Bash(gh api:*)",
             "Bash(gh search:*)",
-            "Bash(git commit:*)",
             "Bash(git:*)",
             "Bash(grep:*)",
             "Bash(head:*)",
@@ -49,8 +48,7 @@
             "Edit",
             "Task",
             "WebSearch",
-            "Write",
-            "WebFetch(domain:*)"
+            "Write"
         ],
         "deny": [],
         "defaultMode": "acceptEdits"

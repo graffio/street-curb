@@ -83,7 +83,7 @@ Address me as "Jeff". We're colleagues—no hierarchy.
 - Track work in task file steps; never discard tasks without approval
 - Fix bugs immediately when found
 - TDD: failing test → make it pass → refactor
-- Bash: no `cd` (use absolute paths / `--cwd` / `-C`), no `&&` or `;` (separate tool calls), pipes only to output filters (`tail`, `head`, `grep`, `jq`, etc.)
+- Bash: no `cd`, no `&&` or `;` (separate tool calls), pipes only to output filters (`tail`, `head`, `grep`, `jq`, etc.). Use `--cwd` / `-C` only when targeting a different directory than cwd.
 
 ## Debugging
 
