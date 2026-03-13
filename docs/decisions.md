@@ -964,6 +964,12 @@ Future architecture decisions are data-driven and support sustainable business g
 **Decision:** Convert seed queries to JSON literals + `IRFinancialQuery.fromJSON()`. Remove IRFilter, IRGrouping, IRDateRange, IRComputedRow, IRPivotExpression from barrel. Only IRFinancialQuery remains (provides `.fromJSON` entry point and `.match()` dispatch). Add `@@tagNames` whitelist guard to generated fromJSON for fail-fast on unknown variants.
 **Why:** Module boundary is now enforced — internal IR types are not importable. `fromJSON` is the single entry point for query construction from outside the module.
 
+### Review methodology belongs in agent definitions, not task files (2026-03-13)
+
+**Context:** review-complexity.md and review-simplicity.md contained good methodology (simplification strategies, litmus tests, anti-patterns) but were referenced via indirection ("Read the task file") that subagents didn't reliably follow. The methodology was effectively orphaned.
+**Decision:** Inline methodology into the agent definitions that execute it. Simplicity content → code-simplicity-reviewer. Structural/layer strategies → architecture-strategist. Both agents get a "Cross-File Mode" section activated during wrap-up for branch-scope analysis. Task files deleted.
+**Why:** Agent definitions are always loaded when the agent runs — no indirection to fail. Cross-file review at wrap-up scope catches patterns (duplicated logic, consolidation opportunities) that per-file review during development can't see.
+
 ### Type-definitions organized by domain lifecycle (2026-03-04)
 
 **Context:** 30+ type-definition files in a flat directory, hard to find by purpose. Generator copies FieldTypes import paths verbatim, complicating subdirectory moves.

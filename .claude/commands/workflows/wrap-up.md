@@ -56,6 +56,8 @@ Read the brainstorm file (from the task file's `brainstorm` field) so agents hav
 
 Prompt each agent with: the full diff, the brainstorm's Settled Approach, and "Does the implementation match the spec? Flag deviations and issues."
 
+For **code-simplicity-reviewer** and **architecture-strategist**, add: "This is a full-branch review — use Cross-File Mode. Look across all changed files for duplicated patterns, shared abstractions, layer violations, and consolidation opportunities."
+
 **After agents return:** Present a combined summary. If any agent flags blocking issues, **[CHECKPOINT]** — resolve before continuing.
 
 ### 4. Commit Quality Check

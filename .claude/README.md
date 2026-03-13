@@ -48,18 +48,12 @@ Finish up:
 - `js-module.md` — cohesion groups, naming, fail-fast philosophy
 - `test-file.md` — TAP structure, Given/When/Then, TDD flow
 
-Loaded via `style_card` field in task file steps. `/workflows:plan` maps file types to cards automatically.
+Loaded via `style_cards` field in task file steps.
 
 ### Task Files
 
 Named JSON files co-located with brainstorms: `docs/brainstorms/{name}.task.json`. Gitignored (`*.task.json`). JSON
-steps with `done` boolean. Can't be reinterpreted.
-
-Schema adds `style_card` field:
-
-```json
-{ "step": 3, "action": "Implement component", "style_card": "react-component", "done": false }
-```
+steps with `status` field. Can't be reinterpreted.
 
 ### Mechanical Enforcement
 
@@ -81,14 +75,14 @@ Schema adds `style_card` field:
 
 ### Review Agents
 
-| Agent                    | Focus                                              |
-|--------------------------|----------------------------------------------------|
-| jeff-js-reviewer         | Naming, layer placement, pattern choice, fail-fast |
-| code-simplicity-reviewer | Complexity, unnecessary abstraction                |
-| performance-oracle       | Performance issues                                 |
-| architecture-strategist  | Layer violations, structural issues                |
-| security-sentinel        | Security concerns                                  |
-| learnings-researcher     | Past solutions from docs/solutions/                |
+| Agent                    | Focus                                              | Used by          |
+|--------------------------|----------------------------------------------------|------------------|
+| jeff-js-reviewer         | Naming, layer placement, pattern choice, fail-fast | review, wrap-up  |
+| code-simplicity-reviewer | Abstraction justification, YAGNI, cross-file duplication | review, wrap-up  |
+| architecture-strategist  | Layer violations, simplification strategies, cross-file patterns | wrap-up          |
+| performance-oracle       | Performance issues                                 | wrap-up          |
+| security-sentinel        | Security concerns                                  | wrap-up          |
+| learnings-researcher     | Past solutions from docs/solutions/                | plan             |
 
 ### Key Files
 
@@ -96,8 +90,6 @@ Schema adds `style_card` field:
 |--------------------------------|--------------------------------------------------------------|
 | `CLAUDE.md`                    | Entry point — principles, workflow, triggers, functional API |
 | `preferences.md`               | Architectural judgment calls (imported by CLAUDE.md)         |
-| `conventions.md`               | Pointer file — where style rules actually live               |
-| `workflow.md`                  | Pointer file — where workflow rules actually live            |
 | `docs/brainstorms/*.task.json` | Active task spec (gitignored)                                |
 | `style-cards/*.md`             | Per-step style guidance                                      |
 | `api-cheatsheets/*.md`         | API references for custom data structures                    |
