@@ -75,7 +75,11 @@ Steps are **logical work units**, not file edits. Each step should be roughly on
 - **3-8 steps** for a typical feature. Fewer than 3 means the feature is simple enough to just implement without a plan.
   More than 8 means decompose the brainstorm into smaller features.
 - **Intent** describes what Claude is building, not which files to edit. "Build filter resolution pipeline — merge chip
-  filters into IR, chip-wins on conflict" not "Edit resolve-chip-filters.js."
+  filters into IR, chip-wins on conflict" not "Edit resolve-chip-filters.js." If the step introduces testable logic
+  (new branching, business rules, bug fix with identifiable root cause), end the intent with what to test and the test
+  type: "Unit test: count selector returns correct count per variant. Integration: assertion in positions-report that
+  filtering to non-investment account shows 0." Unit tests for pure logic, integration tests for cross-component
+  behavior. Prefer adding assertions to existing integration test files.
 - **Scope** names modules and areas, enough that a resuming session can orient itself. Not file lists.
 - **Key constraints** — settled decisions from the brainstorm that are relevant to this step. "Use LookupTable, not
   Map", "chip filters win on conflict", etc. Prevents Claude from re-opening decisions the brainstorm already closed.
@@ -92,6 +96,7 @@ Steps are **logical work units**, not file edits. Each step should be roughly on
 - Mechanical review/validator/commit steps (pre-commit hook handles enforcement)
 - Code snippets or function signatures
 - Prescribed implementation order within a step
+- Separate test-only steps (tests go with their implementation step)
 
 ### Checkpoints
 
@@ -147,6 +152,33 @@ reducer, or utility changes can break integration tests too. Wrap-up runs whatev
 
 ---
 
+## Review the Plan
+
+After generating the task file, spawn three review agents in parallel. Each receives the task file JSON and the
+brainstorm document. No additional instructions beyond the agent's base prompt — let each agent apply its full
+methodology.
+
+**Agents:**
+
+- **architecture-strategist**
+- **code-simplicity-reviewer**
+- **jeff-js-reviewer**
+
+**After agents return:** For each point where reviewers flagged an issue or disagreed with each other, write a
+**titled paragraph** that explains:
+
+1. What the original plan said
+2. What the reviewer(s) objected to and **why** (the reasoning, not just "flagged layer placement")
+3. If reviewers disagreed with each other, what each side argued
+4. Your assessment — which side you picked and your reasoning
+
+Skip issues where all reviewers agreed and the fix is obvious (e.g., "file already supports this prop"). Just apply
+those silently to the task file.
+
+**Do not use tables or bullet lists for reviewer feedback.** Tables compress the reasoning into cryptic phrases that
+don't communicate the actual trade-off. Paragraphs force you to explain the disagreement clearly enough for Jeff to
+evaluate your judgment.
+
 ## Present the Plan
 
 Present the generated task file summary. Include:
@@ -154,7 +186,6 @@ Present the generated task file summary. Include:
 - Step count and checkpoint locations
 - The `not_building` list (scope boundaries)
 - Any precedent concerns (new patterns, new libraries)
+- Reviewer feedback paragraphs (see above) — with changes already applied to the task file
 
 Ask: "Plan ready. Should I start implementing?"
-
-No post-generation agent review. The wrap-up full-branch review catches implementation issues against actual code.
