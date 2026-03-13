@@ -6,6 +6,8 @@ argument-hint: "[brainstorm file path or brief context]"
 
 # Wrap Up
 
+**Effort:** Switch to high (`/model`) before running — this is judgment-heavy work.
+
 Run after completing a feature or fixing a non-trivial bug. Handles everything that happens after code is done.
 
 ## Steps

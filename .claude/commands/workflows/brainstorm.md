@@ -6,6 +6,8 @@ argument-hint: "[feature idea or problem to explore]"
 
 # Brainstorm a Feature or Improvement
 
+**Effort:** Switch to high (`/model`) before running — this is judgment-heavy work.
+
 **Note: The current year is 2026.** Use this when dating brainstorm documents.
 
 Brainstorming helps answer **WHAT** to build through collaborative dialogue. It precedes `/workflows:plan`, which

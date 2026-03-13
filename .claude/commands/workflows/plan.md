@@ -6,6 +6,8 @@ argument-hint: "[brainstorm file path]"
 
 # Plan
 
+**Effort:** Switch to high (`/model`) before running — this is judgment-heavy work.
+
 Generates a task file with intent-level steps. Claude decides file-level implementation details and commit
 boundaries. The pre-commit hook and wrap-up review provide quality enforcement.
 
