@@ -33,11 +33,11 @@ Finish up:
 
 ### Three Tiers of Reference Material
 
-| Tier              | What                                                               | When loaded                     | Where                          |
-|-------------------|--------------------------------------------------------------------|---------------------------------|--------------------------------|
-| Always in context | Universal principles, workflow, pattern triggers, functional names | Session start                   | `CLAUDE.md` (inline)           |
-| Per-step          | File-type-specific style rules                                     | Before each implementation step | `.claude/style-cards/*.md`     |
-| On-demand         | Full API references                                                | When signaled by style cards    | `.claude/api-cheatsheets/*.md` |
+| Tier              | What                                                               | When loaded      | Where                          |
+|-------------------|--------------------------------------------------------------------|--------------------|--------------------------------|
+| Always in context | Universal principles, workflow, pattern triggers, functional names | Session start      | `CLAUDE.md` (inline)           |
+| Always in context | File-type-specific style rules (~160 lines total)                  | Session start      | `.claude/style-cards/*.md`     |
+| On-demand         | Full API references                                                | When needed        | `.claude/api-cheatsheets/*.md` |
 
 ### Style Cards
 
@@ -48,7 +48,7 @@ Finish up:
 - `js-module.md` — cohesion groups, naming, fail-fast philosophy
 - `test-file.md` — TAP structure, Given/When/Then, TDD flow
 
-Loaded via `style_cards` field in task file steps.
+All loaded at session start (~160 lines total). The `style_cards` field in task files documents which areas a step touches.
 
 ### Task Files
 
@@ -91,7 +91,7 @@ steps with `status` field. Can't be reinterpreted.
 | `CLAUDE.md`                    | Entry point — principles, workflow, triggers, functional API |
 | `preferences.md`               | Architectural judgment calls (imported by CLAUDE.md)         |
 | `docs/brainstorms/*.task.json` | Active task spec (gitignored)                                |
-| `style-cards/*.md`             | Per-step style guidance                                      |
+| `style-cards/*.md`             | Style guidance (loaded at session start)                     |
 | `api-cheatsheets/*.md`         | API references for custom data structures                    |
 | `tasks/*.md`                   | Templates for specific activities                            |
 
@@ -106,7 +106,7 @@ Claude needs constraints to stay on track. Without them, it:
 The protocol addresses this with:
 
 - **JSON task spec** — enumerable steps, no room for interpretation
-- **Style cards per step** — style guidance in fresh context when needed
+- **Style cards at session start** — all style guidance loaded upfront (~160 lines)
 - **Mechanical enforcement** — hooks that can't be skipped
 - **Checkpoints** — forced approval at decision points
 

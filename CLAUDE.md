@@ -6,7 +6,7 @@ Brevity > thoroughness. Short, correct answers beat comprehensive ones. Bullet p
 
 See `.claude/README.md` for full protocol explanation. Key files:
 - `docs/brainstorms/{name}.task.json` — Active task spec (follow exactly during implementation)
-- `.claude/style-cards/` — Read the relevant card BEFORE writing code (per `style_card` field)
+- `.claude/style-cards/` — Read ALL cards at session start (~160 lines total)
 - `.claude/preferences.md` — Architectural preferences (judgment calls)
 - `.claude/tasks/` — Step-by-step templates for common work
 
@@ -32,7 +32,7 @@ See `.claude/README.md` for full protocol explanation. Key files:
 - **Complexity-budget failure = CHECKPOINT** — stop, run complexity review, rethink approach. Never shuffle code to pass.
 - **Never add COMPLEXITY or COMPLEXITY-TODO comments** without asking Jeff first.
 - **Quick checks:** `review <file>` or `review staged` for quality during development
-- **Style cards:** When a step has a `style_card` field, read `.claude/style-cards/{card}.md` before writing code
+- **Style cards:** Read all `.claude/style-cards/*.md` at session start
 
 ## Pattern Triggers
 

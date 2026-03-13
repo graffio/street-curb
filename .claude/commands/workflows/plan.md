@@ -6,8 +6,8 @@ argument-hint: "[brainstorm file path]"
 
 # Plan
 
-Generates a task file with intent-level steps. Claude decides file-level implementation details, style card loading
-timing, and commit boundaries. The pre-commit hook and wrap-up review provide quality enforcement.
+Generates a task file with intent-level steps. Claude decides file-level implementation details and commit
+boundaries. The pre-commit hook and wrap-up review provide quality enforcement.
 
 ## Input
 
@@ -70,7 +70,7 @@ Read `.claude/preferences.md` and the brainstorm's Settled Approach before gener
 
 ### Step design
 
-Steps are **logical work units**, not file edits. Each step should be roughly one session of work.
+Steps are **logical work units**, not file edits.
 
 - **3-8 steps** for a typical feature. Fewer than 3 means the feature is simple enough to just implement without a plan.
   More than 8 means decompose the brainstorm into smaller features.
@@ -84,7 +84,7 @@ Steps are **logical work units**, not file edits. Each step should be roughly on
 - **Key constraints** — settled decisions from the brainstorm that are relevant to this step. "Use LookupTable, not
   Map", "chip filters win on conflict", etc. Prevents Claude from re-opening decisions the brainstorm already closed.
   Omit if the step has no relevant constraints.
-- **Style cards** lists which cards are relevant to this step. Claude loads them when it starts working on that area.
+- **Style cards** lists which cards are relevant to this step (for documentation — all cards are loaded at session start).
 - **Acceptance** is one sentence describing how to verify the step is done. Prefer testable criteria.
 - **Notes** — Claude fills this in during and after implementation. Record deviations, surprises, and in-progress
   breadcrumbs (for resumption). "Started merge logic, 3 of 5 variant tests passing" is useful. Absence of notes on a
@@ -124,7 +124,7 @@ When populating `style_cards` for a step, use this mapping:
 
 These aren't generated as separate steps, but Claude must follow them during implementation:
 
-- **Style cards:** Load the relevant card before writing code in that area
+- **Style cards:** Load all style cards at session start (they total ~160 lines — trivial at 1M context)
 - **TDD:** Write failing tests first when introducing new branching logic or business rules. Do NOT write tests for:
   adding entries to lookup tables/registries, filtering/mapping with standard operations, passing new input to existing
   infrastructure, or wiring components to existing selectors.
