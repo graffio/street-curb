@@ -358,7 +358,8 @@ const VirtualRow = ({ virtualRow, row, isExpanded, isHighlighted, renderSubCompo
 }
 
 // Table row component with zebra striping and highlight support
-// @sig TableRow :: { row, cells, rowIndex, isHighlighted, onRowClick } -> ReactElement
+// isExpanded is not rendered here — it's included so React.memo re-renders cells when expansion toggles
+// @sig TableRow :: { row, cells, rowIndex, isExpanded, isHighlighted, onRowClick } -> ReactElement
 const TableRow = React.memo(({ row, cells, rowIndex, isExpanded, isHighlighted, onRowClick }) => {
     const zebraColor = rowIndex % 2 === 0 ? 'var(--gray-1)' : 'var(--gray-2)'
     const backgroundColor = isHighlighted ? 'var(--yellow-5)' : zebraColor
