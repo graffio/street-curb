@@ -283,6 +283,7 @@ const A = {
     collectBalanceSnapshot: (date, filtered, investmentAccountIds, investmentAccountIdsInScope, state) => {
         const isCashTransaction = ({ date: d, accountId }) => d <= date && !investmentAccountIds.has(accountId)
         const cashTotal = sumCompensated(compactMap(t => (isCashTransaction(t) ? t.amount : undefined), filtered))
+        if (investmentAccountIdsInScope.length === 0) return { date, total: cashTotal }
         const positions = computePositions({
             ...state,
             asOfDate: date,

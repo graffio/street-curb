@@ -461,10 +461,43 @@ const _queryDescription = (state, viewId, fallbackIR) => {
     return toFinancialQueryDescription(mergedIR)
 }
 
+// Count leaf nodes in a position tree (groups contain positions as children)
+const _countPositionLeaves = nodes =>
+    nodes.reduce((sum, node) => (node.children.length > 0 ? sum + _countPositionLeaves(node.children) : sum + 1), 0)
+
+// Derive result counts appropriate to the query type
+// TransactionQuery uses existing transaction-based filter counts; PositionQuery/SnapshotQuery derive from result shape
+// @sig _queryResultCounts :: (State, String, IRFinancialQuery?) -> { filtered: Number, total: Number }
+const _queryResultCounts = (state, viewId, fallbackIR) => {
+    if (!fallbackIR) return { filtered: 0, total: 0 }
+    return fallbackIR.match({
+        TransactionQuery: () => {
+            const { filtered, total } = _filterCounts(state, viewId)
+            return { filtered, total }
+        },
+        PositionQuery: () => {
+            const result = _queryResult(state, viewId, fallbackIR)
+            if (!result) return { filtered: 0, total: 0 }
+            const count = _countPositionLeaves(result.nodes)
+            return { filtered: count, total: count }
+        },
+        SnapshotQuery: () => {
+            const { filtered, total } = _filterCounts(state, viewId)
+            return { filtered, total }
+        },
+        AccountQuery: () => {
+            const result = _queryResult(state, viewId, fallbackIR)
+            const count = result ? result.length : 0
+            return { filtered: count, total: count }
+        },
+    })
+}
+
 // prettier-ignore
 const QueryResult = {
     fromIR:      memoizeReduxStatePerKey(ENGINE_STATE_KEYS, 'queryIR', _queryResult),
     description: memoizeReduxStatePerKey(ENGINE_STATE_KEYS, 'queryIR', _queryDescription),
+    counts:      memoizeReduxStatePerKey(ENGINE_STATE_KEYS, 'queryIR', _queryResultCounts),
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
