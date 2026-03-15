@@ -103,6 +103,20 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
     // @sig loadFile :: Action.LoadFile -> State
     const loadFile = action => ({ ...state, ...action })
 
+    // Sets transaction filter and resets treeExpansion when groupBy changes
+    // @sig setTransactionFilterWithGroupByReset :: Action.SetTransactionFilter -> State
+    const setTransactionFilterWithGroupByReset = () => {
+        const { viewId, changes } = action
+        const updated = TransactionFilters.setTransactionFilter(state, action)
+        const oldGroupBy = (state.transactionFilters.get(viewId) || createDefaultFilter(viewId)).groupBy
+        if (changes.groupBy !== undefined && changes.groupBy !== oldGroupBy) {
+            const existing = updated.viewUiState.get(viewId) || createDefaultViewUiState(viewId)
+            const cleared = ViewUiState.from({ ...existing, treeExpansion: {} })
+            return { ...updated, viewUiState: updated.viewUiState.addItemWithId(cleared) }
+        }
+        return updated
+    }
+
     // Handle raw Redux action from post handler
     const { action } = reduxAction
     if (!Action.is(action)) return state
@@ -113,7 +127,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         ResetTransactionFilters: () => ViewUiStateReducer.resetViewUiState(TransactionFilters.resetTransactionFilters(state, action), action),
         SetTableLayout         : () => setTableLayout(action),
         EnsureTableLayout      : () => ensureTableLayout(action),
-        SetTransactionFilter   : () => TransactionFilters.setTransactionFilter(state, action),
+        SetTransactionFilter   : setTransactionFilterWithGroupByReset,
         SetViewUiState         : () => ViewUiStateReducer.setViewUiState(state, action),
         ToggleAccountFilter    : () => TransactionFilters.toggleAccountFilter(state, action),
         ToggleSecurityFilter   : () => TransactionFilters.toggleSecurityFilter(state, action),

@@ -1,6 +1,7 @@
 #!/bin/bash
 # ABOUTME: PreToolUse hook for Bash tool — enforces simple, reviewable commands
 # ABOUTME: Blocks cd (path drift), blocks chaining (&&, ;), allows pipes to safe output filters
+# ABOUTME: Allowlists known-safe commands to bypass permission prompts
 input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command')
 
@@ -11,7 +12,7 @@ first_line=$(echo "$command" | head -1)
 # --- Block cd: mutates persistent shell state, causes "lost in subfolder" problems ---
 if echo "$first_line" | grep -qE '^\s*cd\s'; then
     echo "Blocked: 'cd' changes persistent shell state — you'll lose track of your working directory." >&2
-    echo "Fix: use absolute paths, or --cwd / -C flags:" >&2
+    echo "Fix: use absolute paths. Use --cwd / -C only when targeting a different directory than cwd:" >&2
     echo "  yarn --cwd modules/foo test" >&2
     echo "  git -C modules/foo status" >&2
     exit 2
@@ -45,6 +46,40 @@ if echo "$cleaned" | grep -qE '\|'; then
             exit 2
         fi
     done
+fi
+
+# --- Allowlist: bypass permission prompts when base command is already permitted ---
+# Permission prefix matching fails when flags come before the subcommand
+# (e.g. "git -C /path commit" doesn't match "Bash(git commit:*)").
+# Fix: extract the base command, check if it's permitted in any settings file.
+
+cmd_is_allowed() {
+    local cmd="$1"
+    local file="$2"
+    [ -f "$file" ] && jq -e --arg cmd "$cmd" \
+        '.permissions.allow // [] | map(select(startswith("Bash(" + $cmd))) | length > 0' \
+        "$file" > /dev/null 2>&1
+}
+
+# Strip leading VAR=value assignments (handles quoted values with spaces)
+stripped="$first_line"
+while [[ "$stripped" =~ ^[A-Za-z_][A-Za-z_0-9]*= ]]; do
+    stripped=$(echo "$stripped" | sed -E "s/^[A-Za-z_][A-Za-z_0-9]*(=\"[^\"]*\"|='[^']*'|=[^ ]*) *//")
+done
+base_cmd=$(echo "$stripped" | awk '{print $1}')
+
+if cmd_is_allowed "$base_cmd" "$CLAUDE_PROJECT_DIR/.claude/settings.local.json" \
+    || cmd_is_allowed "$base_cmd" "$CLAUDE_PROJECT_DIR/.claude/settings.json" \
+    || cmd_is_allowed "$base_cmd" "$HOME/.claude/settings.json"; then
+    cat <<EOF
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "allow"
+  }
+}
+EOF
+    exit 0
 fi
 
 exit 0

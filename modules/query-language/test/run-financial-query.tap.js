@@ -344,6 +344,37 @@ test('AccountQuery — respects filter', t => {
 })
 
 // ═════════════════════════════════════════════════
+// (f2) SnapshotQuery — credit card account filter produces negative balance
+// ═════════════════════════════════════════════════
+
+test('SnapshotQuery — credit card filtered balance is negative', t => {
+    t.test('Given a SnapshotQuery filtered to a credit card account', t => {
+        t.test('When executing against state', t => {
+            const query = IRFinancialQuery.SnapshotQuery(
+                'cc_balance',
+                undefined,
+                IRFilter.In('account', ['Amex Platinum']),
+                IRDateRange.Year(2025),
+                undefined,
+                'balances',
+                'monthly',
+            )
+            const result = runFinancialQuery(query, STATE)
+
+            t.ok(result.nodes, 'Then result has nodes')
+            const netWorthNode = result.nodes[0]
+            const lastColumn = result.columns[result.columns.length - 1]
+            const lastBalance = netWorthNode.aggregate.columns[lastColumn]
+
+            t.ok(lastBalance < 0, `Then net worth is negative (got ${lastBalance})`)
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
+// ═════════════════════════════════════════════════
 // (f) JSON.stringify stability — memoization depends on this
 // ═════════════════════════════════════════════════
 

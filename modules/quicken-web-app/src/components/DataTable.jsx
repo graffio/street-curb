@@ -337,13 +337,13 @@ const TableCell = ({ cell }) => {
 
 // Virtualized row wrapper with absolute positioning
 // @sig VirtualRow :: Props -> ReactElement
-const VirtualRow = ({ virtualRow, row, isHighlighted, renderSubComponent, measureElement, onRowClick }) => {
+const VirtualRow = ({ virtualRow, row, isExpanded, isHighlighted, renderSubComponent, measureElement, onRowClick }) => {
     const { index, start } = virtualRow
     const style = { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` }
     const isLeaf = !row.subRows || row.subRows.length === 0
-    const showSubComponent = renderSubComponent && row.getIsExpanded() && isLeaf
+    const showSubComponent = renderSubComponent && isExpanded && isLeaf
 
-    const rowProps = { row, cells: row.getVisibleCells(), rowIndex: index, isHighlighted, onRowClick }
+    const rowProps = { row, cells: row.getVisibleCells(), rowIndex: index, isExpanded, isHighlighted, onRowClick }
 
     return (
         <Box data-index={index} ref={measureElement} style={style}>
@@ -358,8 +358,9 @@ const VirtualRow = ({ virtualRow, row, isHighlighted, renderSubComponent, measur
 }
 
 // Table row component with zebra striping and highlight support
-// @sig TableRow :: { row, cells, rowIndex, isHighlighted, onRowClick } -> ReactElement
-const TableRow = React.memo(({ row, cells, rowIndex, isHighlighted, onRowClick }) => {
+// isExpanded is not rendered here — it's included so React.memo re-renders cells when expansion toggles
+// @sig TableRow :: { row, cells, rowIndex, isExpanded, isHighlighted, onRowClick } -> ReactElement
+const TableRow = React.memo(({ row, cells, rowIndex, isExpanded, isHighlighted, onRowClick }) => {
     const zebraColor = rowIndex % 2 === 0 ? 'var(--gray-1)' : 'var(--gray-2)'
     const backgroundColor = isHighlighted ? 'var(--yellow-5)' : zebraColor
     const handleClick = onRowClick ? () => onRowClick(row.original, rowIndex) : undefined
@@ -553,6 +554,7 @@ const DataTable = ({
         const props = {
             virtualRow: { index, start },
             row,
+            isExpanded: row.getIsExpanded(),
             isHighlighted: index === highlightedRowIndex,
             renderSubComponent,
             measureElement: virtualizer.measureElement,

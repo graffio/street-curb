@@ -47,13 +47,23 @@ const F = {
             return <Component key={k} viewId={viewId} />
         }),
 
+    // Format a column key for display — ISO dates become friendly labels, others pass through
+    // @sig toColumnHeader :: (String, String?) -> String
+    toColumnHeader: (col, interval) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(col)) return col
+        const [year, month] = col.split('-')
+        if (interval === 'yearly') return year
+        if (interval === 'quarterly') return `Q${Math.ceil(Number(month) / 3)} ${year}`
+        return `${SHORT_MONTH_NAMES[Number(month) - 1]} ${year}`
+    },
+
     // Build a value column def for one 2D tree column key
-    // @sig toTreeValueColumn :: (String, Object?) -> ColumnDef
-    toTreeValueColumn: (col, computed) => ({
+    // @sig toTreeValueColumn :: (String, Object?, String?) -> ColumnDef
+    toTreeValueColumn: (col, computed, interval) => ({
         id: `col_${col}`,
         accessorFn: ({ isComputed, rowLabel, aggregate }) =>
             isComputed ? computed?.[rowLabel]?.[col] : aggregate.columns?.[col],
-        header: col,
+        header: F.toColumnHeader(col, interval),
         size: 120,
         cell: ({ getValue, row }) =>
             row.original.isComputed ? PivotPercentCell({ getValue }) : PivotCurrencyCell({ getValue }),
@@ -61,8 +71,8 @@ const F = {
     }),
 
     // Build TanStack column defs for a 2D tree (row label + value columns + total)
-    // @sig toTreePivotColumns :: ([String], Object?) -> [ColumnDef]
-    toTreePivotColumns: (columns, computed) => {
+    // @sig toTreePivotColumns :: ([String], Object?, String?) -> [ColumnDef]
+    toTreePivotColumns: (columns, computed, interval) => {
         const labelCol = {
             id: 'rowLabel',
             accessorFn: ({ isComputed, rowLabel, id }) => (isComputed ? rowLabel : id),
@@ -70,7 +80,7 @@ const F = {
             size: 200,
             cell: PivotRowLabelCell,
         }
-        const valueCols = columns.map(col => F.toTreeValueColumn(col, computed))
+        const valueCols = columns.map(col => F.toTreeValueColumn(col, computed, interval))
         const totalCol = {
             id: 'total',
             accessorFn: ({ isComputed, aggregate }) => (isComputed ? undefined : aggregate.total),
@@ -141,6 +151,9 @@ const PivotPercentCell = ({ getValue }) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
+// prettier-ignore
+const SHORT_MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 // Maps editableFilters keys to scoping chip components — key order determines chip display order
 // prettier-ignore
 const CHIP_MAP = {
@@ -188,11 +201,17 @@ const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
     const highlightedRowId = useSelector(state => S.UI.highlightedRowId(state, viewId))
     const queryDescription = useSelector(state => S.QueryResult.description(state, viewId, baseQueryIR))
+    const counts = useSelector(state => S.QueryResult.counts(state, viewId, baseQueryIR))
 
     if (!result) return undefined
 
     const { columns: resultColumns, computed, nodes, snapshots } = result
-    const chipRowProps = { viewId, itemLabel: metadata.itemLabel }
+    const chipRowProps = {
+        viewId,
+        itemLabel: metadata.itemLabel,
+        filteredCount: counts.filtered,
+        totalCount: counts.total,
+    }
 
     const chipRow = (
         <FilterChipRow {...chipRowProps}>
@@ -236,7 +255,7 @@ const QueryResultPage = ({ viewId, metadata, height = '100%' }) => {
 
     // 2D tree result — drillable tree with dynamic value columns from aggregate.columns
     if (nodes && resultColumns) {
-        const treeColumns = F.toTreePivotColumns(resultColumns, computed)
+        const treeColumns = F.toTreePivotColumns(resultColumns, computed, baseQueryIR.interval)
         const computedRows = F.toComputedRows(computed)
         const chartData = chart ? F.toChartDataFromTree(resultColumns, nodes) : undefined
         const pivotTreeExtraProps = {

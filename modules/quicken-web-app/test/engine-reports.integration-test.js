@@ -6,6 +6,10 @@ import { IntegrationBrowser } from './helpers/integration-browser.js'
 
 const { wait, loadExpected } = IntegrationBrowser
 
+// prettier-ignore
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const toMonthYear = iso => `${SHORT_MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`
+
 const PORT = process.env.PORT || 3000
 const TEST_URL = `http://localhost:${PORT}?testFile=seed-12345`
 
@@ -555,7 +559,10 @@ tap.test('SnapshotQuery/TimeSeries: monthly snapshots as 2D tree with date-point
 
     // Verify date-point column headers from fixture
     const expected = loadExpected()
-    expected.netWorthSnapshots.forEach(({ date }) => t.ok(snapshot.includes(date), `${date} column header present`))
+    expected.netWorthSnapshots.forEach(({ date }) => {
+        const header = toMonthYear(date)
+        t.ok(snapshot.includes(header), `${header} column header present`)
+    })
 
     // Verify dollar values at each date point match fixture
     expected.netWorthSnapshots.forEach(({ date, total }) =>
@@ -594,8 +601,8 @@ tap.test('SnapshotQuery/TimeSeries: date filter narrows visible columns', async 
     const beforeFilter = session.browser('snapshot')
 
     // Verify we can see multiple date-point columns before filtering
-    t.ok(beforeFilter.includes('2025-01-31'), '2025-01-31 column visible before date filter')
-    t.ok(beforeFilter.includes('2025-06-30'), '2025-06-30 column visible before date filter')
+    t.ok(beforeFilter.includes('Jan 2025'), 'Jan 2025 column visible before date filter')
+    t.ok(beforeFilter.includes('Jun 2025'), 'Jun 2025 column visible before date filter')
 
     // Apply date filter — Q1 only
     session.clickByText('Date:')
@@ -611,14 +618,14 @@ tap.test('SnapshotQuery/TimeSeries: date filter narrows visible columns', async 
     t.notOk(afterFilter.includes('Something went wrong'), 'no crash after date filter')
 
     // Q1 date points should be visible after filtering
-    t.ok(afterFilter.includes('2025-01'), '2025-01 column visible after Q1 filter')
-    t.ok(afterFilter.includes('2025-03'), '2025-03 column visible after Q1 filter')
+    t.ok(afterFilter.includes('Jan 2025'), 'Jan 2025 column visible after Q1 filter')
+    t.ok(afterFilter.includes('Mar 2025'), 'Mar 2025 column visible after Q1 filter')
 
     // Clear and verify full year returns
     session.clickClear()
     await wait(500)
     const afterClear = session.browser('snapshot')
-    t.ok(afterClear.includes('2025-06-30'), '2025-06-30 column visible again after clearing date filter')
+    t.ok(afterClear.includes('Jun 2025'), 'Jun 2025 column visible again after clearing date filter')
 })
 
 // ═════════════════════════════════════════════════════════════════════════════
